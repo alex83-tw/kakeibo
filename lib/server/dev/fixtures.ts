@@ -63,7 +63,7 @@ function seed(): Store {
 const g = globalThis as unknown as { __kakeibo_fixtures?: Store };
 const store = (): Store => (g.__kakeibo_fixtures ??= seed());
 
-type Mode = "select" | "insert" | "update";
+type Mode = "select" | "insert" | "update" | "upsert" | "delete";
 
 class Query implements PromiseLike<{ data: Row[]; error: null }> {
   private mode: Mode = "select";
@@ -71,6 +71,7 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
   private filters: ((r: Row) => boolean)[] = [];
   private sorts: { col: string; asc: boolean }[] = [];
   private window: [number, number] | null = null;
+  private conflict: string[] = [];
 
   constructor(private table: string) {}
 
@@ -85,6 +86,16 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
   update(patch: Row) {
     this.mode = "update";
     this.payload = patch;
+    return this;
+  }
+  upsert(row: Row, opts: { onConflict: string }) {
+    this.mode = "upsert";
+    this.payload = row;
+    this.conflict = opts.onConflict.split(",");
+    return this;
+  }
+  delete() {
+    this.mode = "delete";
     return this;
   }
   eq(col: string, v: unknown) {
@@ -132,7 +143,17 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
       rows.push(row);
       return { data: [row], error: null };
     }
+    if (this.mode === "upsert") {
+      const same = rows.find((r) => this.conflict.every((c) => r[c] === this.payload[c]));
+      if (same) Object.assign(same, this.payload);
+      else rows.push({ id: uid(), created_at: new Date().toISOString(), rollover_amount: 0, ...this.payload });
+      return { data: [], error: null };
+    }
     const hit = rows.filter((r) => this.filters.every((f) => f(r)));
+    if (this.mode === "delete") {
+      store()[this.table] = rows.filter((r) => !hit.includes(r));
+      return { data: hit, error: null };
+    }
     if (this.mode === "update") {
       hit.forEach((r) => Object.assign(r, this.payload));
       return { data: hit, error: null };
@@ -148,8 +169,63 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
   }
 }
 
+type Args = Record<string, string | null>;
+
+/** The same selection the SQL functions use: this user's rows of `kind` under main[/sub]. */
+function matching(table: string, a: Args): Row[] {
+  const rows = store()[table] ?? [];
+  return rows.filter((r) => {
+    if (r.user_id !== FIXTURE_USER) return false;
+    if (table !== "budget_plans" && r.entry_type !== a.p_kind) return false;
+    const mainKey = "main_category";
+    if (r[mainKey] !== a.p_from_main && r[mainKey] !== a.p_main) return false;
+    const sub = (r.sub_category ?? "other") as string;
+    const want = a.p_from_sub !== undefined ? a.p_from_sub : a.p_sub;
+    return want === null || want === undefined || sub === want;
+  });
+}
+
+function rpc(name: string, a: Args): { data: Record<string, number>; error: null } {
+  const count = (t: string) => matching(t, a).filter((r) => t !== "accounting_entries" || r.deleted_at == null).length;
+  if (name === "category_usage") {
+    return { data: { entries: count("accounting_entries"), budgets: a.p_kind === "expense" ? count("budget_plans") : 0, rules: count("category_rules"), recurring: count("recurring_rules") }, error: null };
+  }
+  const wholeMain = a.p_from_sub === null;
+  const same = a.p_from_main === a.p_to_main && (wholeMain || a.p_from_sub === a.p_to_sub);
+  const out = { entries: 0, budgets: 0, rules: 0, recurring: 0, budget_conflicts: 0 };
+  if (same) return { data: out, error: null };
+  const move = (t: string) => {
+    const hit = matching(t, a);
+    hit.forEach((r) => {
+      r.main_category = a.p_to_main;
+      if (!wholeMain) r.sub_category = a.p_to_sub;
+    });
+    return hit;
+  };
+  out.entries = move("accounting_entries").filter((r) => r.deleted_at == null).length;
+  out.rules = move("category_rules").length;
+  out.recurring = move("recurring_rules").length;
+  if (a.p_kind === "expense") {
+    const plans = store().budget_plans;
+    for (const b of matching("budget_plans", a)) {
+      out.budgets++;
+      const newSub = wholeMain ? b.sub_category : a.p_to_sub;
+      const t = plans.find((x) => x !== b && x.user_id === b.user_id && x.period_year === b.period_year && x.period_month === b.period_month && x.main_category === a.p_to_main && x.sub_category === newSub);
+      if (!t) {
+        b.main_category = a.p_to_main;
+        b.sub_category = newSub;
+      } else if (t.currency === b.currency) {
+        t.budget_amount = Number(t.budget_amount) + Number(b.budget_amount);
+        plans.splice(plans.indexOf(b), 1);
+      } else out.budget_conflicts++;
+    }
+  }
+  return { data: out, error: null };
+}
+
 export function fixtureClient(): SupabaseClient {
   return {
+    rpc: async (name: string, args: Args) => rpc(name, args),
     from: (table: string) => new Query(table),
     auth: { getUser: async () => ({ data: { user: { id: FIXTURE_USER } }, error: null }) },
   } as unknown as SupabaseClient;

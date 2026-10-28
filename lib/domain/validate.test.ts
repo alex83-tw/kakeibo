@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateEntryInput, type EntryInput } from "./validate";
+import { validateAccountInput, validateBudgetInput, validateEntryInput, type EntryInput } from "./validate";
 
 const ok: EntryInput = {
   entry_type: "expense",
@@ -82,5 +82,51 @@ describe("date and notes", () => {
 describe("collects every error at once", () => {
   it("reports amount, category and date together", () => {
     expect(Object.keys(errorsFor({ amount: "", main_category: "", entry_date: "x" })).sort()).toEqual(["amount", "entry_date", "main_category"]);
+  });
+});
+
+describe("validateBudgetInput", () => {
+  const ok = { main_category: "餐飲", year: 2026, month: 10, amount: "6,000", warning_threshold: 0.8 };
+  it("accepts a normal budget", () => {
+    const r = validateBudgetInput(ok);
+    expect(r.ok && r.value).toMatchObject({ main_category: "餐飲", amount: 6000, warning_threshold: 0.8 });
+  });
+  it.each([["abc", "請輸入數字"], ["-1", "金額必須大於 0"], ["0", "金額必須大於 0"], ["", "請輸入金額"], ["1,000,000,000", "金額太大"]])("amount %j", (amount, message) => {
+    const r = validateBudgetInput({ ...ok, amount });
+    expect(!r.ok && r.errors.amount).toBe(message);
+  });
+  it.each([0, -0.1, 1.01, NaN])("threshold %j is rejected", (warning_threshold) => {
+    const r = validateBudgetInput({ ...ok, warning_threshold });
+    expect(!r.ok && r.errors.warning_threshold).toBe("提醒比例要在 1% 到 100% 之間");
+  });
+  it("threshold of exactly 1 is allowed", () => {
+    expect(validateBudgetInput({ ...ok, warning_threshold: 1 }).ok).toBe(true);
+  });
+  it("needs a category and a real month", () => {
+    expect(!validateBudgetInput({ ...ok, main_category: " " }).ok).toBe(true);
+    expect(!validateBudgetInput({ ...ok, month: 13 }).ok).toBe(true);
+  });
+});
+
+describe("validateAccountInput", () => {
+  const ok = { kind: "bank" as const, name: "郵局", opening_balance: "61,880", opening_date: "2026-10-01" };
+  it("accepts a normal account, trimming the name", () => {
+    const r = validateAccountInput({ ...ok, name: "  郵局 " });
+    expect(r.ok && r.value).toEqual({ kind: "bank", name: "郵局", opening_balance: 61880, opening_date: "2026-10-01" });
+  });
+  it("a credit card opens negative (△), zero is allowed", () => {
+    const r = validateAccountInput({ ...ok, kind: "credit_card", opening_balance: "△3,150" });
+    expect(r.ok && r.value.opening_balance).toBe(-3150);
+    const z = validateAccountInput({ ...ok, opening_balance: "0" });
+    expect(z.ok && z.value.opening_balance).toBe(0);
+  });
+  it("rejects blank names, non-numeric balances and bad dates", () => {
+    expect(validateAccountInput({ ...ok, name: "   " })).toEqual({ ok: false, errors: { name: "請輸入帳戶名稱" } });
+    expect(validateAccountInput({ ...ok, opening_balance: "abc" })).toEqual({ ok: false, errors: { opening_balance: "請輸入數字" } });
+    expect(validateAccountInput({ ...ok, opening_balance: "" })).toEqual({ ok: false, errors: { opening_balance: "請輸入數字" } });
+    expect(validateAccountInput({ ...ok, opening_date: "2026-02-30" })).toEqual({ ok: false, errors: { opening_date: "日期不正確" } });
+  });
+  it("names are limited to 20 characters", () => {
+    expect(validateAccountInput({ ...ok, name: "字".repeat(21) })).toEqual({ ok: false, errors: { name: "名稱最多 20 字" } });
   });
 });

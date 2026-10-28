@@ -47,3 +47,65 @@ export async function listBudgets(
     warning_threshold: normalizeThreshold(r.warning_threshold),
   }));
 }
+
+const CONFLICT = "user_id,period_year,period_month,main_category,sub_category";
+
+/** Main-category budget for one month. rollover_amount is left alone so an existing value survives. */
+export async function upsertBudget(
+  client: SupabaseClient,
+  userId: string,
+  b: { main_category: string; year: number; month: number; amount: number; warning_threshold: number },
+): Promise<void> {
+  const { error } = await client.from("budget_plans").upsert(
+    {
+      user_id: userId,
+      main_category: b.main_category,
+      sub_category: "other",
+      budget_amount: b.amount,
+      currency: "TWD",
+      period_year: b.year,
+      period_month: b.month,
+      warning_threshold: b.warning_threshold,
+    },
+    { onConflict: CONFLICT },
+  );
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteBudget(
+  client: SupabaseClient,
+  userId: string,
+  b: { main_category: string; year: number; month: number },
+): Promise<void> {
+  const { error } = await client
+    .from("budget_plans")
+    .delete()
+    .eq("user_id", userId)
+    .eq("period_year", b.year)
+    .eq("period_month", b.month)
+    .eq("main_category", b.main_category)
+    .eq("sub_category", "other")
+    .eq("currency", "TWD");
+  if (error) throw new Error(error.message);
+}
+
+/** Copies last month's main-category budgets into `to`, only when `to` has none. Returns how many were copied. */
+export async function copyBudgetsFromPrevious(
+  client: SupabaseClient,
+  userId: string,
+  from: { year: number; month: number },
+  to: { year: number; month: number },
+): Promise<number> {
+  if ((await listBudgets(client, userId, to.year, to.month)).length > 0) return 0;
+  const rows = await listBudgets(client, userId, from.year, from.month);
+  for (const r of rows) {
+    await upsertBudget(client, userId, {
+      main_category: r.main_category,
+      year: to.year,
+      month: to.month,
+      amount: r.budget_amount,
+      warning_threshold: r.warning_threshold,
+    });
+  }
+  return rows.length;
+}

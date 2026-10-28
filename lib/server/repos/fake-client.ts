@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Test double: records every query-builder call and resolves to `rows` when awaited. */
-export function fakeClient(rows: unknown[] = [], error: { message: string } | null = null) {
+export function fakeClient(rows: unknown[] = [], error: { message: string } | null = null, rpcResult: unknown = null) {
   const calls: [string, ...unknown[]][] = [];
   let window: [number, number] | null = null;
   const builder: Record<string, unknown> = {
@@ -13,13 +13,17 @@ export function fakeClient(rows: unknown[] = [], error: { message: string } | nu
       return builder;
     },
   };
-  for (const m of ["select", "insert", "update", "eq", "is", "gte", "lte", "order", "in"]) {
+  for (const m of ["select", "insert", "update", "upsert", "delete", "eq", "is", "gte", "lte", "order", "in"]) {
     builder[m] = (...args: unknown[]) => {
       calls.push([m, ...args]);
       return builder;
     };
   }
   const client = {
+    rpc: (name: string, args: unknown) => {
+      calls.push(["rpc", name, args]);
+      return Promise.resolve({ data: error ? null : rpcResult, error });
+    },
     from: (table: string) => {
       calls.push(["from", table]);
       return builder;
