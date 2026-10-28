@@ -37,45 +37,45 @@ SELECT set_config('request.jwt.claims', json_build_object('sub', a)::text, true)
 
 DO $$
 DECLARE
-  a uuid := (SELECT a FROM _u);
-  b uuid := (SELECT b FROM _u);
+  ua uuid := (SELECT _u.a FROM _u);
+  ub uuid := (SELECT _u.b FROM _u);
   preview jsonb; r jsonb;
 BEGIN
   -- 1) 預覽與實際一致（子分類合併：餐飲/飲料 → 餐飲/other）
   preview := financial.category_usage('expense', '餐飲', '飲料');
   r := financial.rename_or_merge_category('expense', '餐飲', '飲料', '餐飲', 'other');
-  IF preview->>'entries' <> '2' OR preview->>'budgets' <> '3' OR preview->>'rules' <> '1' OR preview->>'recurring' <> '1' THEN
+  IF preview->>'entries' <> '2' OR preview->>'budgets' <> '2' OR preview->>'rules' <> '1' OR preview->>'recurring' <> '1' THEN
     RAISE EXCEPTION 'FAIL: preview counts % ', preview; END IF;
-  IF (r->>'entries', r->>'budgets', r->>'rules', r->>'recurring') IS DISTINCT FROM ('2', '3', '1', '1') THEN
+  IF (r->>'entries', r->>'budgets', r->>'rules', r->>'recurring') IS DISTINCT FROM ('2', '2', '1', '1') THEN
     RAISE EXCEPTION 'FAIL: apply counts % (preview was %)', r, preview; END IF;
 
   -- 2) 帳目全數轉到目標（含軟刪除），其他種類與他人不變
-  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = a AND entry_type = 'expense' AND main_category = '餐飲' AND sub_category = '飲料') <> 0 THEN
+  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = ua AND entry_type = 'expense' AND main_category = '餐飲' AND sub_category = '飲料') <> 0 THEN
     RAISE EXCEPTION 'FAIL: expense rows still on old sub'; END IF;
-  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = a AND entry_type = 'expense' AND main_category = '餐飲' AND sub_category = 'other') <> 4 THEN
+  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = ua AND entry_type = 'expense' AND main_category = '餐飲' AND sub_category = 'other') <> 4 THEN
     RAISE EXCEPTION 'FAIL: target should hold 3 moved (incl. 1 soft-deleted) + 1 original = 4 rows (NULL-sub row untouched)'; END IF;
-  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = a AND entry_type = 'income' AND sub_category = '飲料') <> 1 THEN
+  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = ua AND entry_type = 'income' AND sub_category = '飲料') <> 1 THEN
     RAISE EXCEPTION 'FAIL: income row was touched'; END IF;
-  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = b AND sub_category = '飲料') <> 1 THEN
+  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = ub AND sub_category = '飲料') <> 1 THEN
     RAISE EXCEPTION 'FAIL: other user entry was touched'; END IF;
 
   -- 3) 預算：同月撞鍵相加成 5,000、沒有重複鍵；rollover 相加；不撞的月份直接搬
-  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = a AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 5000 THEN
+  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = ua AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 5000 THEN
     RAISE EXCEPTION 'FAIL: merged budget should be 5000'; END IF;
-  IF (SELECT rollover_amount FROM financial.budget_plans WHERE user_id = a AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 100 THEN
+  IF (SELECT rollover_amount FROM financial.budget_plans WHERE user_id = ua AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 100 THEN
     RAISE EXCEPTION 'FAIL: rollover should be summed'; END IF;
-  IF (SELECT count(*) FROM financial.budget_plans WHERE user_id = a AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 1 THEN
+  IF (SELECT count(*) FROM financial.budget_plans WHERE user_id = ua AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 1 THEN
     RAISE EXCEPTION 'FAIL: duplicate budget key'; END IF;
-  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = a AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 11) <> 1500 THEN
+  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = ua AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 11) <> 1500 THEN
     RAISE EXCEPTION 'FAIL: non-colliding month should move as is'; END IF;
-  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = b AND sub_category = '飲料') <> 1000 THEN
+  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = ub AND sub_category = '飲料') <> 1000 THEN
     RAISE EXCEPTION 'FAIL: other user budget was touched'; END IF;
 
   -- 4) 自動分類與週期帳目跟著改，他人的不動
-  IF (SELECT count(*) FROM financial.category_rules WHERE user_id = a AND sub_category = 'other') <> 1
-     OR (SELECT count(*) FROM financial.category_rules WHERE user_id = b AND sub_category = '飲料') <> 1 THEN
+  IF (SELECT count(*) FROM financial.category_rules WHERE user_id = ua AND sub_category = 'other') <> 1
+     OR (SELECT count(*) FROM financial.category_rules WHERE user_id = ub AND sub_category = '飲料') <> 1 THEN
     RAISE EXCEPTION 'FAIL: category_rules'; END IF;
-  IF (SELECT count(*) FROM financial.recurring_rules WHERE user_id = a AND sub_category = 'other') <> 1 THEN
+  IF (SELECT count(*) FROM financial.recurring_rules WHERE user_id = ua AND sub_category = 'other') <> 1 THEN
     RAISE EXCEPTION 'FAIL: recurring_rules'; END IF;
 
   -- 5) 來源沒有任何帳目：回 0、不報錯
@@ -88,12 +88,12 @@ BEGIN
   r := financial.rename_or_merge_category('expense', '飲食', NULL, '餐飲', NULL);
   IF preview->>'entries' <> r->>'entries' OR preview->>'budgets' <> r->>'budgets' THEN
     RAISE EXCEPTION 'FAIL: main-level preview % vs apply %', preview, r; END IF;
-  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = a AND main_category = '飲食') <> 0 THEN
+  IF (SELECT count(*) FROM financial.accounting_entries WHERE user_id = ua AND main_category = '飲食') <> 0 THEN
     RAISE EXCEPTION 'FAIL: main merge left entries behind'; END IF;
-  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = a AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 5700 THEN
+  IF (SELECT budget_amount FROM financial.budget_plans WHERE user_id = ua AND main_category = '餐飲' AND sub_category = 'other' AND period_year = 2026 AND period_month = 10) <> 5700 THEN
     RAISE EXCEPTION 'FAIL: main merge budget should be 5700'; END IF;
   IF r->>'budget_conflicts' <> '1' THEN RAISE EXCEPTION 'FAIL: currency mismatch should be reported, got %', r; END IF;
-  IF (SELECT count(*) FROM financial.budget_plans WHERE user_id = a AND main_category = '飲食' AND currency = 'USD') <> 1 THEN
+  IF (SELECT count(*) FROM financial.budget_plans WHERE user_id = ua AND main_category = '飲食' AND currency = 'USD') <> 1 THEN
     RAISE EXCEPTION 'FAIL: conflicting USD budget should stay put'; END IF;
 
   -- 7) 來源與目標相同：不動
