@@ -107,4 +107,10 @@ BEGIN
   IF r->>'entries' <> '0' THEN RAISE EXCEPTION 'FAIL: same source and target should be a no-op'; END IF;
 END $$;
 
+-- 結尾再清一次：SQL editor 若沒有把整段當成同一個交易（ROLLBACK 不生效），也不會留下測試資料。
+DELETE FROM financial.accounting_entries WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.budget_plans       WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.category_rules     WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.recurring_rules    WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+
 ROLLBACK;
