@@ -7,7 +7,7 @@ export function fakeClient(rows: unknown[] = [], error: { message: string } | nu
     then: (resolve: (v: { data: unknown[] | null; error: { message: string } | null }) => unknown) =>
       resolve({ data: error ? null : rows, error }),
   };
-  for (const m of ["select", "eq", "is", "gte", "lte", "order", "in"]) {
+  for (const m of ["select", "insert", "update", "eq", "is", "gte", "lte", "order", "in"]) {
     builder[m] = (...args: unknown[]) => {
       calls.push([m, ...args]);
       return builder;

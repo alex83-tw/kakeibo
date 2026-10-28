@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Entry, EntryType } from "@/lib/domain/types";
+import type { ValidEntry } from "@/lib/domain/validate";
 
 const COLUMNS =
   "id, entry_type, main_category, sub_category, amount, currency, entry_date, notes, account_id, transfer_account_id, deleted_at, is_recurring";
@@ -41,4 +42,53 @@ export async function listEntries(
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   return ((data ?? []) as unknown as EntryRow[]).map(toEntry);
+}
+
+const TWD = "TWD";
+
+/** Returns the new id. user_id is written explicitly: the column default is auth.uid(), which is null for a dev bypass. */
+export async function insertEntry(client: SupabaseClient, userId: string, value: ValidEntry): Promise<string> {
+  const { data, error } = await client
+    .from("accounting_entries")
+    .insert({ ...value, user_id: userId, currency: TWD, is_recurring: false })
+    .select("id");
+  if (error) throw new Error(error.message);
+  const id = (data as { id: string }[] | null)?.[0]?.id;
+  if (!id) throw new Error("insert returned no row");
+  return id;
+}
+
+/** False when no live row of this user has that id. */
+export async function updateEntryRow(
+  client: SupabaseClient,
+  userId: string,
+  id: string,
+  value: ValidEntry,
+): Promise<boolean> {
+  const { data, error } = await client
+    .from("accounting_entries")
+    .update({ ...value, updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return ((data as unknown[] | null) ?? []).length > 0;
+}
+
+/** Soft delete (deleted = true) or restore (false). False when this user has no such row. */
+export async function setEntryDeleted(
+  client: SupabaseClient,
+  userId: string,
+  id: string,
+  deleted: boolean,
+): Promise<boolean> {
+  const { data, error } = await client
+    .from("accounting_entries")
+    .update({ deleted_at: deleted ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("id", id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return ((data as unknown[] | null) ?? []).length > 0;
 }

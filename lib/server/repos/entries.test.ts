@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { listEntries, scopedEntries } from "./entries";
+import type { ValidEntry } from "@/lib/domain/validate";
+import { insertEntry, listEntries, scopedEntries, setEntryDeleted, updateEntryRow } from "./entries";
 import { fakeClient } from "./fake-client";
 
 describe("scopedEntries", () => {
@@ -33,5 +34,38 @@ describe("listEntries", () => {
   it("throws when the query fails", async () => {
     const { client } = fakeClient([], { message: "boom" });
     await expect(listEntries(client, "u1", { start: "a", end: "b" })).rejects.toThrow("boom");
+  });
+});
+
+const valid: ValidEntry = {
+  entry_type: "expense", amount: 180, main_category: "餐飲", sub_category: "other",
+  account_id: null, transfer_account_id: null, entry_date: "2026-10-28", notes: null,
+};
+
+describe("entry writes", () => {
+  it("insert stamps the user and TWD explicitly", async () => {
+    const { client, calls } = fakeClient([{ id: "new" }]);
+    expect(await insertEntry(client, "u1", valid)).toBe("new");
+    const ins = calls.find((c) => c[0] === "insert");
+    expect(ins?.[1]).toMatchObject({ user_id: "u1", currency: "TWD", amount: 180 });
+  });
+  it("update is scoped to user and live rows, and reports a miss", async () => {
+    const hit = fakeClient([{ id: "e1" }]);
+    expect(await updateEntryRow(hit.client, "u1", "e1", valid)).toBe(true);
+    expect(hit.calls).toContainEqual(["eq", "user_id", "u1"]);
+    expect(hit.calls).toContainEqual(["eq", "id", "e1"]);
+    expect(hit.calls).toContainEqual(["is", "deleted_at", null]);
+    const miss = fakeClient([]);
+    expect(await updateEntryRow(miss.client, "u1", "someone-elses", valid)).toBe(false);
+  });
+  it("soft delete sets a timestamp, restore sets null, both scoped to the user", async () => {
+    const del = fakeClient([{ id: "e1" }]);
+    await setEntryDeleted(del.client, "u1", "e1", true);
+    expect((del.calls.find((c) => c[0] === "update")?.[1] as { deleted_at: string }).deleted_at).toMatch(/^\d{4}-/);
+    expect(del.calls).toContainEqual(["eq", "user_id", "u1"]);
+    const res = fakeClient([{ id: "e1" }]);
+    await setEntryDeleted(res.client, "u1", "e1", false);
+    expect((res.calls.find((c) => c[0] === "update")?.[1] as { deleted_at: null }).deleted_at).toBeNull();
+    expect(await setEntryDeleted(fakeClient([]).client, "u1", "x", true)).toBe(false);
   });
 });
