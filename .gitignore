@@ -1,6 +1,40 @@
-.superpowers/
-.playwright-mcp/
-.impeccable/
+
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# debug
+# dependencies
+# env files (can opt-in for committing if needed)
+# misc
+# next.js
+# production
+# testing
+# typescript
+# vercel
+*.pem
+*.tsbuildinfo
+.DS_Store
+.env*
 .env*.local
-node_modules/
+.impeccable/
 .next/
+.playwright-mcp/
+.pnp.*
+.pnpm-debug.log*
+.superpowers/
+.vercel
+.yarn/*
+/.next/
+/.pnp
+/build
+/coverage
+/node_modules
+/out/
+next-env.d.ts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+!.env.example

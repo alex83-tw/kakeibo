@@ -1,0 +1,41 @@
+import Link from "next/link";
+import { Head } from "@/components/paper/Head";
+import { Run } from "@/components/paper/Run";
+import { getUserId } from "@/lib/server/auth";
+import { listAccounts } from "@/lib/server/repos/accounts";
+import { listBudgets } from "@/lib/server/repos/budgets";
+import { createServerClient } from "@/lib/server/supabase";
+import { currentMonth, toKanji } from "@/lib/time";
+
+export default async function SettingsPage() {
+  const userId = await getUserId();
+  const client = await createServerClient();
+  const { year, month } = currentMonth();
+  const [budgets, accounts] = await Promise.all([listBudgets(client, userId, year, month), listAccounts(client, userId)]);
+  const rows: { href: string; label: string; note: string }[] = [
+    { href: "/settings/budget", label: "預算", note: budgets.length > 0 ? `本月 ${budgets.length} 項` : "尚未設定" },
+    { href: "/settings/categories", label: "科目", note: "改名・合併" },
+    { href: "/settings/accounts", label: "帳戶", note: accounts.filter((a) => !a.archived).length > 0 ? `${accounts.filter((a) => !a.archived).length} 個` : "尚未建立" },
+    { href: "/settings/recurring", label: "週期帳目", note: "每月固定的收支" },
+    { href: "/settings/rules", label: "自動分類", note: "關鍵字對應科目" },
+    { href: "/settings/import-export", label: "匯入・匯出", note: "CSV" },
+  ];
+  return (
+    <>
+      <Run label={`${toKanji(month)}月　設定`} />
+      <div className="rows">
+        <Head month={month} title="設定" />
+        <div className="gap" />
+        <nav className="menu" aria-label="設定項目">
+          {rows.map((r) => (
+            <Link key={r.href} href={r.href}>
+              <span>{r.label}</span>
+              <span>{r.note}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="gap" />
+      </div>
+    </>
+  );
+}
