@@ -1,4 +1,4 @@
-import { subLabel } from "./categories";
+import { normalizeSub, subLabel } from "./categories";
 import type { Entry, LedgerAccount } from "./types";
 import { validateEntryInput, type EntryInput } from "./validate";
 
@@ -15,7 +15,7 @@ export function entriesToCsv(entries: Entry[], accounts: LedgerAccount[]): strin
       e.entry_date,
       TYPE_LABEL[e.entry_type],
       e.main_category,
-      subLabel(e.sub_category),
+      subLabel(normalizeSub(e.sub_category ?? "")),
       String(e.amount),
       name(e.account_id),
       name(e.transfer_account_id),
