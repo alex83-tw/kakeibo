@@ -1,4 +1,5 @@
 import { MAX_AMOUNT, parseAmountInput } from "@/lib/money";
+import { isRealDate } from "@/lib/time";
 import { normalizeSub } from "./categories";
 import type { EntryType } from "./types";
 
@@ -28,13 +29,6 @@ export type ValidationResult =
   | { ok: true; value: ValidEntry }
   | { ok: false; errors: Partial<Record<keyof EntryInput, string>> };
 
-function validDate(s: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
-  const [y, m, d] = s.split("-").map(Number);
-  const t = new Date(Date.UTC(y, m - 1, d));
-  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
-}
-
 /** Returns the amount, or the message to show under the field. */
 function checkAmount(raw: string): { amount: number } | { error: string } {
   const s = raw.replace(/[,\s]/g, "").replace(/^△/, "-");
@@ -62,7 +56,7 @@ export function validateEntryInput(input: EntryInput): ValidationResult {
     else if (input.transfer_account_id === input.account_id) errors.transfer_account_id = "轉出與轉入不能是同一個帳戶";
   }
 
-  if (!validDate(input.entry_date)) errors.entry_date = "日期不正確";
+  if (!isRealDate(input.entry_date)) errors.entry_date = "日期不正確";
 
   const notes = input.notes.trim();
   if ([...notes].length > 200) errors.notes = "備註最多 200 字";

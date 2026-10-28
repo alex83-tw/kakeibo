@@ -6,6 +6,7 @@ import type { LedgerAccount } from "@/lib/domain/types";
 const createEntry = vi.fn();
 const softDeleteEntry = vi.fn();
 vi.mock("@/app/actions/entries", () => ({
+  updateEntry: vi.fn(),
   createEntry: (...a: unknown[]) => createEntry(...a),
   softDeleteEntry: (...a: unknown[]) => softDeleteEntry(...a),
 }));

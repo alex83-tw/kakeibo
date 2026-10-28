@@ -14,7 +14,7 @@ const NOT_FOUND: EntryActionResult = { ok: false, errors: { form: "找不到這�
 
 function refresh() {
   revalidatePath("/");
-  revalidatePath("/ledger");
+  revalidatePath("/ledger", "layout"); // the month view and every day page under it
 }
 
 async function guarded(run: (userId: string, client: Awaited<ReturnType<typeof createServerClient>>) => Promise<EntryActionResult>) {

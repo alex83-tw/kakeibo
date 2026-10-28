@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   WEEKDAY_JP,
   currentMonth,
+  parseMonthParam,
   shiftMonth,
   dayOfMonth,
   monthRange,
@@ -75,5 +76,23 @@ describe("shiftMonth", () => {
     expect(shiftMonth(2026, 1, -1)).toEqual({ year: 2025, month: 12 });
     expect(shiftMonth(2026, 12, 1)).toEqual({ year: 2027, month: 1 });
     expect(shiftMonth(2026, 6, 0)).toEqual({ year: 2026, month: 6 });
+  });
+});
+
+describe("parseMonthParam", () => {
+  it("accepts YYYY-MM and rejects everything else", () => {
+    expect(parseMonthParam("2026-10")).toEqual({ year: 2026, month: 10 });
+    for (const bad of ["", "2026-13", "2026-00", "2026-1", "26-10", "2026/10", "2026-10-01", "abc", "1999-12", "2101-01"]) {
+      expect(parseMonthParam(bad)).toBeNull();
+    }
+  });
+});
+
+describe("isRealDate", () => {
+  it("only real calendar dates", async () => {
+    const { isRealDate } = await import("./time");
+    expect(isRealDate("2026-10-29")).toBe(true);
+    expect(isRealDate("2028-02-29")).toBe(true);
+    for (const bad of ["2026-02-30", "2026-13-01", "2026-1-1", "x", "2026-10-29x"]) expect(isRealDate(bad)).toBe(false);
   });
 });

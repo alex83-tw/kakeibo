@@ -187,3 +187,25 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 .acct > .tot { grid-column: 1 / -1; border-left: 0; border-bottom: 0; padding: 0; font-weight: 700; border-top: 1px solid var(--ink); }
 .acct > .tot b { border-bottom: 3px double var(--ink); padding: 0 2px; }
 .hint a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+
+/* 帳本 */
+.cat { font-size: var(--fs-body); color: var(--ink); }
+.det { font-size: var(--fs-label); color: var(--ink-2); }
+table.ledger tr.today .dim, table.ledger tr.today .det, table.ledger tr.today .clamp { color: var(--ink); }
+table.ledger td.d { overflow: visible; position: relative; }
+a.dlink { color: var(--ink); text-decoration: none; display: block; }
+a.dlink::after { content: ""; position: absolute; inset: -4px 0; } /* 36px 行高的點擊區加高到 44px */
+a.dlink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+.mnav { height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mnav a { min-height: 44px; display: inline-flex; align-items: center; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
+.mnav span { font-size: var(--fs-label); color: var(--ink-2); }
+
+/* 當日明細：每筆兩行＋操作列 */
+.de-list { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: var(--paper); margin-inline: calc(var(--pad) * -1); padding-inline: var(--pad); }
+.de { border-bottom: 1px solid var(--hair); padding-top: 4px; }
+.de:last-child { border-bottom: 0; }
+.de-main { min-height: var(--row); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.de-amt { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.de-sub { font-size: var(--fs-label); color: var(--ink-2); overflow-wrap: anywhere; line-height: 1.5; }
+.de-act { display: flex; justify-content: flex-end; gap: 8px; }
+.de-act .ghost { padding: 0 8px; }
