@@ -61,7 +61,7 @@ describe("findMissingRecurring", () => {
 });
 
 describe("topAlerts", () => {
-  const a = (kind: Alert["kind"], text = kind): Alert => ({ kind, text, href: "/" });
+  const a = (kind: Alert["kind"], text: string = kind): Alert => ({ kind, text, href: "/" });
   it("orders budget over/projected, warning, reconcile, uncategorized, then the rest", () => {
     const input = [a("abnormal"), a("uncategorized"), a("reconcile"), a("budget-warning"), a("budget-projected"), a("budget-over"), a("duplicate"), a("missing-recurring")];
     expect(topAlerts(input, 8).map((x) => x.kind)).toEqual([
