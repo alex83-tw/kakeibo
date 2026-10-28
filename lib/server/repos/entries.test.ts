@@ -31,6 +31,14 @@ describe("listEntries", () => {
     expect(e.amount).toBe(180.5);
     expect(e.is_recurring).toBe(false);
   });
+  it("pages past PostgREST's 1000-row cap instead of silently truncating", async () => {
+    const row = (i: number) => ({ id: `e${i}`, entry_type: "expense", main_category: "餐飲", sub_category: null, amount: 1, currency: "TWD",
+      entry_date: "2026-10-01", notes: null, account_id: null, transfer_account_id: null, deleted_at: null, is_recurring: false });
+    const { client, calls } = fakeClient(Array.from({ length: 2300 }, (_, i) => row(i)));
+    const all = await listEntries(client, "u1", { start: "2026-01-01", end: "2026-12-31" });
+    expect(all).toHaveLength(2300);
+    expect(calls.filter((c) => c[0] === "range")).toEqual([["range", 0, 999], ["range", 1000, 1999], ["range", 2000, 2999]]);
+  });
   it("throws when the query fails", async () => {
     const { client } = fakeClient([], { message: "boom" });
     await expect(listEntries(client, "u1", { start: "a", end: "b" })).rejects.toThrow("boom");

@@ -171,3 +171,19 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 .toast .ghost { color: var(--paper); padding-right: 0; }
 .toast .ghost:focus-visible { outline-color: var(--paper); }
 .entry .amtrow input:focus-visible { outline-offset: -3px; }
+
+/* 今日：每日支出長條（可拖曳選日）、帳戶區 */
+.dayr { height: var(--row); display: flex; align-items: center; justify-content: space-between; }
+.dayr .l { font-size: var(--fs-label); color: var(--ink-2); letter-spacing: 0.04em; }
+.days { height: calc(var(--row) * 2); display: grid; align-items: end; gap: 3px; border-bottom: 2px solid var(--ink); cursor: ew-resize; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.days i { display: block; min-height: 3px; border: 1px solid var(--ink); border-bottom: 0; background-color: var(--paper); background-image: var(--dots); background-size: 4px 4px; pointer-events: none; }
+.days i.t { background: var(--ink); }
+.days i.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
+.days:focus-visible, a.act:focus-visible, .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.dayscale { display: flex; justify-content: space-between; height: var(--row); font-size: var(--fs-label); color: var(--ink-2); line-height: 24px; white-space: nowrap; }
+.acct { display: grid; grid-template-columns: 1fr 1fr; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: var(--paper); }
+.acct > div { height: var(--row); display: flex; justify-content: space-between; align-items: center; padding: 0 10px 0 0; border-bottom: 1px solid var(--hair); white-space: nowrap; }
+.acct > div:nth-child(even) { border-left: 1px solid var(--hair); padding: 0 0 0 12px; }
+.acct > .tot { grid-column: 1 / -1; border-left: 0; border-bottom: 0; padding: 0; font-weight: 700; border-top: 1px solid var(--ink); }
+.acct > .tot b { border-bottom: 3px double var(--ink); padding: 0 2px; }
+.hint a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }

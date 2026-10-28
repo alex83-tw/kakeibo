@@ -40,3 +40,15 @@ describe("normalizeThreshold", () => {
     expect(normalizeThreshold(raw as number | string | null)).toBe(want);
   });
 });
+
+import { listAllReconciliations } from "./reconciliations";
+
+describe("listAllReconciliations", () => {
+  it("is scoped to the user and maps numbers", async () => {
+    const { client, calls } = fakeClient([{ account_id: "a1", statement_date: "2026-10-20", statement_balance: "-2830", book_balance: "-3150", diff: "-320" }]);
+    expect(await listAllReconciliations(client, "u1")).toEqual([
+      { account_id: "a1", statement_date: "2026-10-20", statement_balance: -2830, book_balance: -3150, diff: -320 },
+    ]);
+    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
+  });
+});

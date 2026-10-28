@@ -29,19 +29,28 @@ export function toEntry(r: EntryRow): Entry {
   return { ...r, amount: Number(r.amount), is_recurring: r.is_recurring ?? false };
 }
 
-/** Entries with entry_date in [start, end], both inclusive. */
+const PAGE = 1000; // PostgREST returns at most 1000 rows per request
+
+/** Entries with entry_date in [start, end], both inclusive. Pages through every row. */
 export async function listEntries(
   client: SupabaseClient,
   userId: string,
   range: { start: string; end: string },
 ): Promise<Entry[]> {
-  const { data, error } = await scopedEntries(client, userId)
-    .gte("entry_date", range.start)
-    .lte("entry_date", range.end)
-    .order("entry_date", { ascending: true })
-    .order("created_at", { ascending: true });
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as unknown as EntryRow[]).map(toEntry);
+  const out: Entry[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await scopedEntries(client, userId)
+      .gte("entry_date", range.start)
+      .lte("entry_date", range.end)
+      .order("entry_date", { ascending: true })
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as unknown as EntryRow[];
+    out.push(...rows.map(toEntry));
+    if (rows.length < PAGE) return out;
+  }
 }
 
 const TWD = "TWD";

@@ -13,8 +13,14 @@ export type AlertKind =
 
 export interface Alert {
   kind: AlertKind;
+  /** The whole sentence in plain text. */
   text: string;
   href: string;
+  /** Optional pieces for rich rendering: **subject** body <emphasis> [actionLabel]. */
+  subject?: string;
+  body?: string;
+  emphasis?: string;
+  actionLabel?: string;
 }
 
 const live = (e: Entry) => e.deleted_at === null && e.entry_type !== "transfer";

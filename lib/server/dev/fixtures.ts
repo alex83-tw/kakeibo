@@ -70,6 +70,7 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
   private payload: Row = {};
   private filters: ((r: Row) => boolean)[] = [];
   private sorts: { col: string; asc: boolean }[] = [];
+  private window: [number, number] | null = null;
 
   constructor(private table: string) {}
 
@@ -106,6 +107,10 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
     this.filters.push((r) => vs.includes(r[col]));
     return this;
   }
+  range(from: number, to: number) {
+    this.window = [from, to];
+    return this;
+  }
   order(col: string, opts?: { ascending?: boolean }) {
     this.sorts.push({ col, asc: opts?.ascending ?? true });
     return this;
@@ -137,7 +142,7 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
       }
       return 0;
     });
-    return { data: sorted, error: null };
+    return { data: this.window ? sorted.slice(this.window[0], this.window[1] + 1) : sorted, error: null };
   }
 }
 

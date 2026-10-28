@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   WEEKDAY_JP,
   currentMonth,
+  shiftMonth,
   dayOfMonth,
   monthRange,
   toKanji,
@@ -64,5 +65,15 @@ describe("toKanji", () => {
     [31, "三十一"],
   ])("%i -> %s", (n, s) => {
     expect(toKanji(n)).toBe(s);
+  });
+});
+
+describe("shiftMonth", () => {
+  it("crosses year boundaries both ways", () => {
+    expect(shiftMonth(2026, 10, -6)).toEqual({ year: 2026, month: 4 });
+    expect(shiftMonth(2026, 3, -6)).toEqual({ year: 2025, month: 9 });
+    expect(shiftMonth(2026, 1, -1)).toEqual({ year: 2025, month: 12 });
+    expect(shiftMonth(2026, 12, 1)).toEqual({ year: 2027, month: 1 });
+    expect(shiftMonth(2026, 6, 0)).toEqual({ year: 2026, month: 6 });
   });
 });

@@ -60,3 +60,9 @@ export function toKanji(n: number): string {
   const ones = n % 10;
   return `${DIGITS[Math.floor(n / 10)]}十${ones ? DIGITS[ones] : ""}`;
 }
+
+/** Calendar month `delta` months away (negative = earlier). */
+export function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
+  const idx = year * 12 + (month - 1) + delta;
+  return { year: Math.floor(idx / 12), month: (idx % 12) + 1 };
+}
