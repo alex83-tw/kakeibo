@@ -12,6 +12,7 @@ vi.mock("@/app/actions/entries", () => ({
 }));
 
 import { EntrySheet } from "./EntrySheet";
+import { CategoryOptionsProvider } from "./CategoryOptions";
 
 const acct = (id: string, name: string, kind: LedgerAccount["kind"], sort_order: number): LedgerAccount => ({
   id, name, kind, sort_order, opening_balance: 0, opening_date: "2026-01-01", archived: false,
@@ -31,6 +32,23 @@ beforeEach(() => {
   softDeleteEntry.mockReset().mockResolvedValue({ ok: true, id: "new1" });
 });
 afterEach(() => vi.useRealTimers());
+
+describe("EntrySheet category options", () => {
+  it("offers a renamed category from the provider, not only the built-in taxonomy", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <CategoryOptionsProvider value={{ expense: { 吃喝: ["午餐"], 交通: [] }, income: { 薪資: [] } }}>
+        <EntrySheet accounts={accounts} recentCategories={[]} />
+      </CategoryOptionsProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "記一筆" }));
+    const options = within(screen.getByLabelText("科目")).getAllByRole("option").map((o) => o.textContent);
+    expect(options).toContain("吃喝／午餐");
+    expect(options).toContain("吃喝／一般");
+    await user.click(screen.getByRole("radio", { name: "收入" }));
+    expect(within(screen.getByLabelText("科目")).getAllByRole("option").map((o) => o.textContent)).toContain("薪資／一般");
+  });
+});
 
 describe("EntrySheet as a modal dialog", () => {
   it("is aria-modal, and the bookmark bar and page behind it are inert only while it is open", async () => {

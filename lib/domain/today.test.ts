@@ -157,3 +157,17 @@ describe("budget rows for the desktop table", () => {
     expect(buildToday(base).budgetRows).toEqual([]);
   });
 });
+
+describe("account balances are as of today", () => {
+  it("a future-dated entry this month counts for the month's budget but not for any balance", () => {
+    const v = buildToday({
+      ...base,
+      accounts: [account("cash", "cash", 1000)],
+      budgets: [{ main_category: "餐飲", budget_amount: 5000, rollover_amount: 0, warning_threshold: 0.8 }],
+      entries: [entry({ amount: 100, account_id: "cash" }), entry({ amount: 400, account_id: "cash", entry_date: "2026-10-31" })],
+    });
+    expect(v.accounts[0].balance).toBe(900);
+    expect(v.totalBalance).toBe(900);
+    expect(v.budget?.spent).toBe(500);
+  });
+});

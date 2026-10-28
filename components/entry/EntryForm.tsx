@@ -9,6 +9,7 @@ import { validateEntryInput, type EntryInput } from "@/lib/domain/validate";
 import { formatAmount } from "@/lib/money";
 import { twToday } from "@/lib/time";
 import { AmountField } from "./AmountField";
+import { useCategoryOptions } from "./CategoryOptions";
 
 const KINDS: { type: EntryType; label: string }[] = [
   { type: "expense", label: "支出" },
@@ -134,7 +135,8 @@ export function EntryForm({
     onSaved({ id: res.id, text: `${initial ? "已更新" : "已記錄"} NT$${formatAmount(v.value.amount)} ${kind}` });
   }
 
-  const taxonomy = type === "income" ? INCOME_TAXONOMY : EXPENSE_TAXONOMY;
+  const options = useCategoryOptions();
+  const taxonomy = type === "income" ? (options?.income ?? INCOME_TAXONOMY) : (options?.expense ?? EXPENSE_TAXONOMY);
   const err = (k: keyof Errors) => errors[k];
   const known = new Set(Object.entries(taxonomy).flatMap(([main, subs]) => ["other", ...subs].map((s) => joinCategory(main, s))));
   const legacy = category !== "" && !known.has(category) && !recent.some((r) => joinCategory(r.main, r.sub) === category) ? category : null;

@@ -132,11 +132,14 @@ export function buildToday(input: {
     alerts.push(mk({ kind: "missing-recurring", subject: r.name, body: "本月還沒記帳", href: "/ledger", actionLabel: "去記帳" }));
   }
 
+  // Balances are "as of today"; a future-dated entry this month counts for the month's budget, not for what is in the account now.
+  const sofar = entries.filter((e) => e.entry_date <= today);
+
   return {
     todayRows,
     todayExpense,
-    accounts: accounts.map((a) => ({ id: a.id, name: a.name, kind: a.kind, balance: accountBalance(a, entries) })),
-    totalBalance: totalBalance(accounts, entries),
+    accounts: accounts.map((a) => ({ id: a.id, name: a.name, kind: a.kind, balance: accountBalance(a, sofar) })),
+    totalBalance: totalBalance(accounts, sofar),
     budget,
     budgetRows: progress.map(({ b, p, spent: s }) => ({ main: b.main_category, budget: p.available, spent: s, progress: p })),
     daily: dailyExpenses(entries, range),

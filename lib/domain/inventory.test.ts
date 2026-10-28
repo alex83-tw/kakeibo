@@ -35,3 +35,18 @@ describe("categoryInventory", () => {
     expect(categoryInventory("income", [])[0].main).toBe("薪資");
   });
 });
+
+import { inventoryToTaxonomy } from "./inventory";
+
+describe("inventoryToTaxonomy", () => {
+  it("lists built-in and renamed categories for the entry form, without the implicit 一般 sub", () => {
+    const entries = [
+      { id: "1", entry_type: "expense", main_category: "吃喝", sub_category: "午餐", amount: 1, currency: "TWD", entry_date: "2026-10-01", notes: null, account_id: null, transfer_account_id: null, deleted_at: null, is_recurring: false },
+      { id: "2", entry_type: "expense", main_category: "吃喝", sub_category: null, amount: 1, currency: "TWD", entry_date: "2026-10-02", notes: null, account_id: null, transfer_account_id: null, deleted_at: null, is_recurring: false },
+    ] as import("./types").Entry[];
+    const t = inventoryToTaxonomy("expense", entries);
+    expect(t["吃喝"]).toEqual(["午餐"]);
+    expect(t["交通"]).toContain("捷運");
+    expect(Object.keys(t)).toContain("餐飲");
+  });
+});

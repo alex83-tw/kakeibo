@@ -27,3 +27,8 @@ export function categoryInventory(kind: EntryKind, entries: Entry[]): MainInvent
     subs: [...subs].map(([sub, count]) => ({ sub, count })),
   }));
 }
+
+/** categoryInventory in the shape the entry form's select wants: main → named subs (the implicit 一般 is added by the form). */
+export function inventoryToTaxonomy(kind: EntryKind, entries: Entry[]): Record<string, string[]> {
+  return Object.fromEntries(categoryInventory(kind, entries).map((m) => [m.main, m.subs.map((s) => s.sub).filter((s) => s !== "other")]));
+}

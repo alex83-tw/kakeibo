@@ -77,7 +77,7 @@ export function LeftPage({ data }: { data: Data }) {
 export function RightPage({ data }: { data: Data }) {
   const { view, today, month, accountNames, raw } = data;
   const day = dayOfMonth(today);
-  const recon = buildRecon({ accounts: raw.accounts, entries: raw.entries, reconciliations: raw.reconciliations });
+  const recon = buildRecon({ accounts: raw.accounts, entries: raw.entries.filter((e) => e.entry_date <= today), reconciliations: raw.reconciliations });
   return (
     <>
       <Run label={`${toKanji(month)}月　今日・預算・對帳`} />
