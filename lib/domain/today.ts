@@ -1,6 +1,6 @@
 import { formatAmount, roundToTen } from "@/lib/money";
 import { dayOfMonth, monthRange } from "@/lib/time";
-import { findAbnormal, findDuplicates, topAlerts, type Alert } from "./alerts";
+import { findAbnormal, findDuplicates, findMissingRecurring, topAlerts, type Alert } from "./alerts";
 import { accountBalance, dailyExpenses, spentByMain, totalBalance } from "./balances";
 import { budgetProgress } from "./budget";
 import { isUncategorized } from "./categories";
@@ -36,6 +36,8 @@ export function buildToday(input: {
   accounts: LedgerAccount[];
   budgets: BudgetInput[];
   reconciliations: ReconciliationRecord[];
+  /** Active monthly recurring items, as dueRules() returns them. */
+  recurring?: { id: string; name: string; due_day: number }[];
 }): TodayView {
   const { today, entries, budgets } = input;
   const accounts = input.accounts.filter((a) => !a.archived);
@@ -123,6 +125,10 @@ export function buildToday(input: {
 
   const abnormal = findAbnormal(twd, today)[0];
   if (abnormal) alerts.push(mk({ kind: "abnormal", subject: abnormal.main_category, body: "今日金額偏高", emphasis: nt(abnormal.amount), href: "/ledger", actionLabel: "去確認" }));
+
+  for (const r of findMissingRecurring(input.recurring ?? [], monthTwd, today)) {
+    alerts.push(mk({ kind: "missing-recurring", subject: r.name, body: "本月還沒記帳", href: "/ledger", actionLabel: "去記帳" }));
+  }
 
   return {
     todayRows,

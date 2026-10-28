@@ -114,3 +114,55 @@ describe("category RPC wrappers", () => {
     await expect(categoryUsage(fakeClient([], { message: "boom" }).client, "income", { main: "x", sub: null })).rejects.toThrow("boom");
   });
 });
+
+import { deleteCategoryRule, deleteRecurring, insertCategoryRule, insertRecurring, listCategoryRules, listRecurring, setRecurringActive } from "./rules";
+
+describe("rules repo", () => {
+  it("listRecurring is scoped to the user and maps numbers", async () => {
+    const { client, calls } = fakeClient([{ id: "r1", label: null, entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: "12000", amount_twd_max: "12500", frequency: "monthly", start_date: "2026-01-05", end_date: null, is_active: true }]);
+    const [r] = await listRecurring(client, "u1");
+    expect(r.amount_twd_min).toBe(12000);
+    expect(r.amount_twd_max).toBe(12500);
+    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
+  });
+  it("insertRecurring writes user_id explicitly and leaves importance/source to their defaults", async () => {
+    const { client, calls } = fakeClient([{ id: "r9" }]);
+    await insertRecurring(client, "u1", { label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, start_date: "2026-01-05" });
+    const insert = calls.find((c) => c[0] === "insert")![1] as Record<string, unknown>;
+    expect(insert).toMatchObject({ user_id: "u1", frequency: "monthly", is_active: true });
+    expect(insert).not.toHaveProperty("importance");
+    expect(insert).not.toHaveProperty("source");
+  });
+  it("setRecurringActive and deleteRecurring filter by user and id", async () => {
+    const a = fakeClient([{ id: "r1" }]);
+    expect(await setRecurringActive(a.client, "u1", "r1", false)).toBe(true);
+    expect(a.calls).toContainEqual(["eq", "user_id", "u1"]);
+    expect(a.calls).toContainEqual(["eq", "id", "r1"]);
+    const b = fakeClient([]);
+    expect(await deleteRecurring(b.client, "u1", "r1")).toBe(false);
+    expect(b.calls).toContainEqual(["eq", "user_id", "u1"]);
+  });
+  it("category rules are scoped, and a duplicate keyword surfaces as false", async () => {
+    const a = fakeClient([{ id: "k1", keyword: "全聯", entry_type: "expense", main_category: "日用購物", sub_category: null }]);
+    expect((await listCategoryRules(a.client, "u1"))[0].sub_category).toBe("other");
+    expect(a.calls).toContainEqual(["eq", "user_id", "u1"]);
+    const dup = fakeClient([], { message: 'duplicate key value violates unique constraint "category_rules_user_id_keyword_key"' });
+    expect(await insertCategoryRule(dup.client, "u1", { keyword: "全聯", entry_type: "expense", main_category: "日用購物", sub_category: "other" })).toBe(false);
+    const del = fakeClient([{ id: "k1" }]);
+    expect(await deleteCategoryRule(del.client, "u1", "k1")).toBe(true);
+    expect(del.calls).toContainEqual(["eq", "user_id", "u1"]);
+  });
+});
+
+import { insertEntries } from "./entries";
+
+describe("insertEntries", () => {
+  it("writes every row in chunks of 500, each stamped with the user, TWD and not recurring", async () => {
+    const { client, calls } = fakeClient([]);
+    const v = { entry_type: "expense" as const, amount: 1, main_category: "餐飲", sub_category: "other", account_id: null, transfer_account_id: null, entry_date: "2026-10-01", notes: null };
+    await insertEntries(client, "u1", Array.from({ length: 1001 }, () => v));
+    const inserts = calls.filter((c) => c[0] === "insert").map((c) => c[1] as Record<string, unknown>[]);
+    expect(inserts.map((i) => i.length)).toEqual([500, 500, 1]);
+    expect(inserts[0][0]).toMatchObject({ user_id: "u1", currency: "TWD", is_recurring: false });
+  });
+});

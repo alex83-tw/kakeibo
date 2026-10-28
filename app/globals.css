@@ -246,3 +246,9 @@ a.dlink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 .acc-r { display: flex; align-items: center; gap: 8px; }
 .cc-result p { margin: 0; padding: 8px 0; line-height: 1.6; }
 .cc-result .btn { margin-top: 0; }
+
+/* settings: recurring, rules, import/export */
+a.btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.cc-result ul { margin: 4px 0 8px; padding-left: 1.25em; }
+.acc .note { overflow-wrap: anywhere; }
+.fld input[type="file"] { font-size: var(--fs-label); padding-top: 10px; }

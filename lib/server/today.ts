@@ -1,3 +1,4 @@
+import { dueRules } from "@/lib/domain/recurring";
 import { buildToday, type TodayView } from "@/lib/domain/today";
 import { currentMonth, monthRange, shiftMonth, twToday } from "@/lib/time";
 import { getUserId } from "./auth";
@@ -5,6 +6,7 @@ import { listAccounts } from "./repos/accounts";
 import { listBudgets } from "./repos/budgets";
 import { listEntries } from "./repos/entries";
 import { listAllReconciliations } from "./repos/reconciliations";
+import { listRecurring } from "./repos/rules";
 import { createServerClient } from "./supabase";
 
 export async function loadToday(): Promise<{
@@ -25,14 +27,15 @@ export async function loadToday(): Promise<{
   const historyStart = monthRange(sixAgo.year, sixAgo.month).start;
   const start = accounts.reduce((min, a) => (a.opening_date < min ? a.opening_date : min), historyStart);
 
-  const [entries, budgets, reconciliations] = await Promise.all([
+  const [entries, budgets, reconciliations, recurring] = await Promise.all([
     listEntries(client, userId, { start, end: monthRange(year, month).end }),
     listBudgets(client, userId, year, month),
     listAllReconciliations(client, userId),
+    listRecurring(client, userId),
   ]);
 
   return {
-    view: buildToday({ today, entries, accounts, budgets, reconciliations }),
+    view: buildToday({ today, entries, accounts, budgets, reconciliations, recurring: dueRules(recurring, today) }),
     today,
     year,
     month,

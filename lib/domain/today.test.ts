@@ -115,3 +115,18 @@ describe("alerts", () => {
     expect(buildToday(base).alerts).toEqual([]);
   });
 });
+
+describe("missing recurring alert", () => {
+  const rent = { id: "r1", name: "房租", due_day: 5 };
+  it("alerts when a recurring item is 3+ days past due with no entry this month, after the budget and data alerts", () => {
+    const v = buildToday({ ...base, recurring: [rent] });
+    expect(v.alerts).toEqual([expect.objectContaining({ kind: "missing-recurring", subject: "房租", body: "本月還沒記帳", href: "/ledger", actionLabel: "去記帳" })]);
+  });
+  it("stays quiet once an entry names it", () => {
+    const v = buildToday({ ...base, recurring: [rent], entries: [entry({ notes: "房租 10 月" })] });
+    expect(v.alerts).toEqual([]);
+  });
+  it("does nothing without recurring input", () => {
+    expect(buildToday(base).alerts).toEqual([]);
+  });
+});

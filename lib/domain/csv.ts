@@ -100,3 +100,27 @@ export function parseEntriesCsv(
   });
   return { rows, errors };
 }
+
+const sameEntry = (e: { entry_date: string; entry_type: string; main_category: string; sub_category: string | null; amount: number; account_id: string | null; transfer_account_id: string | null; notes: string | null }) =>
+  JSON.stringify([e.entry_date, e.entry_type, e.main_category, normalizeSub(e.sub_category), e.amount, e.account_id, e.transfer_account_id, e.notes?.trim() || null]);
+
+/**
+ * Splits parsed rows into those to write and those already in the ledger. Each live entry cancels at most
+ * one row, so a file holding two identical lunches against one existing lunch still adds one.
+ */
+export function planImport(rows: EntryInput[], existing: Entry[]): { toAdd: EntryInput[]; duplicates: number } {
+  const have = new Map<string, number>();
+  for (const e of existing) if (e.deleted_at === null) have.set(sameEntry(e), (have.get(sameEntry(e)) ?? 0) + 1);
+  const toAdd: EntryInput[] = [];
+  let duplicates = 0;
+  for (const row of rows) {
+    const v = validateEntryInput(row);
+    const key = v.ok ? sameEntry(v.value) : null;
+    const n = key === null ? 0 : (have.get(key) ?? 0);
+    if (n > 0) {
+      have.set(key!, n - 1);
+      duplicates++;
+    } else toAdd.push(row);
+  }
+  return { toAdd, duplicates };
+}

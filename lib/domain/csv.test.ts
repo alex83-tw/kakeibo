@@ -93,3 +93,44 @@ describe("parseEntriesCsv", () => {
     expect(errors).toEqual([{ line: 1, message: "表頭不正確" }]);
   });
 });
+
+import { planImport } from "./csv";
+
+describe("planImport", () => {
+  const row = (p: Partial<import("./validate").EntryInput> = {}): import("./validate").EntryInput => ({
+    entry_type: "expense",
+    amount: "180",
+    main_category: "餐飲",
+    sub_category: "other",
+    account_id: "a1",
+    transfer_account_id: "",
+    entry_date: "2026-10-28",
+    notes: "",
+    ...p,
+  });
+
+  it("counts a row that matches a live entry as a duplicate", () => {
+    const plan = planImport([row()], [entry({})]);
+    expect(plan).toEqual({ toAdd: [], duplicates: 1 });
+  });
+  it("adds rows with no match", () => {
+    expect(planImport([row({ amount: "181" })], [entry({})]).toAdd).toHaveLength(1);
+  });
+  it("each existing entry cancels only one row", () => {
+    const plan = planImport([row(), row()], [entry({})]);
+    expect(plan.toAdd).toHaveLength(1);
+    expect(plan.duplicates).toBe(1);
+  });
+  it("ignores soft-deleted entries and other spellings of the default sub", () => {
+    expect(planImport([row()], [entry({ deleted_at: "x" })]).toAdd).toHaveLength(1);
+    expect(planImport([row({ sub_category: "一般" })], [entry({ sub_category: null })]).duplicates).toBe(1);
+  });
+  it("matches amounts and notes after the same normalisation validateEntryInput applies", () => {
+    expect(planImport([row({ amount: "1,200.00", notes: " 房租 " })], [entry({ amount: 1200, notes: "房租" })]).duplicates).toBe(1);
+  });
+  it("round-trips: re-importing an export of the same entries adds nothing", () => {
+    const entries = [entry({ id: "1" }), entry({ id: "2", entry_type: "transfer", main_category: "轉帳", account_id: "a1", transfer_account_id: "a2" })];
+    const { rows } = parseEntriesCsv(entriesToCsv(entries, accounts), accounts);
+    expect(planImport(rows, entries)).toEqual({ toAdd: [], duplicates: 2 });
+  });
+});

@@ -56,7 +56,10 @@ function seed(): Store {
     ].map((b) => ({ id: uid(), user_id: FIXTURE_USER, sub_category: "other", currency: "TWD", period_year: year, period_month: month, ...b })),
     reconciliations: [],
     category_rules: [],
-    recurring_rules: [],
+    recurring_rules: [
+      { id: uid(), user_id: FIXTURE_USER, label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, frequency: "monthly", start_date: "2026-01-02", end_date: null, is_active: true },
+      { id: uid(), user_id: FIXTURE_USER, label: "網路", entry_type: "expense", main_category: "居住", sub_category: "網路", amount_twd_min: 599, amount_twd_max: 699, frequency: "monthly", start_date: "2026-01-01", end_date: null, is_active: true },
+    ],
   };
 }
 
@@ -65,9 +68,10 @@ const store = (): Store => (g.__kakeibo_fixtures ??= seed());
 
 type Mode = "select" | "insert" | "update" | "upsert" | "delete";
 
-class Query implements PromiseLike<{ data: Row[]; error: null }> {
+class Query implements PromiseLike<{ data: Row[]; error: { message: string } | null }> {
   private mode: Mode = "select";
   private payload: Row = {};
+  private batch: Row[] = [];
   private filters: ((r: Row) => boolean)[] = [];
   private sorts: { col: string; asc: boolean }[] = [];
   private window: [number, number] | null = null;
@@ -78,9 +82,9 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
   select() {
     return this;
   }
-  insert(row: Row) {
+  insert(row: Row | Row[]) {
     this.mode = "insert";
-    this.payload = row;
+    this.batch = Array.isArray(row) ? row : [row];
     return this;
   }
   update(patch: Row) {
@@ -127,21 +131,29 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
     return this;
   }
 
-  then<R1 = { data: Row[]; error: null }, R2 = never>(
-    onfulfilled?: ((v: { data: Row[]; error: null }) => R1 | PromiseLike<R1>) | null,
+  then<R1 = { data: Row[]; error: { message: string } | null }, R2 = never>(
+    onfulfilled?: ((v: { data: Row[]; error: { message: string } | null }) => R1 | PromiseLike<R1>) | null,
     onrejected?: ((e: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
     return Promise.resolve(this.run()).then(onfulfilled, onrejected);
   }
 
-  private run(): { data: Row[]; error: null } {
+  private run(): { data: Row[]; error: { message: string } | null } {
     const rows = (store()[this.table] ??= []);
     if (this.mode === "insert") {
-      const row: Row = { id: uid(), created_at: new Date().toISOString(), deleted_at: null, ...this.payload };
-      // reconciliations.diff is a generated column in the real database
-      if (this.table === "reconciliations") row.diff = Number(row.book_balance) - Number(row.statement_balance);
-      rows.push(row);
-      return { data: [row], error: null };
+      const made: Row[] = [];
+      for (const payload of this.batch) {
+        // UNIQUE(user_id, keyword) on the real table
+        if (this.table === "category_rules" && rows.some((r) => r.user_id === payload.user_id && r.keyword === payload.keyword)) {
+          return { data: [], error: { message: 'duplicate key value violates unique constraint "category_rules_user_id_keyword_key"' } };
+        }
+        const row: Row = { id: uid(), created_at: new Date().toISOString(), deleted_at: null, ...payload };
+        // reconciliations.diff is a generated column in the real database
+        if (this.table === "reconciliations") row.diff = Number(row.book_balance) - Number(row.statement_balance);
+        rows.push(row);
+        made.push(row);
+      }
+      return { data: made, error: null };
     }
     if (this.mode === "upsert") {
       const same = rows.find((r) => this.conflict.every((c) => r[c] === this.payload[c]));

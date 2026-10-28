@@ -146,3 +146,85 @@ export function validateAccountInput(
   if (Object.keys(errors).length > 0 || balance === null) return { ok: false, errors };
   return { ok: true, value: { kind: input.kind, name, opening_balance: balance, opening_date: input.opening_date } };
 }
+
+export interface RecurringInput {
+  label: string;
+  entry_type: "income" | "expense";
+  main_category: string;
+  sub_category: string;
+  amount_min: string;
+  /** Blank means the same as the minimum. */
+  amount_max: string;
+  due_day: string;
+}
+export interface ValidRecurring {
+  label: string;
+  entry_type: "income" | "expense";
+  main_category: string;
+  sub_category: string;
+  amount_twd_min: number;
+  amount_twd_max: number;
+  start_date: string;
+}
+
+/**
+ * recurring_rules has no due-day column: the due day is the day of start_date. January has 31 days, so
+ * any due day fits; `year` only has to be a real year.
+ */
+export function validateRecurringInput(
+  input: RecurringInput,
+  year: number,
+): { ok: true; value: ValidRecurring } | { ok: false; errors: Partial<Record<keyof RecurringInput, string>> } {
+  const errors: Partial<Record<keyof RecurringInput, string>> = {};
+  const label = input.label.trim();
+  if (label === "") errors.label = "請輸入名稱";
+  else if ([...label].length > 20) errors.label = "名稱最多 20 字";
+  if (input.main_category.trim() === "") errors.main_category = "請選擇科目";
+
+  const min = checkAmount(input.amount_min);
+  if ("error" in min) errors.amount_min = min.error;
+  const blankMax = input.amount_max.trim() === "";
+  const max = blankMax ? min : checkAmount(input.amount_max);
+  if ("error" in max) {
+    if (!blankMax) errors.amount_max = max.error;
+  } else if (!("error" in min) && max.amount < min.amount) errors.amount_max = "上限不能小於下限";
+
+  const day = /^\d{1,2}$/.test(input.due_day.trim()) ? Number(input.due_day) : 0;
+  if (day < 1 || day > 31) errors.due_day = "到期日是 1 到 31 的整數";
+
+  if (Object.keys(errors).length > 0 || "error" in min || "error" in max) return { ok: false, errors };
+  return {
+    ok: true,
+    value: {
+      label,
+      entry_type: input.entry_type,
+      main_category: input.main_category.trim(),
+      sub_category: normalizeSub(input.sub_category),
+      amount_twd_min: min.amount,
+      amount_twd_max: max.amount,
+      start_date: `${year}-01-${String(day).padStart(2, "0")}`,
+    },
+  };
+}
+
+export interface RuleInput {
+  keyword: string;
+  entry_type: "income" | "expense";
+  main_category: string;
+  sub_category: string;
+}
+
+export function validateRuleInput(
+  input: RuleInput,
+): { ok: true; value: RuleInput } | { ok: false; errors: Partial<Record<keyof RuleInput, string>> } {
+  const errors: Partial<Record<keyof RuleInput, string>> = {};
+  const keyword = input.keyword.trim();
+  if (keyword === "") errors.keyword = "請輸入關鍵字";
+  else if ([...keyword].length > 30) errors.keyword = "關鍵字最多 30 字";
+  if (input.main_category.trim() === "") errors.main_category = "請選擇科目";
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+  return {
+    ok: true,
+    value: { keyword, entry_type: input.entry_type, main_category: input.main_category.trim(), sub_category: normalizeSub(input.sub_category) },
+  };
+}

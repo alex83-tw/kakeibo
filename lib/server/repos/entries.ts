@@ -67,6 +67,17 @@ export async function insertEntry(client: SupabaseClient, userId: string, value:
   return id;
 }
 
+const CHUNK = 500;
+
+/** Bulk insert for CSV import; same stamping as insertEntry. */
+export async function insertEntries(client: SupabaseClient, userId: string, values: ValidEntry[]): Promise<void> {
+  for (let i = 0; i < values.length; i += CHUNK) {
+    const rows = values.slice(i, i + CHUNK).map((v) => ({ ...v, user_id: userId, currency: TWD, is_recurring: false }));
+    const { error } = await client.from("accounting_entries").insert(rows);
+    if (error) throw new Error(error.message);
+  }
+}
+
 /** False when no live row of this user has that id. */
 export async function updateEntryRow(
   client: SupabaseClient,

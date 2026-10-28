@@ -130,3 +130,52 @@ describe("validateAccountInput", () => {
     expect(validateAccountInput({ ...ok, name: "字".repeat(21) })).toEqual({ ok: false, errors: { name: "名稱最多 20 字" } });
   });
 });
+
+import { validateRecurringInput, validateRuleInput } from "./validate";
+
+describe("validateRecurringInput", () => {
+  const ok = { label: "房租", entry_type: "expense" as const, main_category: "居住", sub_category: "房租", amount_min: "12,000", amount_max: "", due_day: "5" };
+  it("accepts a rule and defaults max to min", () => {
+    const v = validateRecurringInput(ok, 2026);
+    expect(v).toEqual({
+      ok: true,
+      value: { label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, start_date: "2026-01-05" },
+    });
+  });
+  it("keeps due day 31 representable", () => {
+    const v = validateRecurringInput({ ...ok, due_day: "31" }, 2026);
+    expect(v.ok && v.value.start_date).toBe("2026-01-31");
+  });
+  it.each([
+    [{ label: " " }, "label"],
+    [{ main_category: "" }, "main_category"],
+    [{ amount_min: "abc" }, "amount_min"],
+    [{ amount_min: "0" }, "amount_min"],
+    [{ amount_min: "100", amount_max: "50" }, "amount_max"],
+    [{ due_day: "0" }, "due_day"],
+    [{ due_day: "32" }, "due_day"],
+    [{ due_day: "1.5" }, "due_day"],
+  ])("rejects %j at %s", (patch, field) => {
+    const v = validateRecurringInput({ ...ok, ...patch }, 2026);
+    expect(!v.ok && v.errors[field as keyof typeof v.errors]).toBeTruthy();
+  });
+});
+
+describe("validateRecurringInput blank amounts", () => {
+  it("reports a missing amount once, on the minimum, not again on the blank maximum", () => {
+    const v = validateRecurringInput({ label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_min: "", amount_max: "", due_day: "5" }, 2026);
+    expect(!v.ok && v.errors.amount_min).toBe("請輸入金額");
+    expect(!v.ok && v.errors.amount_max).toBeUndefined();
+  });
+});
+
+describe("validateRuleInput", () => {
+  const ok = { keyword: " 全聯 ", entry_type: "expense" as const, main_category: "日用購物", sub_category: "" };
+  it("trims the keyword and stores the default sub as other", () => {
+    expect(validateRuleInput(ok)).toEqual({ ok: true, value: { keyword: "全聯", entry_type: "expense", main_category: "日用購物", sub_category: "other" } });
+  });
+  it.each([[{ keyword: "  " }, "keyword"], [{ keyword: "a".repeat(31) }, "keyword"], [{ main_category: "" }, "main_category"]])("rejects %j", (patch, field) => {
+    const v = validateRuleInput({ ...ok, ...patch });
+    expect(!v.ok && v.errors[field as keyof typeof v.errors]).toBeTruthy();
+  });
+});
