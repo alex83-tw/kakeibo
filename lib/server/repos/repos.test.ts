@@ -45,10 +45,22 @@ import { listAllReconciliations } from "./reconciliations";
 
 describe("listAllReconciliations", () => {
   it("is scoped to the user and maps numbers", async () => {
-    const { client, calls } = fakeClient([{ account_id: "a1", statement_date: "2026-10-20", statement_balance: "-2830", book_balance: "-3150", diff: "-320" }]);
+    const { client, calls } = fakeClient([{ account_id: "a1", statement_date: "2026-10-20", statement_balance: "-2830", book_balance: "-3150", diff: "-320", created_at: "2026-10-20T01:00:00Z" }]);
     expect(await listAllReconciliations(client, "u1")).toEqual([
-      { account_id: "a1", statement_date: "2026-10-20", statement_balance: -2830, book_balance: -3150, diff: -320 },
+      { account_id: "a1", created_at: "2026-10-20T01:00:00Z", statement_date: "2026-10-20", statement_balance: -2830, book_balance: -3150, diff: -320 },
     ]);
     expect(calls).toContainEqual(["eq", "user_id", "u1"]);
+  });
+});
+
+import { insertReconciliation } from "./reconciliations";
+
+describe("insertReconciliation", () => {
+  it("stamps the user and never sends the generated diff column", async () => {
+    const { client, calls } = fakeClient();
+    await insertReconciliation(client, "u1", { account_id: "a1", statement_date: "2026-10-29", statement_balance: -2830, book_balance: -3150 });
+    const ins = calls.find((c) => c[0] === "insert")?.[1] as Record<string, unknown>;
+    expect(ins).toMatchObject({ user_id: "u1", account_id: "a1", statement_balance: -2830, book_balance: -3150 });
+    expect(ins).not.toHaveProperty("diff");
   });
 });

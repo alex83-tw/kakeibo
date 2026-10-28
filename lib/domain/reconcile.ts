@@ -20,3 +20,10 @@ export function reconcile(
       : `帳面比帳單${diff < 0 ? "少" : "多"} ${n}`;
   return { diff, matched: false, sentence };
 }
+
+/** What a gap probably means. Direction follows reconcile(): diff = book − statement. */
+export function reconcileHint(kind: AccountKind, diff: number): string {
+  if (diff === 0) return "";
+  if (kind === "credit_card") return diff < 0 ? "可能多記或退款未記" : "可能漏記消費";
+  return diff < 0 ? "可能漏記收入" : "可能漏記支出";
+}

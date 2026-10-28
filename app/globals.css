@@ -209,3 +209,13 @@ a.dlink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 .de-sub { font-size: var(--fs-label); color: var(--ink-2); overflow-wrap: anywhere; line-height: 1.5; }
 .de-act { display: flex; justify-content: flex-end; gap: 8px; }
 .de-act .ghost { padding: 0 8px; }
+
+/* 對帳 */
+.chkrow { min-height: calc(var(--row) * 2); display: flex; align-items: center; gap: 10px; margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); }
+.chkrow label { font-weight: 700; white-space: nowrap; }
+.chkrow input, .chkrow select { flex: 1; min-width: 0; height: 44px; border: 2px solid var(--ink); border-radius: 0; background: var(--paper); font: inherit; color: var(--ink); padding: 0 8px; }
+.chkrow input { text-align: right; }
+.chkrow .btn { width: auto; flex: none; height: 44px; padding: 0 18px; }
+.chkrow input:focus-visible, .chkrow select:focus-visible, .chkrow .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
+.recon-result { min-height: var(--row); }
+.recon-result p { margin: 0; min-height: var(--row); display: flex; align-items: center; flex-wrap: wrap; line-height: 1.5; padding: 4px 0; }

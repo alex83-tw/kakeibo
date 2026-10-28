@@ -5,6 +5,7 @@ import { accountBalance, dailyExpenses, spentByMain, totalBalance } from "./bala
 import { budgetProgress } from "./budget";
 import { isUncategorized } from "./categories";
 import { reconcile } from "./reconcile";
+import { latestByAccount, type ReconciliationRecord } from "./recon";
 import type { Entry, LedgerAccount } from "./types";
 
 export interface BudgetInput {
@@ -12,13 +13,6 @@ export interface BudgetInput {
   budget_amount: number;
   rollover_amount: number;
   warning_threshold: number;
-}
-export interface ReconciliationInput {
-  account_id: string;
-  statement_date: string;
-  statement_balance: number;
-  book_balance: number;
-  diff: number;
 }
 
 export interface TodayView {
@@ -41,7 +35,7 @@ export function buildToday(input: {
   entries: Entry[];
   accounts: LedgerAccount[];
   budgets: BudgetInput[];
-  reconciliations: ReconciliationInput[];
+  reconciliations: ReconciliationRecord[];
 }): TodayView {
   const { today, entries, budgets } = input;
   const accounts = input.accounts.filter((a) => !a.archived);
@@ -112,11 +106,7 @@ export function buildToday(input: {
     }
   }
 
-  const latest = new Map<string, ReconciliationInput>();
-  for (const r of input.reconciliations) {
-    const cur = latest.get(r.account_id);
-    if (!cur || r.statement_date > cur.statement_date) latest.set(r.account_id, r);
-  }
+  const latest = latestByAccount(input.reconciliations);
   for (const a of accounts) {
     const r = latest.get(a.id);
     if (!r) continue;

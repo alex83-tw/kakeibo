@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatSigned } from "@/lib/money";
-import { reconcile } from "./reconcile";
+import { reconcile, reconcileHint } from "./reconcile";
 
 describe("reconcile", () => {
   it("credit card booked more owed than the statement: 多欠, diff is negative (△)", () => {
@@ -23,5 +23,15 @@ describe("reconcile", () => {
   });
   it("compares to two decimals so float noise still matches", () => {
     expect(reconcile("cash", 0.1 + 0.2, 0.3).matched).toBe(true);
+  });
+});
+
+describe("reconcileHint", () => {
+  it("says what the gap probably is, by account type and direction", () => {
+    expect(reconcileHint("credit_card", -320)).toBe("可能多記或退款未記");
+    expect(reconcileHint("credit_card", 320)).toBe("可能漏記消費");
+    expect(reconcileHint("bank", -50)).toBe("可能漏記收入");
+    expect(reconcileHint("cash", 50)).toBe("可能漏記支出");
+    expect(reconcileHint("e_wallet", 0)).toBe("");
   });
 });

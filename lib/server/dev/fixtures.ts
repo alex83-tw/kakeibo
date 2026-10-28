@@ -127,6 +127,8 @@ class Query implements PromiseLike<{ data: Row[]; error: null }> {
     const rows = (store()[this.table] ??= []);
     if (this.mode === "insert") {
       const row: Row = { id: uid(), created_at: new Date().toISOString(), deleted_at: null, ...this.payload };
+      // reconciliations.diff is a generated column in the real database
+      if (this.table === "reconciliations") row.diff = Number(row.book_balance) - Number(row.statement_balance);
       rows.push(row);
       return { data: [row], error: null };
     }
