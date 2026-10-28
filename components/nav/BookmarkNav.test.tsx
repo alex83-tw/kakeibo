@@ -1,12 +1,28 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const pathname = vi.hoisted(() => ({ current: "/" }));
+const desktop = vi.hoisted(() => ({ current: false }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
+vi.mock("@/components/desktop/useDesktop", () => ({ useDesktop: () => desktop.current }));
 
 import { BookmarkNav, BOOKMARKS } from "./BookmarkNav";
 
 describe("BookmarkNav", () => {
+  beforeEach(() => {
+    desktop.current = false;
+  });
+
+  it("steps aside on / at desktop width, where the spread carries its own bookmarks, but not on other pages", () => {
+    desktop.current = true;
+    pathname.current = "/";
+    const { container, rerender } = render(<BookmarkNav />);
+    expect(container).toBeEmptyDOMElement();
+    pathname.current = "/ledger";
+    rerender(<BookmarkNav />);
+    expect(screen.getAllByRole("link")).toHaveLength(4);
+  });
+
   it("renders the four bookmarks as links", () => {
     pathname.current = "/";
     render(<BookmarkNav />);
