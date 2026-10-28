@@ -32,6 +32,28 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 
+describe("EntrySheet as a modal dialog", () => {
+  it("is aria-modal, and the bookmark bar and page behind it are inert only while it is open", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <>
+        <nav className="tabs" data-testid="tabs" />
+        <div className="page" data-testid="page">
+          <EntrySheet accounts={accounts} recentCategories={[]} />
+        </div>
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: "記一筆" }));
+    expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
+    expect(screen.getByTestId("tabs")).toHaveAttribute("inert");
+    expect(screen.getByTestId("page")).toHaveAttribute("inert");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByTestId("tabs")).not.toHaveAttribute("inert");
+    expect(screen.getByTestId("page")).not.toHaveAttribute("inert");
+  });
+});
+
 describe("EntrySheet", () => {
   it("opens on expense with the amount field focused", async () => {
     await open();

@@ -1,11 +1,14 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { Entry, LedgerAccount } from "@/lib/domain/types";
 import { EntryForm, type SavedEntry } from "./EntryForm";
 
-/** Radix shell around EntryForm: focus trap, aria-modal, Esc, and focus return to whatever opened it. */
+/** What sits behind the dialog: the bookmark bar and the page (content, dock, toasts). */
+const BACKGROUND = ".tabs, .page";
+
+/** Radix shell around EntryForm: focus trap, aria-modal, inert background, Esc, and focus return to whatever opened it. */
 export function EntryDialog({
   open,
   onOpenChange,
@@ -23,12 +26,22 @@ export function EntryDialog({
 }) {
   // There is no Dialog.Trigger (the opener lives elsewhere), so remember who had focus and hand it back.
   const opener = useRef<HTMLElement | null>(null);
+
+  // Radix only aria-hides the background; inert also takes it out of the Tab order and out of pointer reach.
+  useEffect(() => {
+    if (!open) return;
+    const behind = [...document.querySelectorAll(BACKGROUND)].filter((el) => !el.hasAttribute("inert"));
+    behind.forEach((el) => el.setAttribute("inert", ""));
+    return () => behind.forEach((el) => el.removeAttribute("inert"));
+  }, [open]);
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="scrim" />
         <Dialog.Content
           className="entry"
+          aria-modal="true"
           aria-describedby={undefined}
           onOpenAutoFocus={(e) => {
             e.preventDefault();

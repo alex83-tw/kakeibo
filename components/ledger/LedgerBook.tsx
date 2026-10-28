@@ -39,7 +39,7 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
               {ledger.weeks.map((w) => (
                 <Fragment key={w.start}>
                   {w.rows.map((r) => (
-                    <tr key={r.day} className={r.isToday ? "today" : undefined}>
+                    <tr key={r.day} className={r.isToday ? "day today" : "day"}>
                       <td className="d">
                         <Link className="dlink" href={`/ledger/${date(r.day)}`}>
                           {r.isToday ? (
