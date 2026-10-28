@@ -1,26 +1,16 @@
-import { describe, expect, it } from "vitest";
-import { resolveUserId } from "./auth";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_USER_ID, getUserId } from "./auth";
 
-describe("resolveUserId", () => {
-  it("never accepts the dev bypass in production", () => {
-    expect(() =>
-      resolveUserId({ sessionUserId: null, env: { NODE_ENV: "production", KAKEIBO_DEV_USER_ID: "dev" } }),
-    ).toThrow("UNAUTHENTICATED");
+afterEach(() => vi.unstubAllEnvs());
+
+describe("getUserId", () => {
+  it("defaults to the single-user id financial-advisor uses", async () => {
+    vi.stubEnv("KAKEIBO_USER_ID", "");
+    expect(DEFAULT_USER_ID).toBe("00000000-0000-0000-0000-000000000000");
+    expect(await getUserId()).toBe(DEFAULT_USER_ID);
   });
-  it("test and unset environments do not get the bypass either", () => {
-    for (const NODE_ENV of ["test", ""]) {
-      expect(() => resolveUserId({ sessionUserId: null, env: { NODE_ENV, KAKEIBO_DEV_USER_ID: "dev" } })).toThrow("UNAUTHENTICATED");
-    }
-  });
-  it("uses the dev id in development when there is no session", () => {
-    expect(resolveUserId({ sessionUserId: null, env: { NODE_ENV: "development", KAKEIBO_DEV_USER_ID: "dev" } })).toBe("dev");
-  });
-  it("development without a dev id or with a blank one is unauthenticated", () => {
-    expect(() => resolveUserId({ sessionUserId: null, env: { NODE_ENV: "development" } })).toThrow("UNAUTHENTICATED");
-    expect(() => resolveUserId({ sessionUserId: null, env: { NODE_ENV: "development", KAKEIBO_DEV_USER_ID: "  " } })).toThrow("UNAUTHENTICATED");
-  });
-  it("a session always wins", () => {
-    expect(resolveUserId({ sessionUserId: "me", env: { NODE_ENV: "development", KAKEIBO_DEV_USER_ID: "dev" } })).toBe("me");
-    expect(resolveUserId({ sessionUserId: "me", env: { NODE_ENV: "production" } })).toBe("me");
+  it("can be overridden by KAKEIBO_USER_ID (trimmed)", async () => {
+    vi.stubEnv("KAKEIBO_USER_ID", "  11111111-1111-1111-1111-111111111111 ");
+    expect(await getUserId()).toBe("11111111-1111-1111-1111-111111111111");
   });
 });

@@ -105,13 +105,13 @@ describe("account writes", () => {
 describe("category RPC wrappers", () => {
   it("pass exact parameter names and map counts", async () => {
     const { client, calls } = fakeClient([], null, { entries: 2, budgets: "3", rules: 1, recurring: 0 });
-    expect(await categoryUsage(client, "expense", { main: "餐飲", sub: "飲料" })).toEqual({ entries: 2, budgets: 3, rules: 1, recurring: 0 });
-    expect(calls).toContainEqual(["rpc", "category_usage", { p_kind: "expense", p_main: "餐飲", p_sub: "飲料" }]);
-    await renameOrMergeCategory(client, "expense", { main: "餐飲", sub: null }, { main: "飲食", sub: null });
-    expect(calls).toContainEqual(["rpc", "rename_or_merge_category", { p_kind: "expense", p_from_main: "餐飲", p_from_sub: null, p_to_main: "飲食", p_to_sub: null }]);
+    expect(await categoryUsage(client, "u1", "expense", { main: "餐飲", sub: "飲料" })).toEqual({ entries: 2, budgets: 3, rules: 1, recurring: 0 });
+    expect(calls).toContainEqual(["rpc", "category_usage", { p_user: "u1", p_kind: "expense", p_main: "餐飲", p_sub: "飲料" }]);
+    await renameOrMergeCategory(client, "u1", "expense", { main: "餐飲", sub: null }, { main: "飲食", sub: null });
+    expect(calls).toContainEqual(["rpc", "rename_or_merge_category", { p_user: "u1", p_kind: "expense", p_from_main: "餐飲", p_from_sub: null, p_to_main: "飲食", p_to_sub: null }]);
   });
   it("surfaces an RPC error", async () => {
-    await expect(categoryUsage(fakeClient([], { message: "boom" }).client, "income", { main: "x", sub: null })).rejects.toThrow("boom");
+    await expect(categoryUsage(fakeClient([], { message: "boom" }).client, "u1", "income", { main: "x", sub: null })).rejects.toThrow("boom");
   });
 });
 

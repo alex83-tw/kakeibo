@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { currentMonth, monthRange, twToday } from "@/lib/time";
+import { DEFAULT_USER_ID } from "@/lib/server/auth";
 
 /**
  * Development-only in-memory stand-in for the database, so pages can be exercised in a real browser
  * without a Supabase session. Enabled only when NODE_ENV === "development" and KAKEIBO_DEV_FIXTURES=1.
  * It implements just the query-builder calls the repositories use; it is not a PostgREST emulator.
  */
-export const FIXTURE_USER = "fixture-user";
+export const FIXTURE_USER = DEFAULT_USER_ID;
 
 type Row = Record<string, unknown>;
 type Store = Record<string, Row[]>;
@@ -239,7 +240,6 @@ export function fixtureClient(): SupabaseClient {
   return {
     rpc: async (name: string, args: Args) => rpc(name, args),
     from: (table: string) => new Query(table),
-    auth: { getUser: async () => ({ data: { user: { id: FIXTURE_USER } }, error: null }) },
   } as unknown as SupabaseClient;
 }
 

@@ -6,6 +6,12 @@ BEGIN;
 -- 夾具：A 是「我」，B 是另一位使用者（不得被動到）。
 CREATE TEMP TABLE _u AS SELECT 'aaaaaaaa-0000-0000-0000-000000000001'::uuid AS a, 'bbbbbbbb-0000-0000-0000-000000000002'::uuid AS b;
 
+-- 先清掉這兩個假 user_id 可能殘留的資料（上次沒 ROLLBACK 成功時，帳目沒有唯一鍵會重複、預算會撞鍵）。
+DELETE FROM financial.accounting_entries WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.budget_plans       WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.category_rules     WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.recurring_rules    WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+
 INSERT INTO financial.accounting_entries (user_id, entry_type, main_category, sub_category, amount, currency, entry_date, deleted_at)
 SELECT a, 'expense', '餐飲', '飲料', 60,  'TWD', '2026-10-01'::date, NULL::timestamptz FROM _u UNION ALL
 SELECT a, 'expense', '餐飲', '飲料', 70,  'TWD', '2026-10-02', NULL FROM _u UNION ALL
@@ -100,5 +106,11 @@ BEGIN
   r := financial.rename_or_merge_category('expense', '餐飲', NULL, '餐飲', NULL);
   IF r->>'entries' <> '0' THEN RAISE EXCEPTION 'FAIL: same source and target should be a no-op'; END IF;
 END $$;
+
+-- 結尾再清一次：SQL editor 若沒有把整段當成同一個交易（ROLLBACK 不生效），也不會留下測試資料。
+DELETE FROM financial.accounting_entries WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.budget_plans       WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.category_rules     WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
+DELETE FROM financial.recurring_rules    WHERE user_id IN (SELECT a FROM _u UNION SELECT b FROM _u);
 
 ROLLBACK;
