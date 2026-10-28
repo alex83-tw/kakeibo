@@ -136,3 +136,6 @@ a.act { margin-left: auto; color: var(--ink); font-weight: 700; text-decoration:
 .tab:hover span { background-image: var(--dots); background-size: 4px 4px; }
 .tab[aria-current] { padding-top: 0; }
 .tab[aria-current] span { background: var(--ink); color: var(--paper); background-image: none; }
+
+/* 文字輸入：一行高，墨色底線，不用外框 */
+input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-height: 44px; padding: 0 var(--pad); background: var(--paper); border: 0; border-bottom: 2px solid var(--ink); border-radius: 0; font: 400 1rem/1 var(--serif); color: var(--ink); }
