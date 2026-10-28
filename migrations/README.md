@@ -14,6 +14,6 @@
 | 002_entries_transfer.sql | `deleted_at`、帳戶欄、轉帳（`entry_type` 加 CHECK） | 已執行 | 2026-10-29 |
 | 003_reconciliations.sql | 對帳紀錄（`diff` 為 generated column，寫入不要帶） | 已執行 | 2026-10-29 |
 | 004_category_rename_merge.sql | `rename_or_merge_category`、`category_usage` | 已執行 | 2026-10-29 |
-| tests/004_assert.sql | 驗證 004（ROLLBACK，不留資料） | 待確認（使用者回報有一次「Success」，未說明是哪個檔） | |
+| tests/004_assert.sql | 驗證 004（ROLLBACK，不留資料） | 已驗證（2026-10-29，使用者在 SQL editor 執行，無 FAIL，ROLLBACK 後無殘留） | |
 
 注意：新表沒有 `updated_at` trigger，更新時由程式明確寫入 `updated_at`。

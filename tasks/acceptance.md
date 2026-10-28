@@ -1,6 +1,6 @@
 # 驗收記錄（規格第 9 節）
 
-日期：2026-10-29。方式：Playwright 真瀏覽器，390px 與 1280px 各跑一輪，資料為開發用的記憶體 fixtures（`KAKEIBO_DEV_FIXTURES=1`）。**真實資料庫路徑與真實 magic link 登入沒有在瀏覽器裡跑過**（需要使用者的帳號），見最後一節。
+日期：2026-10-29。方式：Playwright 真瀏覽器，390px 與 1280px 各跑一輪，資料為開發用的記憶體 fixtures（`KAKEIBO_DEV_FIXTURES=1`）。**真實資料庫路徑與真實 Email＋密碼登入沒有在瀏覽器裡跑過**（需要使用者的帳號），見最後一節。
 
 | # | 條目 | 390px | 1280px | 證據 |
 |---|---|---|---|---|
@@ -16,9 +16,9 @@
 
 ## 已知限制與未在瀏覽器驗證的部分
 
-- 真實資料庫（RLS、複合外鍵、`rename_or_merge_category`、`diff` generated column）與 magic link 登入沒有在瀏覽器跑過；開發用 fixtures 模擬了這些行為。
-- `migrations/tests/004_assert.sql` 是否已成功執行待使用者確認。001–004 已執行。
-- 需要使用者設定：`NEXT_PUBLIC_SITE_URL`、Supabase Auth 的 Redirect URLs（精確網址、不用萬用字元）、啟用 Email provider。
+- 真實資料庫（RLS、複合外鍵、`rename_or_merge_category`、`diff` generated column）與 Email＋密碼登入沒有在瀏覽器跑過；開發用 fixtures 模擬了這些行為。
+- `migrations/tests/004_assert.sql` 已由使用者執行並通過（2026-10-29）。001–004 已執行。
+- 登入沿用 financial-advisor 的 Supabase Auth Email＋密碼帳號（已存在，不需額外設定）；本 app 沒有註冊頁，陌生人無法自行註冊。
 - 電腦版見開き只在 `/`；桌面開啟時會先以手機版渲染一個 hydration 影格再切換。
 - 自動分類規則已可管理，但記一筆時還不會自動套用。
 - 季繳／年繳的週期帳目可列出，但不會在今日提醒。

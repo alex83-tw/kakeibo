@@ -7,7 +7,7 @@ BEGIN;
 CREATE TEMP TABLE _u AS SELECT 'aaaaaaaa-0000-0000-0000-000000000001'::uuid AS a, 'bbbbbbbb-0000-0000-0000-000000000002'::uuid AS b;
 
 INSERT INTO financial.accounting_entries (user_id, entry_type, main_category, sub_category, amount, currency, entry_date, deleted_at)
-SELECT a, 'expense', '餐飲', '飲料', 60,  'TWD', '2026-10-01', NULL FROM _u UNION ALL
+SELECT a, 'expense', '餐飲', '飲料', 60,  'TWD', '2026-10-01'::date, NULL::timestamptz FROM _u UNION ALL
 SELECT a, 'expense', '餐飲', '飲料', 70,  'TWD', '2026-10-02', NULL FROM _u UNION ALL
 SELECT a, 'expense', '餐飲', '飲料', 80,  'TWD', '2026-10-03', now() FROM _u UNION ALL      -- 軟刪除
 SELECT a, 'expense', '餐飲', 'other', 90, 'TWD', '2026-10-04', NULL FROM _u UNION ALL
