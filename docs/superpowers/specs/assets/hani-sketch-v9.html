@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>羽仁式家計簿 示意稿 v9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+<!-- 數字專用：Noto Serif TC 的數字是比例寬度，右對齊的金額欄會參差。只取數字與金額符號，交給有等寬數字的 Noto Serif。 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&display=swap&text=0123456789%2C.%25%24NT%2B" rel="stylesheet">
+<style>
+/* 三色刷：墨（黑）＋朱＋青緑。朱＝需要處理（只用在注意、差、預估超支）；青緑＝已經對上；其餘一律墨與網點。 */
+:root {
+  --paper: #F7F7F3;
+  --ink: #1A1D1B;
+  --ink-2: #4A4F4B;
+  --hair: rgba(26,29,27,.16);
+  --grid: rgba(26,29,27,.09);
+  --shu: #C13A2B;
+  --aoi: #2B7A68;
+  --row: 36px;
+  --serif: "Noto Serif", "Noto Serif TC", "Songti TC", "Hiragino Mincho ProN", "PMingLiU", serif;
+  --fs-figure: 2rem;
+  --fs-title: 1.25rem;
+  --fs-body: .9375rem;
+  --fs-label: .8125rem;
+  --dots: radial-gradient(circle at 25% 25%, var(--ink) .7px, transparent .95px), radial-gradient(circle at 75% 75%, var(--ink) .7px, transparent .95px);
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; padding: 24px 16px 48px; background: #DADBD6; color: var(--ink); font-family: var(--serif); font-size: var(--fs-body); line-height: 1.5; font-variant-numeric: tabular-nums lining-nums; font-synthesis: none; font-kerning: normal; line-break: strict; }
+::selection { background: var(--ink); color: var(--paper); }
+.note { max-width: 860px; margin: 0 auto 20px; color: var(--ink-2); font-size: var(--fs-label); line-height: 1.7; }
+.note b { color: var(--ink); }
+.stage { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+figure { margin: 0; max-width: 100%; }
+figcaption { text-align: center; margin: 0 0 8px; font-size: var(--fs-label); color: var(--ink-2); }
+h3.part { max-width: 1160px; margin: 56px auto 12px; font-size: var(--fs-title); font-weight: 700; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* 紙：方眼只出現在天地，內文區是乾淨的行線 */
+.page, .pg { background-color: var(--paper); background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px); background-size: 18px 18px; border: 1px solid var(--ink); }
+.page { width: 390px; max-width: 100%; box-shadow: 0 10px 24px -12px rgba(26,29,27,.4); padding: 0 18px 0 36px; }
+.sheet { background-color: var(--paper); border-left: 1px solid var(--ink); border-right: 1px solid var(--ink); text-shadow: 0 0 .5px rgba(26,29,27,.45); }
+.rows { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--row) - 1px), var(--hair) calc(var(--row) - 1px), var(--hair) var(--row)); background-attachment: local; --pad: 14px; padding: 0 var(--pad); }
+.screen { height: min(800px, calc(100dvh - 44px)); display: flex; flex-direction: column; position: relative; }
+.screen .rows { flex: 1; overflow-y: auto; }
+
+.gap { height: var(--row); }
+.dim { color: var(--ink-2); }
+.run { height: var(--row); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: var(--fs-label); letter-spacing: .04em; color: var(--ink-2); border-bottom: 1px solid var(--ink); background: var(--paper); }
+.run b { font-weight: 700; color: var(--ink); }
+
+/* 標題區：整塊鋪紙色蓋掉行線，字不再壓在線上；下緣收在行線上 */
+.head { height: calc(var(--row) * 2); display: flex; align-items: stretch; gap: 14px; margin: 0 calc(var(--pad) * -1); padding: 8px var(--pad) 6px; background: var(--paper); border-bottom: 1px solid var(--hair); }
+.head .mo { writing-mode: vertical-rl; text-orientation: upright; font-size: var(--fs-label); font-weight: 700; letter-spacing: .1em; line-height: 1.1; border-right: 1px solid var(--ink); padding-right: 10px; display: grid; place-items: center; }
+.head h1 { margin: 0; font-size: var(--fs-title); font-weight: 700; letter-spacing: .02em; line-height: 1.25; align-self: center; white-space: nowrap; }
+.head h1 .wd { font-size: var(--fs-label); font-weight: 400; color: var(--ink); letter-spacing: .06em; margin-left: .5em; }
+.head .sub { margin-left: auto; align-self: flex-end; text-align: right; color: var(--ink-2); font-size: var(--fs-label); line-height: 1.6; white-space: nowrap; }
+/* 帳戶合計放進日期列右側：首屏就看得到，點下去跳到各帳戶。至少 44px 高。 */
+a.acctlink { margin-left: auto; align-self: center; min-height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-decoration: none; color: var(--ink); padding: 0 0 0 10px; white-space: nowrap; }
+a.acctlink span { font-size: var(--fs-label); color: var(--ink-2); line-height: 1.3; }
+a.acctlink b { font-size: var(--fs-body); font-weight: 700; line-height: 1.3; border-bottom: 3px double var(--ink); }
+a.acctlink:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+h2.sec { margin: 0; height: var(--row); display: flex; align-items: center; font-weight: 700; font-size: var(--fs-label); letter-spacing: .08em; }
+.r { height: var(--row); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.r > span { white-space: nowrap; }
+
+.total { height: calc(var(--row) * 2); display: flex; align-items: center; justify-content: space-between; margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); }
+.total .lab { font-weight: 700; letter-spacing: .04em; }
+.total .amt { font-size: var(--fs-figure); font-weight: 700; line-height: 1.12; border-bottom: 3px double var(--ink); padding: 0 2px; white-space: nowrap; letter-spacing: -.01em; }
+.total .amt .cur { font-size: .5em; font-weight: 700; letter-spacing: .04em; margin-right: .25em; }
+
+.block { display: grid; grid-template-columns: 28px minmax(0, 1fr); border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: var(--paper); }
+.vl { writing-mode: vertical-rl; text-orientation: upright; width: 28px; display: grid; place-items: center; font-size: var(--fs-label); font-weight: 700; letter-spacing: .15em; line-height: 1.1; border-right: 1px solid var(--ink); background-image: radial-gradient(circle at 25% 25%, var(--ink) 1.05px, transparent 1.35px), radial-gradient(circle at 75% 75%, var(--ink) 1.05px, transparent 1.35px); background-size: 4px 4px; }
+.vl span { background: var(--paper); padding: 5px 0; }
+table.ledger { width: 100%; border-collapse: collapse; table-layout: fixed; }
+table.ledger th, table.ledger td { height: var(--row); padding: 0 4px; border-left: 1px solid var(--hair); border-bottom: 1px solid var(--hair); font-weight: 400; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+table.ledger tr:last-child td { border-bottom: 0; }
+table.ledger th:first-child, table.ledger td:first-child { border-left: 0; }
+table.ledger th { font-size: var(--fs-label); font-weight: 700; border-bottom: 1px solid var(--ink); letter-spacing: .04em; }
+table.ledger td.n, table.ledger th.n { text-align: right; }
+table.ledger td.sm { font-size: var(--fs-label); color: var(--ink-2); }
+table.ledger td.m { white-space: normal; text-overflow: clip; }
+.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: var(--fs-label); line-height: 17px; color: var(--ink-2); overflow-wrap: anywhere; }
+.cat { font-size: var(--fs-body); color: var(--ink); }
+.det { font-size: var(--fs-label); color: var(--ink-2); }
+table.ledger tr.today td { background-image: radial-gradient(circle at 25% 25%, rgba(26,29,27,.26) .6px, transparent .85px), radial-gradient(circle at 75% 75%, rgba(26,29,27,.26) .6px, transparent .85px); background-size: 4px 4px; }
+table.ledger tr.today .dim, table.ledger tr.today .det, table.ledger tr.today .clamp { color: var(--ink); }
+table.ledger tr.sum td { font-weight: 700; border-top: 1px solid var(--ink); }
+table.ledger tr.wk td { font-weight: 700; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
+.dayno { display: inline-grid; place-items: center; min-width: 30px; height: 26px; border: 2px solid var(--ink); font-weight: 700; background: var(--paper); }
+td.bar { padding: 0 6px; }
+td.bar i { display: block; height: 12px; border: 1px solid var(--ink); background-image: var(--dots); background-size: 4px 4px; background-color: var(--paper); }
+tr.today td.bar i { background: var(--ink); }
+.pb { display: block; height: 12px; border: 1px solid var(--ink); background: var(--paper); }
+.pb i { display: block; height: 100%; background-image: var(--dots); background-size: 4px 4px; }
+
+/* 本月：整條日欄就是一個可以滑動選日的控制項（一個 Tab 停靠點） */
+.dayr { height: var(--row); display: flex; align-items: center; justify-content: space-between; }
+.dayr .l { font-size: var(--fs-label); color: var(--ink-2); letter-spacing: .04em; }
+.days { height: calc(var(--row) * 2); display: grid; grid-template-columns: repeat(28, 1fr); align-items: end; gap: 3px; border-bottom: 2px solid var(--ink); cursor: ew-resize; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.days i { display: block; min-height: 3px; border: 1px solid var(--ink); border-bottom: 0; background-color: var(--paper); background-image: var(--dots); background-size: 4px 4px; pointer-events: none; }
+.days i.t { background: var(--ink); }
+.days i.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
+.days:focus-visible, a.act:focus-visible, .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.dayscale { display: flex; justify-content: space-between; height: var(--row); font-size: var(--fs-label); color: var(--ink-2); line-height: 24px; white-space: nowrap; }
+.kv { display: flex; justify-content: space-between; }
+
+/* 每條注意 48px：連結點擊區 44px 放得下，三條合起來 144px＝四個行距，下面的行線不會錯位 */
+.alert { height: 48px; display: flex; align-items: center; gap: 10px; margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); }
+.alert.two { height: calc(var(--row) * 2); }
+.alert .mk { width: 9px; height: 9px; background: var(--shu); flex: none; }
+.alert .mk.q { background: transparent; border: 1.5px solid var(--ink); }
+.alert > span:nth-child(2) { line-height: 1.45; text-wrap: pretty; }
+.bad { font-weight: 700; color: var(--shu); white-space: nowrap; }
+a.act { margin-left: auto; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 0 0 0 10px; min-height: 44px; display: inline-flex; align-items: center; white-space: nowrap; }
+.acct { display: grid; grid-template-columns: 1fr 1fr; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: var(--paper); }
+.acct > div { height: var(--row); display: flex; justify-content: space-between; align-items: center; padding: 0 10px 0 0; border-bottom: 1px solid var(--hair); white-space: nowrap; }
+.acct > div:nth-child(even) { border-left: 1px solid var(--hair); padding: 0 0 0 12px; }
+.acct > .tot { grid-column: 1 / -1; border-left: 0; border-bottom: 0; padding: 0; font-weight: 700; border-top: 1px solid var(--ink); }
+.acct > .tot b { border-bottom: 3px double var(--ink); padding: 0 2px; }
+.ok { color: var(--aoi); font-weight: 700; }
+
+.dock { border-top: 2px solid var(--ink); padding: 9px 14px; height: calc(var(--row) * 2); background: var(--paper); }
+.btn { display: block; width: 100%; height: calc(var(--row) * 1.5); background: var(--ink); color: var(--paper); border: 0; border-radius: 0; font: 700 1.0625rem/1 var(--serif); letter-spacing: .2em; text-indent: .2em; cursor: pointer; text-shadow: none; }
+.btn:hover { background: #2C312E; }
+.btn.sm { width: 168px; height: 44px; }
+/* 書籤：掛在頁緣上方的索引籤。按鈕整高 44px 當點擊區，看得見的籤身只有 36px（作用中的籤升到 44px 與頁面相連） */
+.tabs { display: flex; gap: 4px; padding-left: 36px; position: relative; z-index: 3; margin-bottom: -1px; }
+.tab { appearance: none; border: 0; background: none; padding: 8px 0 0; height: 44px; min-width: 64px; cursor: pointer; font: inherit; color: var(--ink); display: flex; align-items: stretch; text-decoration: none; text-shadow: none; }
+.tab span { flex: 1; display: grid; place-items: center; padding: 0 14px; border: 1px solid var(--ink); border-bottom: 0; background: var(--paper); font-size: var(--fs-label); font-weight: 700; letter-spacing: .15em; text-indent: .15em; white-space: nowrap; }
+.tab:hover span { background-image: var(--dots); background-size: 4px 4px; }
+.tab[aria-selected="true"], .tab[aria-current="true"] { padding-top: 0; }
+.tab[aria-selected="true"] span, .tab[aria-current="true"] span { background: var(--ink); color: var(--paper); background-image: none; }
+.tab:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+.tabs.ph { padding-left: 36px; width: 390px; max-width: 100%; }
+.dtabs { display: flex; width: 1160px; margin: 0 auto; }
+.dtabs .tabs { flex: 1; }
+.dtabs .tabs.r2 { padding-left: 14px; }
+[hidden] { display: none !important; }
+.r.hint { height: calc(var(--row) * 2); margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); font-size: var(--fs-label); color: var(--ink-2); line-height: 1.5; }
+.chkrow { height: calc(var(--row) * 2); display: flex; align-items: center; gap: 10px; margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); }
+.chkrow label { font-weight: 700; white-space: nowrap; }
+.chkrow input { flex: 1; min-width: 0; height: 44px; border: 2px solid var(--ink); border-radius: 0; background: var(--paper); text-align: right; font: inherit; color: var(--ink); padding: 0 8px; }
+.btn.s2 { width: 72px; height: 44px; flex: none; font-size: var(--fs-body); letter-spacing: .15em; }
+.menu { display: block; }
+.menu a { display: flex; justify-content: space-between; align-items: center; gap: 8px; height: 48px; padding: 0 10px; border-bottom: 1px solid var(--hair); color: var(--ink); text-decoration: none; background: var(--paper); }
+.menu a:last-child { border-bottom: 0; }
+.menu a span:first-child { font-weight: 700; }
+.menu a span:last-child { font-size: var(--fs-label); color: var(--ink-2); white-space: nowrap; margin-left: auto; }
+.menu a::after { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink); border-top: 2px solid var(--ink); transform: rotate(45deg); margin-left: 6px; flex: none; }
+.menu a:focus-visible, .chkrow input:focus-visible, .chkrow .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
+/* 記一筆：從底部升起的輸入單。類型切換在最上面，轉帳不選科目 */
+.scrim { position: absolute; inset: 0; background: rgba(26,29,27,.38); z-index: 4; }
+.entry { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 2px solid var(--ink); padding: 0 14px 14px; }
+.entry-h { height: 48px; display: flex; align-items: center; justify-content: space-between; }
+.entry-h h2 { margin: 0; font-size: var(--fs-title); font-weight: 700; }
+.ghost { appearance: none; border: 0; background: none; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; min-height: 44px; padding: 0 0 0 16px; cursor: pointer; color: var(--ink); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--ink); }
+.seg button { height: 44px; border: 0; border-left: 1px solid var(--ink); border-radius: 0; background: var(--paper); font: 700 var(--fs-body) var(--serif); letter-spacing: .15em; text-indent: .15em; color: var(--ink); cursor: pointer; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-checked="true"] { background: var(--ink); color: var(--paper); }
+.amtrow { height: calc(var(--row) * 2); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--ink); }
+.amtrow label { font-weight: 700; margin-right: auto; }
+.amtrow .cur { font-size: var(--fs-label); font-weight: 700; }
+.amtrow input { width: 60%; min-width: 0; height: 56px; border: 0; background: none; text-align: right; font: 700 var(--fs-figure) var(--serif); font-variant-numeric: tabular-nums; color: var(--ink); }
+.fld { height: 48px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--hair); }
+.fld > span, .fld > label { width: 56px; flex: none; font-size: var(--fs-label); font-weight: 700; letter-spacing: .08em; }
+.fld .val, .fld input { flex: 1; min-width: 0; height: 44px; border: 0; border-radius: 0; background: none; font: inherit; color: var(--ink); text-align: left; padding: 0; }
+.fld .val { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.fld .val::after { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink); border-top: 2px solid var(--ink); transform: rotate(45deg); margin-right: 4px; }
+.entry-n { margin: 0; height: var(--row); display: flex; align-items: center; font-size: var(--fs-label); color: var(--ink-2); }
+.entry .btn { height: 54px; }
+.entry button:focus-visible, .entry input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* 電腦版：見開き（左頁＝帳本，右頁＝今日・預算・注意・對帳） */
+.desk-wrap { overflow-x: auto; padding: 0 0 24px; }
+.spread { display: flex; width: 1160px; margin: 0 auto; box-shadow: 0 18px 40px -20px rgba(26,29,27,.5); position: relative; }
+.pg { flex: 1; min-width: 0; position: relative; }
+.pg.pl { padding: 0 14px 0 36px; border-right: 0; }
+.pg.pr { padding: 0 36px 0 14px; border-left: 0; }
+.pg.pl::after, .pg.pr::before { content: ""; position: absolute; top: 0; bottom: 0; width: 34px; pointer-events: none; z-index: 2; }
+.pg.pl::after { right: 0; background: linear-gradient(to left, rgba(26,29,27,.2), transparent); }
+.pg.pr::before { left: 0; background: linear-gradient(to right, rgba(26,29,27,.2), transparent); }
+.pgs { min-height: 940px; display: flex; flex-direction: column; }
+.pgs .rows { flex: 1; }
+.pgs .total .btn { flex: none; }
+.pgs .total .grp { display: flex; align-items: flex-end; gap: 24px; justify-content: space-between; width: 100%; }
+
+@media (max-width: 430px) {
+  body { padding: 12px 0 24px; }
+  .note { padding: 0 16px; }
+  .page { padding: 0 9px 0 18px; border-left: 0; border-right: 0; }
+  .rows { --pad: 12px; }
+  .run, .dock { padding-left: 12px; padding-right: 12px; }
+  .tabs.ph { padding-left: 18px; }
+  h3.part { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+<p class="note"><b>羽仁式家計簿・示意稿 v9（全部是假資料）。</b>只改一處：對帳「差」統一成 <b>差 ＝ 帳面 − 帳單</b>，用 △ 表示帳面較少。信用卡 △3,150 − △2,830 ＝ △320，帳戶合計 68,270 − 68,590 ＝ △320，兩處同號；白話一律寫「帳面比帳單多欠 320」。其餘維持 v8；焦點陷阱、輸入驗證、帳本明細編輯另寫進設計文件當驗收條件。</p>
+
+<div class="stage">
+  <figure>
+    <figcaption>手機・書籤切換（今日／帳本／對帳／設定）</figcaption>
+    <nav class="tabs ph" role="tablist" aria-label="頁面">
+      <button class="tab" role="tab" id="t-today" aria-controls="p-today" aria-selected="true"><span>今日</span></button>
+      <button class="tab" role="tab" id="t-ledger" aria-controls="p-ledger" aria-selected="false" tabindex="-1"><span>帳本</span></button>
+      <button class="tab" role="tab" id="t-recon" aria-controls="p-recon" aria-selected="false" tabindex="-1"><span>對帳</span></button>
+      <button class="tab" role="tab" id="t-set" aria-controls="p-set" aria-selected="false" tabindex="-1"><span>設定</span></button>
+    </nav>
+    <div class="page">
+      <main class="sheet screen" id="p-today" role="tabpanel" aria-labelledby="t-today">
+        <div class="run"><b>家計簿</b><span>十月　第四週</span></div>
+        <div class="rows">
+          <div class="head"><span class="mo" aria-hidden="true">十月</span><h1>二十八日<span class="wd">水曜<span class="sr">，十月</span></span></h1><a class="acctlink" href="#acct"><span>帳戶合計</span><b>68,270</b></a></div>
+
+          <div class="total"><span class="lab">今日支出合計</span><span class="amt"><span class="cur">NT$</span>680</span></div>
+
+          <div class="block">
+            <span class="vl" aria-hidden="true"><span>今日</span></span>
+            <table class="ledger">
+              <caption class="sr">今日明細</caption>
+              <colgroup><col style="width:84px"><col><col style="width:52px"><col style="width:50px"></colgroup>
+              <thead><tr><th scope="col">科目</th><th scope="col">摘要</th><th scope="col">帳戶</th><th scope="col" class="n">金額</th></tr></thead>
+              <tbody>
+                <tr><td>餐飲／午餐</td><td class="m"><span class="clamp">排骨便當</span></td><td class="sm">現金</td><td class="n">180</td></tr>
+                <tr><td>餐飲／飲料</td><td class="m"><span class="clamp">拿鐵，少冰半糖，公司樓下那家</span></td><td class="sm">悠遊卡</td><td class="n">120</td></tr>
+                <tr><td>交通／捷運</td><td class="m"><span class="clamp">通勤</span></td><td class="sm">信用卡</td><td class="n">380</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="gap"></div>
+          <h2 class="sec">本月預算</h2>
+          <div class="r kv"><span>已用 <b>74%</b></span><span>38,420 ／ 預算 52,000</span></div>
+          <div class="dayr"><span class="l" id="dayl"></span><span id="daya"></span></div>
+          <div class="days" id="days" role="slider" tabindex="0" aria-label="十月每日支出，左右滑動或按左右鍵選日" aria-valuemin="1" aria-valuemax="28" aria-valuenow="28"></div>
+          <div class="dayscale" aria-hidden="true"><span>一日</span><span>十四日</span><span>今日 二十八日</span></div>
+          <div class="r kv"><span>預估月底</span><span><b>42,540</b>　整體仍在預算內</span></div>
+
+          <div class="gap"></div>
+          <h2 class="sec">注意</h2>
+          <div class="alert"><span class="mk" aria-hidden="true"></span><span><strong>餐飲</strong> 預估月底超支 <span class="bad">NT$&nbsp;1,200</span></span><a class="act" href="#">查看餐飲</a></div>
+          <div class="alert"><span class="mk q" aria-hidden="true"></span><span><strong>2 筆</strong> 帳目未歸類</span><a class="act" href="#">去歸類</a></div>
+          <div class="alert"><span class="mk" aria-hidden="true"></span><span><strong>信用卡</strong> 帳面比帳單<span class="bad">多欠 320</span></span><a class="act" href="#" data-go="t-recon">去對帳</a></div>
+
+          <div class="gap"></div>
+          <h2 class="sec" id="acct">帳戶</h2>
+          <div class="acct">
+            <div><span>現金</span><span>8,200</span></div><div><span>悠遊卡</span><span>1,340</span></div>
+            <div><span>銀行</span><span>61,880</span></div><div><span>信用卡</span><span>△3,150</span></div>
+            <div class="tot"><span>帳戶合計</span><b>68,270</b></div>
+          </div>
+          <div class="gap"></div>
+        </div>
+        <div class="dock"><button class="btn" type="button" id="addbtn" aria-haspopup="dialog">記一筆</button></div>
+        <div class="scrim" id="scrim" hidden></div>
+        <div class="entry" id="entry" role="dialog" aria-labelledby="entry-t" hidden>
+          <div class="entry-h"><h2 id="entry-t">記一筆</h2><button type="button" class="ghost" id="entry-x">取消</button></div>
+          <div class="seg" role="radiogroup" aria-label="類型">
+            <button type="button" role="radio" aria-checked="true" data-k="exp">支出</button>
+            <button type="button" role="radio" aria-checked="false" tabindex="-1" data-k="inc">收入</button>
+            <button type="button" role="radio" aria-checked="false" tabindex="-1" data-k="trf">轉帳</button>
+          </div>
+          <div class="amtrow"><label for="amt">金額</label><span class="cur">NT$</span><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+          <div id="flds"></div>
+          <p class="entry-n" id="entry-n"></p>
+          <button class="btn" type="button" id="entry-s">儲存</button>
+        </div>
+      </main>
+
+      <section class="sheet screen" id="p-ledger" role="tabpanel" aria-labelledby="t-ledger" hidden>
+        <div class="run"><b>家計簿</b><span>十月　帳本</span></div>
+        <div class="rows">
+          <div class="head"><span class="mo" aria-hidden="true">十月</span><h1>帳本</h1><span class="sub">收入 58,000　支出 38,420<br>淨額 ＋19,580</span></div>
+          <div class="gap"></div>
+          <div class="block">
+            <span class="vl" aria-hidden="true"><span>帳本</span></span>
+            <table class="ledger">
+              <caption class="sr">十月每日收支</caption>
+              <colgroup><col style="width:46px"><col><col style="width:62px"><col style="width:62px"></colgroup>
+              <thead><tr><th scope="col">日</th><th scope="col">科目・摘要</th><th scope="col" class="n">收入</th><th scope="col" class="n">支出</th></tr></thead>
+              <tbody>
+                <tr><td>22 <span class="dim">四</span></td><td class="m"><span class="clamp"><span class="cat">餐飲</span><span class="det">・晚餐　交通</span></span></td><td class="n dim">－</td><td class="n">520</td></tr>
+                <tr><td>23 <span class="dim">五</span></td><td class="m"><span class="clamp"><span class="cat">日用購物</span><span class="det">・洗衣精</span></span></td><td class="n dim">－</td><td class="n">260</td></tr>
+                <tr><td>24 <span class="dim">六</span></td><td class="m"><span class="clamp"><span class="cat">娛樂</span><span class="det">・電影　餐飲</span></span></td><td class="n dim">－</td><td class="n">1,180</td></tr>
+                <tr class="wk"><td colspan="2">週計　十八至二十四日</td><td class="n">0</td><td class="n">7,970</td></tr>
+                <tr><td>25 <span class="dim">日</span></td><td class="m"><span class="clamp"><span class="cat">居住</span><span class="det">・水費</span></span></td><td class="n dim">－</td><td class="n">760</td></tr>
+                <tr><td>26 <span class="dim">一</span></td><td class="m"><span class="clamp"><span class="cat">薪資</span><span class="det">・十月獎金，另有交通</span></span></td><td class="n">12,000</td><td class="n">340</td></tr>
+                <tr><td>27 <span class="dim">二</span></td><td class="m"><span class="clamp"><span class="cat">餐飲</span><span class="det">・早餐　午餐</span></span></td><td class="n dim">－</td><td class="n">450</td></tr>
+                <tr class="today"><td><span class="dayno">28<span class="sr"> 今日</span></span></td><td class="m"><span class="clamp"><span class="cat">餐飲</span><span class="det">　交通（3 筆）</span></span></td><td class="n dim">－</td><td class="n">680</td></tr>
+                <tr class="sum"><td colspan="2">本月累計</td><td class="n">58,000</td><td class="n">38,420</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="gap"></div>
+        </div>
+      </section>
+
+      <section class="sheet screen" id="p-recon" role="tabpanel" aria-labelledby="t-recon" hidden>
+        <div class="run"><b>家計簿</b><span>十月　對帳</span></div>
+        <div class="rows">
+          <div class="head"><span class="mo" aria-hidden="true">十月</span><h1>對帳</h1><span class="sub">3 戶對上<br>1 戶有差</span></div>
+          <div class="gap"></div>
+          <div class="block">
+            <span class="vl" aria-hidden="true"><span>帳戶</span></span>
+            <table class="ledger">
+              <caption class="sr">帳戶對帳</caption>
+              <colgroup><col style="width:56px"><col><col><col style="width:58px"></colgroup>
+              <thead><tr><th scope="col">帳戶</th><th scope="col" class="n">帳面</th><th scope="col" class="n">帳單</th><th scope="col" class="n">差</th></tr></thead>
+              <tbody>
+                <tr><td>現金</td><td class="n">8,200</td><td class="n">8,200</td><td class="n ok">對上</td></tr>
+                <tr><td>悠遊卡</td><td class="n">1,340</td><td class="n">1,340</td><td class="n ok">對上</td></tr>
+                <tr><td>銀行</td><td class="n">61,880</td><td class="n">61,880</td><td class="n ok">對上</td></tr>
+                <tr><td>信用卡</td><td class="n">△3,150</td><td class="n">△2,830</td><td class="n bad">△320</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert two"><span class="mk" aria-hidden="true"></span><span><strong>信用卡</strong> 帳面比帳單多欠 320，可能多記或退款未記</span><a class="act" href="#">查看帳目</a></div>
+          <div class="gap"></div>
+          <h2 class="sec">輸入帳單餘額</h2>
+          <div class="chkrow"><label for="stmt">信用卡　帳單</label><input id="stmt" inputmode="decimal" value="△2,830" aria-describedby="chkhint" autocomplete="off"><button type="button" class="btn s2" id="chkbtn">對帳</button></div>
+          <p class="r hint" id="chkhint">差＝帳面−帳單，△ 代表帳面較少（信用卡＝多欠）；對上顯示青緑「對上」</p>
+          <div class="gap"></div>
+        </div>
+      </section>
+
+      <section class="sheet screen" id="p-set" role="tabpanel" aria-labelledby="t-set" hidden>
+        <div class="run"><b>家計簿</b><span>十月　設定</span></div>
+        <div class="rows">
+          <div class="head"><span class="mo" aria-hidden="true">十月</span><h1>設定</h1><span class="sub">科目、預算<br>與帳戶</span></div>
+          <div class="gap"></div>
+          <div class="block">
+            <span class="vl" aria-hidden="true"><span>管理</span></span>
+            <nav class="menu" aria-label="管理">
+              <a href="#"><span>預算</span><span>主分類 7 項　52,000</span></a>
+              <a href="#"><span>科目</span><span>主 12　子 61</span></a>
+              <a href="#"><span>帳戶</span><span>4 個　68,270</span></a>
+              <a href="#"><span>週期帳目</span><span>5 條</span></a>
+              <a href="#"><span>自動分類</span><span>8 條規則</span></a>
+              <a href="#"><span>匯入・匯出</span><span>CSV</span></a>
+            </nav>
+          </div>
+          <div class="gap"></div>
+          <p class="r hint">預算只設主分類；子分類是明細標籤，不設預算</p>
+          <div class="gap"></div>
+        </div>
+      </section>
+    </div>
+  </figure>
+</div>
+
+<h3 class="part">電腦版・見開き</h3>
+<div class="desk-wrap">
+  <div class="dtabs" id="dtabs">
+    <nav class="tabs" aria-label="左頁"><a class="tab" href="#d-diary" aria-current="true"><span>帳本</span></a></nav>
+    <nav class="tabs r2" aria-label="右頁"><a class="tab" href="#d-today"><span>今日</span></a><a class="tab" href="#d-budget"><span>預算</span></a><a class="tab" href="#acct-d"><span>對帳</span></a></nav>
+  </div>
+  <div class="spread">
+    <section class="pg pl" aria-label="左頁：十月帳本">
+      <div class="sheet pgs">
+        <div class="run"><b>家計簿</b><span>十月　帳本</span></div>
+        <div class="rows" id="drows">
+          <div class="head"><span class="mo" aria-hidden="true">十月</span><h1>帳本</h1><span class="sub">收入 58,000　支出 38,420<br>淨額 ＋19,580</span></div>
+          <div class="gap"></div>
+          <div class="block" id="d-diary">
+            <span class="vl" aria-hidden="true"><span>帳本</span></span>
+            <table class="ledger">
+              <caption class="sr">十月每日收支與趨勢</caption>
+              <colgroup><col style="width:56px"><col><col style="width:72px"><col style="width:72px"><col style="width:120px"></colgroup>
+              <thead><tr><th scope="col">日</th><th scope="col">科目・摘要</th><th scope="col" class="n">收入</th><th scope="col" class="n">支出</th><th scope="col">趨勢</th></tr></thead>
+              <tbody id="dtbody"></tbody>
+            </table>
+          </div>
+          <div class="gap"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pg pr" aria-label="右頁：今日、預算、注意、對帳">
+      <div class="sheet pgs">
+        <div class="run"><b>家計簿</b><span>十月二十八日　今日・預算・對帳</span></div>
+        <div class="rows">
+          <div class="head" id="d-today"><span class="mo" aria-hidden="true">十月</span><h1>二十八日<span class="wd">水曜<span class="sr">，十月</span></span></h1><a class="acctlink" href="#acct-d"><span>帳戶合計</span><b>68,270</b></a></div>
+
+          <div class="total"><span class="lab">今日支出合計</span><span class="amt"><span class="cur">NT$</span>680</span></div>
+          <div class="block">
+            <span class="vl" aria-hidden="true"><span>今日</span></span>
+            <table class="ledger">
+              <caption class="sr">今日明細</caption>
+              <colgroup><col style="width:112px"><col><col style="width:84px"><col style="width:70px"></colgroup>
+              <thead><tr><th scope="col">科目</th><th scope="col">摘要</th><th scope="col">帳戶</th><th scope="col" class="n">金額</th></tr></thead>
+              <tbody>
+                <tr><td>餐飲／午餐</td><td class="m"><span class="clamp">排骨便當</span></td><td class="sm">現金</td><td class="n">180</td></tr>
+                <tr><td>餐飲／飲料</td><td class="m"><span class="clamp">拿鐵，少冰半糖，公司樓下那家</span></td><td class="sm">悠遊卡</td><td class="n">120</td></tr>
+                <tr><td>交通／捷運</td><td class="m"><span class="clamp">通勤</span></td><td class="sm">信用卡</td><td class="n">380</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="r" style="height:calc(var(--row)*2);justify-content:flex-end"><button class="btn sm" type="button">記一筆</button></div>
+
+          <h2 class="sec" id="d-budget">本月預算</h2>
+          <div class="r kv"><span>已用 <b>74%</b>　38,420 ／ 預算 52,000</span><span>預估月底 <b>42,540</b>　整體仍在預算內</span></div>
+          <div class="block">
+            <span class="vl" aria-hidden="true"><span>預算</span></span>
+            <table class="ledger">
+              <caption class="sr">各主分類預算消耗</caption>
+              <colgroup><col style="width:92px"><col style="width:68px"><col style="width:68px"><col style="width:68px"><col><col style="width:92px"></colgroup>
+              <thead><tr><th scope="col">科目</th><th scope="col" class="n">預算</th><th scope="col" class="n">已用</th><th scope="col" class="n">餘額</th><th scope="col">已用</th><th scope="col" class="n">月底預估</th></tr></thead>
+              <tbody>
+                <tr><td>餐飲</td><td class="n">14,000</td><td class="n">13,730</td><td class="n">270</td><td class="bar"><span class="pb" role="img" aria-label="已用 98%"><i style="width:98%"></i></span></td><td class="n"><span class="bad">超 1,200</span></td></tr>
+                <tr><td>居住</td><td class="n">12,000</td><td class="n">9,800</td><td class="n">2,200</td><td class="bar"><span class="pb" role="img" aria-label="已用 82%"><i style="width:82%"></i></span></td><td class="n">10,850</td></tr>
+                <tr><td>交通</td><td class="n">6,000</td><td class="n">4,100</td><td class="n">1,900</td><td class="bar"><span class="pb" role="img" aria-label="已用 68%"><i style="width:68%"></i></span></td><td class="n">4,540</td></tr>
+                <tr><td>日用購物</td><td class="n">5,000</td><td class="n">3,200</td><td class="n">1,800</td><td class="bar"><span class="pb" role="img" aria-label="已用 64%"><i style="width:64%"></i></span></td><td class="n">3,540</td></tr>
+                <tr><td>娛樂休閒</td><td class="n">6,000</td><td class="n">2,600</td><td class="n">3,400</td><td class="bar"><span class="pb" role="img" aria-label="已用 43%"><i style="width:43%"></i></span></td><td class="n">2,880</td></tr>
+                <tr><td>醫療保健</td><td class="n">3,000</td><td class="n">1,240</td><td class="n">1,760</td><td class="bar"><span class="pb" role="img" aria-label="已用 41%"><i style="width:41%"></i></span></td><td class="n">1,370</td></tr>
+                <tr><td>其他</td><td class="n">6,000</td><td class="n">3,750</td><td class="n">2,250</td><td class="bar"><span class="pb" role="img" aria-label="已用 63%"><i style="width:63%"></i></span></td><td class="n">4,160</td></tr>
+                <tr class="sum"><td>合計</td><td class="n">52,000</td><td class="n">38,420</td><td class="n">13,580</td><td class="bar"><span class="pb" role="img" aria-label="已用 74%"><i style="width:74%"></i></span></td><td class="n">42,540</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="gap"></div>
+          <h2 class="sec">注意</h2>
+          <div class="alert"><span class="mk" aria-hidden="true"></span><span><strong>餐飲</strong> 預估月底超支 <span class="bad">NT$&nbsp;1,200</span></span><a class="act" href="#">查看餐飲</a></div>
+          <div class="alert"><span class="mk q" aria-hidden="true"></span><span><strong>2 筆</strong> 帳目未歸類</span><a class="act" href="#">去歸類</a></div>
+          <div class="alert"><span class="mk" aria-hidden="true"></span><span><strong>信用卡</strong> 帳面比帳單多欠 320，可能多記或退款未記</span><a class="act" href="#">查看帳目</a></div>
+
+          <div class="gap"></div>
+          <h2 class="sec" id="acct-d">對帳</h2>
+          <div class="block">
+            <span class="vl" aria-hidden="true"><span>帳戶</span></span>
+            <table class="ledger">
+              <caption class="sr">帳戶對帳</caption>
+              <colgroup><col style="width:112px"><col><col><col style="width:84px"></colgroup>
+              <thead><tr><th scope="col">帳戶</th><th scope="col" class="n">帳面</th><th scope="col" class="n">帳單</th><th scope="col" class="n">差</th></tr></thead>
+              <tbody>
+                <tr><td>現金</td><td class="n">8,200</td><td class="n">8,200</td><td class="n ok">對上</td></tr>
+                <tr><td>悠遊卡</td><td class="n">1,340</td><td class="n">1,340</td><td class="n ok">對上</td></tr>
+                <tr><td>銀行</td><td class="n">61,880</td><td class="n">61,880</td><td class="n ok">對上</td></tr>
+                <tr><td>信用卡</td><td class="n">△3,150</td><td class="n">△2,830</td><td class="n bad">△320</td></tr>
+                <tr class="sum"><td>帳戶合計</td><td class="n">68,270</td><td class="n">68,590</td><td class="n"><span class="bad">△320</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="gap"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// 示意資料：28 日的每日支出（NT$）。真實 app 由帳目計算。合計 38,420，22–28 日與月頁一致。
+(function () {
+  var amts = [1670,920,1250,2290,750,3730,1460,1000,1830,1170,2500,830,1500,2000,1080,1330,2910,670,1750,1420,2170,520,260,1180,760,340,450,680];
+  var max = 3730, today = 28, WD = ['日','一','二','三','四','五','六'];
+  var D = '〇一二三四五六七八九';
+  function kj(n) { if (n < 10) return D[n]; if (n === 10) return '十'; if (n < 20) return '十' + D[n - 10]; var o = n % 10; return D[Math.floor(n / 10)] + '十' + (o ? D[o] : ''); }
+  function dow(d) { return (3 + d) % 7; } // 2026-10-01 是週四
+  function fmt(n) { return n.toLocaleString('en-US'); }
+
+  // ① 手機：可滑動選日的月趨勢
+  var wrap = document.getElementById('days'), dayl = document.getElementById('dayl'), daya = document.getElementById('daya');
+  if (wrap) {
+    var bars = amts.map(function (a, i) { var b = document.createElement('i'); b.style.height = Math.round(a / max * 100) + '%'; if (i + 1 === today) b.className = 't'; wrap.appendChild(b); return b; });
+    var cur = today;
+    function select(d) {
+      d = Math.min(28, Math.max(1, d)); cur = d;
+      bars.forEach(function (b, i) { b.classList.toggle('sel', i + 1 === d); });
+      var a = amts[d - 1], label = kj(d) + '日　' + '日月火水木金土'[dow(d)] + '曜' + (d === today ? '　今日' : '');
+      dayl.textContent = label; daya.innerHTML = '<b>' + fmt(a) + '</b>';
+      wrap.setAttribute('aria-valuenow', d); wrap.setAttribute('aria-valuetext', '十月' + d + '日' + (d === today ? '（今日）' : '') + ' 支出 ' + fmt(a));
+    }
+    function idx(e) { var r = wrap.getBoundingClientRect(); var x = Math.min(Math.max(e.clientX - r.left, 0), r.width - 1); return Math.floor(x / r.width * 28) + 1; }
+    var drag = false;
+    wrap.addEventListener('pointerdown', function (e) { drag = true; try { wrap.setPointerCapture(e.pointerId); } catch (x) {} select(idx(e)); });
+    wrap.addEventListener('pointermove', function (e) { if (drag) select(idx(e)); });
+    ['pointerup', 'pointercancel'].forEach(function (t) { wrap.addEventListener(t, function () { drag = false; }); });
+    wrap.addEventListener('keydown', function (e) {
+      var k = { ArrowLeft: -1, ArrowRight: 1, ArrowDown: -1, ArrowUp: 1, PageDown: -7, PageUp: 7 }[e.key];
+      if (k) { select(cur + k); e.preventDefault(); }
+      else if (e.key === 'Home') { select(1); e.preventDefault(); }
+      else if (e.key === 'End') { select(today); e.preventDefault(); }
+    });
+    select(today);
+  }
+
+  // 書籤：手機切換面板；電腦版點到哪枚就標示哪枚
+  var tabs = [].slice.call(document.querySelectorAll('[role=tab]'));
+  function show(t) {
+    tabs.forEach(function (x) {
+      var on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1;
+      document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
+    });
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { show(t); });
+    t.addEventListener('keydown', function (e) {
+      var j = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (j !== undefined) { var n = tabs[(j + tabs.length) % tabs.length]; show(n); n.focus(); e.preventDefault(); }
+    });
+  });
+  [].forEach.call(document.querySelectorAll('#dtabs .tab'), function (a) {
+    a.addEventListener('click', function () {
+      [].forEach.call(document.querySelectorAll('#dtabs .tab'), function (x) { x.removeAttribute('aria-current'); });
+      a.setAttribute('aria-current', 'true');
+    });
+  });
+
+  // 注意區的連結：切到對帳書籤
+  [].forEach.call(document.querySelectorAll('[data-go]'), function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); var t = document.getElementById(a.getAttribute('data-go')); show(t); t.focus(); });
+  });
+
+  // 對帳：輸入帳單餘額 → 與帳面（△3,150）相減
+  var chk = document.getElementById('chkbtn');
+  if (chk) chk.addEventListener('click', function () {
+    var v = parseInt(document.getElementById('stmt').value.replace(/[^0-9]/g, ''), 10) || 0, d = 3150 - v, h = document.getElementById('chkhint');
+    h.innerHTML = d === 0 ? '<span class="ok">對上</span>　帳面與帳單一致' : '帳面比帳單' + (d > 0 ? '多欠 ' : '少欠 ') + '<span class="bad">' + fmt(Math.abs(d)) + '</span>，尚未對上';
+  });
+
+  // 記一筆：支出／收入／轉帳
+  var entry = document.getElementById('entry'), scrim = document.getElementById('scrim'), addbtn = document.getElementById('addbtn');
+  if (entry) {
+    var seg = [].slice.call(entry.querySelectorAll('[role=radio]')), flds = document.getElementById('flds'), note = document.getElementById('entry-n');
+    var F = {
+      exp: [['科目', '餐飲／午餐'], ['帳戶', '現金'], ['日期', '今日　二十八日']],
+      inc: [['科目', '薪資／一般'], ['帳戶', '銀行'], ['日期', '今日　二十八日']],
+      trf: [['轉出', '現金'], ['轉入', '銀行'], ['日期', '今日　二十八日']]
+    };
+    function kind(k) {
+      seg.forEach(function (b) { var on = b.getAttribute('data-k') === k; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; });
+      flds.innerHTML = F[k].map(function (f) { return '<div class="fld"><span>' + f[0] + '</span><button type="button" class="val">' + f[1] + '</button></div>'; }).join('') +
+        '<div class="fld"><label for="memo">摘要</label><input id="memo" placeholder="選填" autocomplete="off"></div>';
+      note.textContent = k === 'trf' ? '轉帳只移動餘額，不計入收入與支出' : (k === 'inc' ? '收入的科目決定它算哪一類收入' : '');
+    }
+    seg.forEach(function (b, i) {
+      b.addEventListener('click', function () { kind(b.getAttribute('data-k')); });
+      b.addEventListener('keydown', function (e) {
+        var j = { ArrowRight: i + 1, ArrowLeft: i - 1 }[e.key]; if (j === undefined) return;
+        var n = seg[(j + seg.length) % seg.length]; kind(n.getAttribute('data-k')); n.focus(); e.preventDefault();
+      });
+    });
+    function openEntry() { entry.hidden = false; scrim.hidden = false; kind('exp'); document.getElementById('amt').value = ''; document.getElementById('amt').focus(); }
+    function closeEntry() { entry.hidden = true; scrim.hidden = true; addbtn.focus(); }
+    addbtn.addEventListener('click', openEntry);
+    document.getElementById('entry-x').addEventListener('click', closeEntry);
+    document.getElementById('entry-s').addEventListener('click', closeEntry);
+    scrim.addEventListener('click', closeEntry);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !entry.hidden) closeEntry(); });
+  }
+
+  // ② 電腦版：左頁整月帳本（附趨勢長條與週計）
+  var tb = document.getElementById('dtbody');
+  if (tb) {
+    var labs = [['餐飲','午餐'],['交通','捷運　停車'],['餐飲','晚餐'],['日用購物','衛生紙'],['娛樂','電影'],['餐飲','早餐　午餐'],['醫療保健','診所'],['交通','加油'],['餐飲','咖啡　晚餐'],['日用購物','文具']];
+    var fixed = { 22: ['餐飲','晚餐　交通'], 23: ['日用購物','洗衣精'], 24: ['娛樂','電影　餐飲'], 25: ['居住','水費'], 26: ['薪資','十月獎金，另有交通'], 27: ['餐飲','早餐　午餐'], 28: ['餐飲','交通（3 筆）'] };
+    var income = { 5: 46000, 26: 12000 };
+    var html = '', wkExp = 0, wkInc = 0, wkStart = 1, totE = 0, totI = 0;
+    for (var d = 1; d <= 28; d++) {
+      var a = amts[d - 1], inc = income[d] || 0, l = fixed[d] || (d === 5 ? ['薪資','十月薪資，另有餐飲'] : labs[(d * 3) % labs.length]);
+      wkExp += a; wkInc += inc; totE += a; totI += inc;
+      var isT = d === today, sep = l[0] === '薪資' || fixed[d] ? '・' : '・';
+      html += '<tr' + (isT ? ' class="today"' : '') + '><td>' + (isT ? '<span class="dayno">' + d + '<span class="sr"> 今日</span></span>' : d + ' <span class="dim">' + WD[dow(d)] + '</span>') + '</td>' +
+        '<td class="m"><span class="clamp"><span class="cat">' + l[0] + '</span><span class="det">' + (d === 28 ? '　' : sep) + l[1] + '</span></span></td>' +
+        '<td class="n' + (inc ? '' : ' dim') + '">' + (inc ? fmt(inc) : '－') + '</td><td class="n">' + fmt(a) + '</td>' +
+        '<td class="bar"><i style="width:' + Math.max(3, Math.round(a / max * 100)) + '%"></i></td></tr>';
+      if (dow(d) === 6) {
+        html += '<tr class="wk"><td colspan="2">週計　' + kj(wkStart) + '至' + kj(d) + '日</td><td class="n">' + fmt(wkInc) + '</td><td class="n">' + fmt(wkExp) + '</td><td></td></tr>';
+        wkExp = 0; wkInc = 0; wkStart = d + 1;
+      }
+    }
+    html += '<tr class="sum"><td colspan="2">本月累計</td><td class="n">' + fmt(totI) + '</td><td class="n">' + fmt(totE) + '</td><td></td></tr>';
+    tb.innerHTML = html;
+    tb.setAttribute('data-income', totI); tb.setAttribute('data-expense', totE);
+  }
+})();
+</script>
+</body>
+</html>

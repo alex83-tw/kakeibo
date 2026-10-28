@@ -1,0 +1,6 @@
+.superpowers/
+.playwright-mcp/
+.impeccable/
+.env*.local
+node_modules/
+.next/
