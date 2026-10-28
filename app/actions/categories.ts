@@ -25,12 +25,13 @@ function check(kind: EntryKind, from: CategoryRef, to: CategoryRef): { from: Cat
   return { from: fromRef, to: toRef };
 }
 
-async function run<T>(fn: (client: Awaited<ReturnType<typeof createServerClient>>) => Promise<T>, failure: string): Promise<T | { ok: false; error: string }> {
+async function run<T>(
+  fn: (client: Awaited<ReturnType<typeof createServerClient>>, userId: string) => Promise<T>,
+  failure: string,
+): Promise<T | { ok: false; error: string }> {
   try {
-    await getUserId();
-    return await fn(await createServerClient());
-  } catch (e) {
-    if (e instanceof Error && e.message === "UNAUTHENTICATED") return { ok: false, error: "請先登入" };
+    return await fn(await createServerClient(), await getUserId());
+  } catch {
     return { ok: false, error: failure };
   }
 }
@@ -39,13 +40,13 @@ async function run<T>(fn: (client: Awaited<ReturnType<typeof createServerClient>
 export async function previewCategoryChange(kind: EntryKind, from: CategoryRef, to: CategoryRef): Promise<CategoryChangeResult> {
   const c = check(kind, from, to);
   if (typeof c === "string") return { ok: false, error: c };
-  return run(async (client) => ({ ok: true as const, ...(await categoryUsage(client, kind, c.from)) }), "預覽失敗，請稍後再試");
+  return run(async (client, userId) => ({ ok: true as const, ...(await categoryUsage(client, userId, kind, c.from)) }), "預覽失敗，請稍後再試");
 }
 
 export async function applyCategoryChange(kind: EntryKind, from: CategoryRef, to: CategoryRef): Promise<CategoryChangeResult> {
   const c = check(kind, from, to);
   if (typeof c === "string") return { ok: false, error: c };
-  const res = await run(async (client) => ({ ok: true as const, ...(await renameOrMergeCategory(client, kind, c.from, c.to)) }), "變更失敗，請稍後再試");
+  const res = await run(async (client, userId) => ({ ok: true as const, ...(await renameOrMergeCategory(client, userId, kind, c.from, c.to)) }), "變更失敗，請稍後再試");
   if (res.ok) {
     revalidatePath("/", "layout");
   }

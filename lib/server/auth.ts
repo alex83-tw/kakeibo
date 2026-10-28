@@ -1,22 +1,10 @@
-import { createServerClient } from "./supabase";
+/** The single user financial-advisor stores everything under (it runs without login). */
+export const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000";
 
-export function resolveUserId(input: {
-  sessionUserId: string | null;
-  env: { NODE_ENV: string; KAKEIBO_DEV_USER_ID?: string };
-}): string {
-  if (input.sessionUserId) return input.sessionUserId;
-  const dev = input.env.KAKEIBO_DEV_USER_ID?.trim();
-  // The dev bypass exists only when NODE_ENV is exactly "development".
-  if (input.env.NODE_ENV === "development" && dev) return dev;
-  throw new Error("UNAUTHENTICATED");
-}
-
-/** The signed-in user's id, verified with the Auth server (not just read from the cookie). */
+/**
+ * kakeibo is single-user and has no login, same as financial-advisor: every query is scoped to
+ * this one id, and the server talks to Supabase with the service-role key (see supabase.ts).
+ */
 export async function getUserId(): Promise<string> {
-  const client = await createServerClient();
-  const { data } = await client.auth.getUser();
-  return resolveUserId({
-    sessionUserId: data.user?.id ?? null,
-    env: { NODE_ENV: process.env.NODE_ENV, KAKEIBO_DEV_USER_ID: process.env.KAKEIBO_DEV_USER_ID },
-  });
+  return process.env.KAKEIBO_USER_ID?.trim() || DEFAULT_USER_ID;
 }
