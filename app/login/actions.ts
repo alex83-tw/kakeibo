@@ -1,18 +1,16 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { siteUrl } from "@/lib/server/site-url";
 import { createServerClient } from "@/lib/server/supabase";
 
-export async function sendLoginLink(formData: FormData) {
+/** Email + password sign-in against the shared Supabase Auth user. No sign-up: strangers cannot register here. */
+export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
   if (!/^\S+@\S+\.\S+$/.test(email)) redirect("/login?error=email");
+  if (!password) redirect("/login?error=password");
 
   const client = await createServerClient();
-  // shouldCreateUser: false — only the existing account can sign in; strangers cannot register.
-  const { error } = await client.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: false, emailRedirectTo: `${siteUrl(process.env)}/auth/callback` },
-  });
-  redirect(error ? "/login?error=send" : "/login?sent=1");
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  redirect(error ? "/login?error=credentials" : "/");
 }
