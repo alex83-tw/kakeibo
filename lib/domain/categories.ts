@@ -1,3 +1,5 @@
+import type { Entry } from "./types";
+
 export type EntryKind = "income" | "expense";
 
 type Taxonomy = Readonly<Record<string, readonly string[]>>;
@@ -49,4 +51,20 @@ export function isUncategorized(
 ): boolean {
   const m = main?.trim() ?? "";
   return m === "" || (m === "其他" && normalizeSub(sub) === DEFAULT_SUB);
+}
+
+/** Distinct expense (main, sub) pairs, most recently used first. */
+export function recentCategories(entries: Entry[], limit = 5): { main: string; sub: string }[] {
+  const seen = new Set<string>();
+  const out: { main: string; sub: string }[] = [];
+  const sorted = entries.filter((e) => e.entry_type === "expense").sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+  for (const e of sorted) {
+    const sub = normalizeSub(e.sub_category);
+    const key = categoryKey(e.main_category, sub);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ main: e.main_category, sub });
+    if (out.length === limit) break;
+  }
+  return out;
 }

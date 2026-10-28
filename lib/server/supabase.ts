@@ -11,6 +11,10 @@ export function supabaseEnv(): { url: string; key: string } {
 
 /** Per-request client on the `financial` schema; RLS applies as the signed-in user. */
 export async function createServerClient(): Promise<SupabaseClient> {
+  // Development-only fixtures (see dev/fixtures.ts); never reachable in a production build.
+  if (process.env.NODE_ENV === "development" && process.env.KAKEIBO_DEV_FIXTURES === "1") {
+    return (await import("./dev/fixtures")).fixtureClient();
+  }
   const { url, key } = supabaseEnv();
   const store = await cookies();
   return createSsrClient(url, key, {

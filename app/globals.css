@@ -139,3 +139,35 @@ a.act { margin-left: auto; color: var(--ink); font-weight: 700; text-decoration:
 
 /* 文字輸入：一行高，墨色底線，不用外框 */
 input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-height: 44px; padding: 0 var(--pad); background: var(--paper); border: 0; border-bottom: 2px solid var(--ink); border-radius: 0; font: 400 1rem/1 var(--serif); color: var(--ink); }
+
+/* 記一筆：從底部升起的輸入單。類型切換在最上面，轉帳不選科目 */
+.scrim { position: fixed; inset: 0; background: rgba(26, 29, 27, 0.38); z-index: 40; }
+.entry { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(100%, 480px); max-height: 92dvh; overflow-y: auto; z-index: 41; background: var(--paper); border-top: 2px solid var(--ink); padding: 0 var(--pad) var(--pad); }
+.entry-h { height: 48px; display: flex; align-items: center; justify-content: space-between; }
+.entry-h h2 { margin: 0; font-size: var(--fs-title); font-weight: 700; }
+.ghost { appearance: none; border: 0; background: none; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; min-height: 44px; padding: 0 0 0 16px; cursor: pointer; color: var(--ink); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--ink); }
+.seg button { height: 44px; border: 0; border-left: 1px solid var(--ink); border-radius: 0; background: var(--paper); font: 700 var(--fs-body) var(--serif); letter-spacing: 0.15em; text-indent: 0.15em; color: var(--ink); cursor: pointer; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-checked="true"] { background: var(--ink); color: var(--paper); }
+.amtrow { height: calc(var(--row) * 2); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--ink); }
+.amtrow label { font-weight: 700; margin-right: auto; }
+.amtrow .cur { font-size: var(--fs-label); font-weight: 700; }
+.amtrow input { width: 60%; min-width: 0; height: 56px; border: 0; background: none; text-align: right; font: 700 var(--fs-figure) var(--serif); font-variant-numeric: tabular-nums; color: var(--ink); }
+.fld { min-height: 48px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--hair); }
+.fld > label { width: 56px; flex: none; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; }
+.fld select, .fld input { flex: 1; min-width: 0; height: 44px; border: 0; border-radius: 0; background: none; font: inherit; color: var(--ink); text-align: left; padding: 0; text-overflow: ellipsis; }
+.fld select { appearance: none; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%); background-position: calc(100% - 9px) 50%, calc(100% - 4px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 20px; }
+.fld-err { margin: 0; min-height: 0; font-size: var(--fs-label); font-weight: 700; color: var(--shu); }
+.fld-err:not(:empty) { padding: 4px 0; }
+.entry-n { margin: 0; min-height: var(--row); display: flex; align-items: center; font-size: var(--fs-label); color: var(--ink-2); }
+.entry .btn { height: 54px; }
+.entry .btn:disabled { opacity: 0.5; cursor: progress; }
+.entry button:focus-visible, .entry input:focus-visible, .entry select:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* 記錄後的提示：浮在 dock 上方，約 5 秒後消失；「復原」等於刪除剛記的那筆 */
+.toast-slot { position: fixed; left: 50%; bottom: calc(var(--row) * 2 + 8px); transform: translateX(-50%); width: min(100% - 2 * var(--pad), 460px); z-index: 30; pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 var(--pad); background: var(--ink); color: var(--paper); font-weight: 700; }
+.toast .ghost { color: var(--paper); padding-right: 0; }
+.toast .ghost:focus-visible { outline-color: var(--paper); }
+.entry .amtrow input:focus-visible { outline-offset: -3px; }

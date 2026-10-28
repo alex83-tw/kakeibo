@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type { Entry } from "./types";
 import {
   EXPENSE_TAXONOMY,
+  recentCategories,
   INCOME_TAXONOMY,
   categoryKey,
   isUncategorized,
@@ -63,5 +65,22 @@ describe("isUncategorized", () => {
   it("is false once a real sub or main is chosen", () => {
     expect(isUncategorized("其他", "雜項")).toBe(false);
     expect(isUncategorized("餐飲", null)).toBe(false);
+  });
+});
+
+describe("recentCategories", () => {
+  const e = (entry_date: string, main_category: string, sub_category: string | null, entry_type: Entry["entry_type"] = "expense"): Entry => ({
+    id: entry_date + main_category, entry_type, main_category, sub_category, amount: 1, currency: "TWD", entry_date,
+    notes: null, account_id: null, transfer_account_id: null, deleted_at: null, is_recurring: false,
+  });
+  it("most recent first, distinct, expenses only, null sub as other", () => {
+    const out = recentCategories(
+      [e("2026-10-01", "交通", "捷運"), e("2026-10-05", "餐飲", null), e("2026-10-03", "餐飲", "other"), e("2026-10-04", "薪資", null, "income"), e("2026-10-06", "轉帳", "other", "transfer"), e("2026-10-02", "餐飲", "午餐")],
+      5,
+    );
+    expect(out).toEqual([{ main: "餐飲", sub: "other" }, { main: "餐飲", sub: "午餐" }, { main: "交通", sub: "捷運" }]);
+  });
+  it("respects the limit", () => {
+    expect(recentCategories([e("2026-10-01", "A", "a"), e("2026-10-02", "B", "b"), e("2026-10-03", "C", "c")], 2)).toHaveLength(2);
   });
 });
