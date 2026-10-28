@@ -30,8 +30,8 @@ where tablename in ('accounting_entries','budget_plans','budget_settings','categ
 order by schemaname, tablename, policyname;
 
 -- 5) 既有帳目的規模與幣別分布（只有計數，沒有內容）
---    若出現 relation does not exist，請把 accounting_entries 改成 <第 1 段查到的 schema>.accounting_entries
+--    表在 financial schema（第 1 段若顯示別的 schema，請改成那個）
 select entry_type, currency, count(*) as n
-from accounting_entries
+from financial.accounting_entries
 group by entry_type, currency
 order by entry_type, currency;
