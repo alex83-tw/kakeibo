@@ -5,12 +5,13 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS financial.reconciliations (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id           uuid NOT NULL DEFAULT auth.uid(),
-  account_id        uuid NOT NULL REFERENCES financial.ledger_accounts (id) ON DELETE RESTRICT,
+  account_id        uuid NOT NULL,
   statement_date    date NOT NULL,
   statement_balance numeric(18,2) NOT NULL,
   book_balance      numeric(18,2) NOT NULL,
   diff              numeric(18,2) GENERATED ALWAYS AS (book_balance - statement_balance) STORED,
-  created_at        timestamptz NOT NULL DEFAULT now()
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  FOREIGN KEY (account_id, user_id) REFERENCES financial.ledger_accounts (id, user_id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS reconciliations_user_account_idx

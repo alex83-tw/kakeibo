@@ -5,8 +5,23 @@ BEGIN;
 
 ALTER TABLE financial.accounting_entries
   ADD COLUMN IF NOT EXISTS deleted_at          timestamptz,
-  ADD COLUMN IF NOT EXISTS account_id          uuid REFERENCES financial.ledger_accounts (id) ON DELETE RESTRICT,
-  ADD COLUMN IF NOT EXISTS transfer_account_id uuid REFERENCES financial.ledger_accounts (id) ON DELETE RESTRICT;
+  ADD COLUMN IF NOT EXISTS account_id          uuid,
+  ADD COLUMN IF NOT EXISTS transfer_account_id uuid;
+
+-- 複合外鍵：帳戶必須屬於同一個 user_id（NULL 不檢查）。
+DO $$ BEGIN
+  ALTER TABLE financial.accounting_entries
+    ADD CONSTRAINT accounting_entries_account_fk
+    FOREIGN KEY (account_id, user_id) REFERENCES financial.ledger_accounts (id, user_id) ON DELETE RESTRICT;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE financial.accounting_entries
+    ADD CONSTRAINT accounting_entries_transfer_account_fk
+    FOREIGN KEY (transfer_account_id, user_id) REFERENCES financial.ledger_accounts (id, user_id) ON DELETE RESTRICT;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 DO $$ BEGIN
   ALTER TABLE financial.accounting_entries

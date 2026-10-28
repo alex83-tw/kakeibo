@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS financial.ledger_accounts (
   sort_order      integer NOT NULL DEFAULT 0,
   archived        boolean NOT NULL DEFAULT false,
   created_at      timestamptz NOT NULL DEFAULT now(),
-  updated_at      timestamptz NOT NULL DEFAULT now()
+  updated_at      timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (id, user_id)  -- 讓其他表用 (account_id, user_id) 複合外鍵，擋掉跨使用者引用
 );
 
 CREATE INDEX IF NOT EXISTS ledger_accounts_user_sort_idx
