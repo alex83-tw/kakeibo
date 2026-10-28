@@ -130,3 +130,30 @@ describe("missing recurring alert", () => {
     expect(buildToday(base).alerts).toEqual([]);
   });
 });
+
+describe("budget rows for the desktop table", () => {
+  const budgets = [
+    { main_category: "餐飲", budget_amount: 1000, rollover_amount: 0, warning_threshold: 0.8 },
+    { main_category: "交通", budget_amount: 2000, rollover_amount: 300, warning_threshold: 0.8 },
+  ];
+  const v = buildToday({
+    ...base,
+    budgets,
+    entries: [entry({ amount: 400 }), entry({ main_category: "交通", sub_category: "捷運", amount: 150 })],
+  });
+  it("has one row per budget with budget (incl. rollover), spent and the shared progress", () => {
+    expect(v.budgetRows.map((r) => [r.main, r.budget, r.spent, r.progress.remaining])).toEqual([
+      ["餐飲", 1000, 400, 600],
+      ["交通", 2300, 150, 2150],
+    ]);
+  });
+  it("sums to the same totals the 今日 summary shows", () => {
+    const sum = (f: (r: (typeof v.budgetRows)[number]) => number) => v.budgetRows.reduce((s, r) => s + f(r), 0);
+    expect(sum((r) => r.budget)).toBe(v.budget!.available);
+    expect(sum((r) => r.spent)).toBe(v.budget!.spent);
+    expect(sum((r) => r.progress.projected)).toBeCloseTo(v.budget!.projected, 6);
+  });
+  it("is empty without budgets", () => {
+    expect(buildToday(base).budgetRows).toEqual([]);
+  });
+});

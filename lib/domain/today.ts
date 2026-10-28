@@ -2,7 +2,7 @@ import { formatAmount, roundToTen } from "@/lib/money";
 import { dayOfMonth, monthRange } from "@/lib/time";
 import { findAbnormal, findDuplicates, findMissingRecurring, topAlerts, type Alert } from "./alerts";
 import { accountBalance, dailyExpenses, spentByMain, totalBalance } from "./balances";
-import { budgetProgress } from "./budget";
+import { budgetProgress, type BudgetProgress } from "./budget";
 import { isUncategorized } from "./categories";
 import { reconcile } from "./reconcile";
 import { latestByAccount, type ReconciliationRecord } from "./recon";
@@ -22,6 +22,8 @@ export interface TodayView {
   totalBalance: number;
   /** null when no budget is set for the month */
   budget: null | { spent: number; available: number; budget: number; percent: number; projected: number; overall: "over" | "projected-over" | "ok" };
+  /** One row per budgeted main category; `budget` includes rollover, so budget − spent = progress.remaining. */
+  budgetRows: { main: string; budget: number; spent: number; progress: BudgetProgress }[];
   /** expense per day of the month, TWD only */
   daily: number[];
   alerts: Alert[];
@@ -136,6 +138,7 @@ export function buildToday(input: {
     accounts: accounts.map((a) => ({ id: a.id, name: a.name, kind: a.kind, balance: accountBalance(a, entries) })),
     totalBalance: totalBalance(accounts, entries),
     budget,
+    budgetRows: progress.map(({ b, p, spent: s }) => ({ main: b.main_category, budget: p.available, spent: s, progress: p })),
     daily: dailyExpenses(entries, range),
     alerts: topAlerts(alerts, 3),
   };

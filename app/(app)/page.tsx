@@ -1,30 +1,25 @@
 import Link from "next/link";
+import { Spread } from "@/components/desktop/Spread";
+import { LeftPage, RightPage } from "@/components/desktop/SpreadPages";
 import { DaySlider } from "@/components/today/DaySlider";
-import { AlertRow } from "@/components/paper/AlertRow";
-import { Block } from "@/components/paper/Block";
+import { TodayBlock } from "@/components/today/TodayBlock";
+import { AlertList } from "@/components/paper/AlertList";
 import { Head } from "@/components/paper/Head";
 import { Hint } from "@/components/paper/Hint";
 import { Run } from "@/components/paper/Run";
 import { TotalLine } from "@/components/paper/TotalLine";
-import { subLabel } from "@/lib/domain/categories";
-import type { Entry } from "@/lib/domain/types";
 import { formatAmount, formatSigned, roundToTen } from "@/lib/money";
 import { loadToday } from "@/lib/server/today";
 import { dayOfMonth, toKanji, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
 
-function amountCell(e: Entry): string {
-  if (e.currency !== "TWD") return "未納入";
-  return e.entry_type === "income" ? `＋${formatAmount(e.amount)}` : formatAmount(e.amount);
-}
-
 export default async function TodayPage() {
-  const { view, today, year, month, accountNames } = await loadToday();
+  const data = await loadToday();
+  const { view, today, year, month, accountNames } = data;
   const day = dayOfMonth(today);
-  const name = (id: string | null) => (id ? (accountNames[id] ?? "—") : "—");
   const { budget } = view;
 
   return (
-    <>
+    <Spread left={<LeftPage data={data} />} right={<RightPage data={data} />}>
       <Run label={`${toKanji(month)}月　今日`} />
       <div className="rows">
         <Head
@@ -49,49 +44,7 @@ export default async function TodayPage() {
 
         <TotalLine label="今日支出合計" amount={view.todayExpense} />
 
-        {view.todayRows.length > 0 ? (
-          <Block label="今日">
-            <table className="ledger">
-              <caption className="sr">今日明細</caption>
-              <colgroup>
-                <col style={{ width: 84 }} />
-                <col />
-                <col style={{ width: 52 }} />
-                <col style={{ width: 62 }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th scope="col">科目</th>
-                  <th scope="col">摘要</th>
-                  <th scope="col">帳戶</th>
-                  <th scope="col" className="n">
-                    金額
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {view.todayRows.map((e) => (
-                  <tr key={e.id}>
-                    <td>
-                      {e.entry_type === "transfer" ? "轉帳" : `${e.main_category}／${subLabel(e.sub_category ?? "other")}`}
-                    </td>
-                    <td className="m">
-                      <span className="clamp">{e.notes ?? ""}</span>
-                    </td>
-                    <td className="sm">
-                      <span className="clamp">
-                        {e.entry_type === "transfer" ? `${name(e.account_id)}→${name(e.transfer_account_id)}` : name(e.account_id)}
-                      </span>
-                    </td>
-                    <td className="n">{amountCell(e)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Block>
-        ) : (
-          <Hint>今天還沒有帳目。按下方「記一筆」開始。</Hint>
-        )}
+        <TodayBlock rows={view.todayRows} accountNames={accountNames} />
 
         <div className="gap" />
         <h2 className="sec">本月預算</h2>
@@ -124,26 +77,7 @@ export default async function TodayPage() {
 
         <div className="gap" />
         <h2 className="sec">注意</h2>
-        {view.alerts.length > 0 ? (
-          view.alerts.map((a) => (
-            <AlertRow
-              key={a.kind + a.text}
-              tone={["uncategorized", "duplicate", "abnormal", "missing-recurring"].includes(a.kind) ? "question" : "action"}
-              href={a.href}
-              actionLabel={a.actionLabel ?? "查看"}
-            >
-              <strong>{a.subject}</strong> {a.body}
-              {a.emphasis ? (
-                <>
-                  {a.body ? " " : ""}
-                  <span className="bad">{a.emphasis}</span>
-                </>
-              ) : null}
-            </AlertRow>
-          ))
-        ) : (
-          <Hint>目前沒有需要處理的事。</Hint>
-        )}
+        <AlertList alerts={view.alerts} />
 
         <div className="gap" />
         <h2 className="sec" id="acct">
@@ -169,6 +103,6 @@ export default async function TodayPage() {
         )}
         <div className="gap" />
       </div>
-    </>
+    </Spread>
   );
 }

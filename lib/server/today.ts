@@ -1,5 +1,7 @@
 import { dueRules } from "@/lib/domain/recurring";
 import { buildToday, type TodayView } from "@/lib/domain/today";
+import type { Entry, LedgerAccount } from "@/lib/domain/types";
+import type { ReconciliationRecord } from "@/lib/domain/recon";
 import { currentMonth, monthRange, shiftMonth, twToday } from "@/lib/time";
 import { getUserId } from "./auth";
 import { listAccounts } from "./repos/accounts";
@@ -15,6 +17,8 @@ export async function loadToday(): Promise<{
   year: number;
   month: number;
   accountNames: Record<string, string>;
+  /** The raw data buildToday used, for the desktop spread's ledger and 對帳 pages. */
+  raw: { accounts: LedgerAccount[]; entries: Entry[]; reconciliations: ReconciliationRecord[] };
 }> {
   const userId = await getUserId();
   const client = await createServerClient();
@@ -40,5 +44,6 @@ export async function loadToday(): Promise<{
     year,
     month,
     accountNames: Object.fromEntries(accounts.map((a) => [a.id, a.name])),
+    raw: { accounts, entries, reconciliations },
   };
 }

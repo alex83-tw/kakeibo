@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { ReconcileForm } from "@/components/recon/ReconcileForm";
+import { ReconTable } from "@/components/recon/ReconTable";
 import { AlertRow } from "@/components/paper/AlertRow";
-import { Block } from "@/components/paper/Block";
 import { Head } from "@/components/paper/Head";
 import { Hint } from "@/components/paper/Hint";
 import { Run } from "@/components/paper/Run";
 import { accountBalance } from "@/lib/domain/balances";
 import { buildRecon } from "@/lib/domain/recon";
 import { reconcile, reconcileHint } from "@/lib/domain/reconcile";
-import { formatSigned } from "@/lib/money";
 import { getUserId } from "@/lib/server/auth";
 import { listAccounts } from "@/lib/server/repos/accounts";
 import { listEntries } from "@/lib/server/repos/entries";
@@ -60,51 +59,7 @@ export default async function ReconPage() {
           }
         />
         <div className="gap" />
-        <Block label="帳戶">
-          <table className="ledger">
-            <caption className="sr">帳戶對帳（各帳戶最近一次對帳的數字）</caption>
-            <colgroup>
-              <col style={{ width: 62 }} />
-              <col />
-              <col />
-              <col style={{ width: 58 }} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th scope="col">帳戶</th>
-                <th scope="col" className="n">
-                  帳面
-                </th>
-                <th scope="col" className="n">
-                  帳單
-                </th>
-                <th scope="col" className="n">
-                  差
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {recon.rows.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.name}</td>
-                  <td className="n">{formatSigned(r.book)}</td>
-                  <td className="n">{r.statement === null ? "—" : formatSigned(r.statement)}</td>
-                  {r.matched === null ? (
-                    <td className="n dim">未對帳</td>
-                  ) : r.matched ? (
-                    <td className="n ok">對上</td>
-                  ) : (
-                    <td className="n bad">{formatSigned(r.diff ?? 0)}</td>
-                  )}
-                </tr>
-              ))}
-              <tr className="sum">
-                <td colSpan={3}>差合計</td>
-                {recon.totalDiff === 0 ? <td className="n ok">對上</td> : <td className="n bad">{formatSigned(recon.totalDiff)}</td>}
-              </tr>
-            </tbody>
-          </table>
-        </Block>
+        <ReconTable recon={recon} />
         {differing.map((r) => (
           <AlertRow key={r.id} tone="action" href="/ledger" actionLabel="查看帳目">
             <strong>{r.name}</strong> {reconcile(r.kind, r.book, r.statement ?? 0).sentence}，{reconcileHint(r.kind, r.diff ?? 0)}

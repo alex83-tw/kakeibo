@@ -65,3 +65,5 @@ export function buildRecon(input: {
     totalDiff: Math.round(rows.reduce((s, r) => s + (r.diff ?? 0), 0) * 100) / 100,
   };
 }
+
+export type ReconView = ReturnType<typeof buildRecon>;
