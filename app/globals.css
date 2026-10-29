@@ -112,6 +112,7 @@ table.ledger th { font-size: var(--fs-label); font-weight: 700; border-bottom: 1
 table.ledger td.n, table.ledger th.n { text-align: right; }
 table.ledger td.sm { font-size: var(--fs-label); color: var(--ink-2); }
 table.ledger td.m { white-space: normal; text-overflow: clip; }
+.wc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; line-height: 17px; overflow-wrap: anywhere; }
 .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: var(--fs-label); line-height: 17px; color: var(--ink-2); overflow-wrap: anywhere; }
 table.ledger tr.today td { background-image: radial-gradient(circle at 25% 25%, rgba(26, 29, 27, 0.26) 0.6px, transparent 0.85px), radial-gradient(circle at 75% 75%, rgba(26, 29, 27, 0.26) 0.6px, transparent 0.85px); background-size: 4px 4px; }
 table.ledger tr.sum td { font-weight: 700; border-top: 1px solid var(--ink); }
@@ -162,6 +163,8 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 .fld select { appearance: none; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%); background-position: calc(100% - 9px) 50%, calc(100% - 4px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 20px; }
 .fld-err { margin: 0; min-height: 0; font-size: var(--fs-label); font-weight: 700; color: var(--shu); }
 .fld-err:not(:empty) { padding: 4px 0; }
+.entry-as { margin: 0; min-height: var(--row); display: flex; align-items: center; gap: 4px; font-size: var(--fs-label); color: var(--ink-2); }
+.entry-as .ghost { padding: 0 4px; color: var(--ink); }
 .entry-n { margin: 0; min-height: var(--row); display: flex; align-items: center; font-size: var(--fs-label); color: var(--ink-2); }
 .entry .btn { height: 54px; }
 .entry .btn:disabled { opacity: 0.5; cursor: progress; }
@@ -188,7 +191,7 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 .acct > div:nth-child(even) { border-left: 1px solid var(--hair); padding: 0 0 0 12px; }
 .acct > .tot { grid-column: 1 / -1; border-left: 0; border-bottom: 0; padding: 0; font-weight: 700; border-top: 1px solid var(--ink); }
 .acct > .tot b { border-bottom: 3px double var(--ink); padding: 0 2px; }
-.hint a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 12px 0; } /* 句中連結：上下加 padding 把點擊區撐到 44px，不影響行高 */
+.hint a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 13px 0; } /* 句中連結：上下加 padding 把點擊區撐到 44px，不影響行高 */
 
 /* 帳本 */
 .cat { font-size: var(--fs-body); color: var(--ink); }
@@ -215,14 +218,22 @@ a.dlink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 
 /* 預算帳頁：預算與提醒比例是表格裡的輸入格，整格 44px 高，底線標出可改 */
 table.bb th[scope="row"] { font-weight: 400; font-size: var(--fs-body); }
-table.bb tr:not(.sum) td, table.bb tr:not(.sum) th { height: 44px; }
+table.bb tr:not(.sum):not(.sub) td, table.bb tr:not(.sum):not(.sub) th { height: 44px; }
+table.bb th.two, table.bb tr:has(th.two) td { height: 64px; }
+.bb-name { white-space: normal; }
+.bb-name > span { display: block; }
+.bb-pct { display: flex; align-items: center; gap: 1px; font-size: var(--fs-label); font-weight: 400; color: var(--ink-2); }
+.bb-pct input { width: 28px; height: 36px; border: 0; border-radius: 0; background: transparent; padding: 0 1px; font: inherit; text-align: right; color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.bb-pct input:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+table.bb th, table.bb td { padding: 0 3px; }
 table.bb td.in { padding: 0; overflow: visible; }
+table.bb tr.sub td, table.bb tr.sub th { height: 36px; color: var(--ink-2); font-size: var(--fs-label); }
+table.bb tr.sub th { font-weight: 400; }
 table.bb td.in input { display: block; width: 100%; height: 44px; border: 0; border-radius: 0; background: transparent; padding: 0 4px; font: inherit; text-align: right; color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
 table.bb td.in input::placeholder { color: var(--ink-2); }
 table.bb td.in input:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
 table.bb td.in input[aria-invalid] { box-shadow: inset 0 -3px 0 var(--shu); }
 table.bb th[scope="row"] { border-bottom: 1px solid var(--hair); }
-table.bb th.tight { letter-spacing: 0; padding-right: 6px; }
 table.bb tr.sum th { font-weight: 700; border-top: 1px solid var(--ink); border-bottom: 0; }
 .bb-live { min-height: var(--row); display: flex; align-items: center; padding: 0; }
 
@@ -230,7 +241,7 @@ table.bb tr.sum th { font-weight: 700; border-top: 1px solid var(--ink); border-
 table.rc th[scope="row"] { font-weight: 400; font-size: var(--fs-body); border-bottom: 1px solid var(--hair); }
 table.rc tr:not(.sum) td, table.rc tr:not(.sum) th { height: 44px; }
 table.rc td.empty { white-space: normal; text-align: left; color: var(--ink-2); font-size: var(--fs-label); }
-table.rc td.empty a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 12px 0; }
+table.rc td.empty a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 13px 0; }
 a.rc-name { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; display: block; line-height: 44px; }
 a.rc-name:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
 
@@ -303,6 +314,9 @@ table.bt th[scope="row"] { font-weight: 400; }
 .bt-name .bar i.bad { background: var(--shu); }
 table.bt { table-layout: auto; width: 100%; }
 table.bt th, table.bt td { overflow: visible; text-overflow: clip; }
-table.bt th[scope="col"]:first-child, table.bt .bt-name, table.bt tr.sum th { width: 112px; }
+table.bt th[scope="col"]:first-child, table.bt .bt-name, table.bt tr.ub th, table.bt tr.ub td { height: 44px; }
+a.ub-link { display: flex; align-items: center; height: 44px; color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+table.bt tr.sum th { width: 112px; }
 .bt-name > span:first-child { font-size: var(--fs-body); }
 table.bt tr.sum th { font-size: var(--fs-body); font-weight: 700; }
+

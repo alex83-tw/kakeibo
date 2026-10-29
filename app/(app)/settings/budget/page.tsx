@@ -48,7 +48,7 @@ export default async function BudgetSettingsPage() {
             </Link>
           }
         />
-        <Hint>點金額直接改，離開欄位就存；清空＝取消這項預算。提醒%＝用到幾成時提醒。</Hint>
+        <Hint>點金額直接改，離開欄位就存；清空＝取消這項預算。「提醒 %」＝用到幾成時提醒。</Hint>
         <BudgetBook year={year} month={month} rows={rows} addable={taxonomy.filter((m) => !used.has(m))} hasAny={budgets.length > 0} />
         <div className="gap" />
       </div>

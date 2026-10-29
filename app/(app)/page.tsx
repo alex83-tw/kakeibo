@@ -52,7 +52,13 @@ export default async function TodayPage() {
           <>
             <div className="r kv">
               <span>
-                已用 <b>{budget.percent}%</b>
+                {budget.spent > budget.available ? (
+                  <b className="bad">超支 {formatAmount(budget.spent - budget.available)}</b>
+                ) : (
+                  <>
+                    已用 <b>{budget.percent}%</b>
+                  </>
+                )}
               </span>
               <span>
                 {formatAmount(budget.spent)} ／ 預算 {formatAmount(budget.available)}

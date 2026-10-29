@@ -62,9 +62,11 @@ export function BudgetTable({ rows, unbudgeted }: { rows: BudgetTableRow[]; unbu
             </td>
           </tr>
           {unbudgeted && unbudgeted.total > 0 ? (
-            <tr>
+            <tr className="ub">
               <th scope="row">
-                <Link href="/settings/budget">未設預算</Link>
+                <Link className="ub-link" href="/settings/budget">
+                  未設預算
+                </Link>
               </th>
               <td className="n dim">－</td>
               <td className="n">{formatAmount(unbudgeted.total)}</td>

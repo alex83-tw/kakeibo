@@ -255,6 +255,14 @@ export function EntryForm({
         <input id="entry-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="選填" autoComplete="off" aria-describedby="entry-notes-err" />
       </Field>
 
+      {type !== "transfer" ? (
+        <p className="entry-as" aria-live="polite">
+          記為{" "}
+          <button type="button" className="ghost" onClick={() => document.getElementById("entry-category")?.focus()}>
+            {category === "" ? "（尚未選科目）" : `${splitCategory(category).main}／${subLabel(splitCategory(category).sub)}`}
+          </button>
+        </p>
+      ) : null}
       <p className="entry-n">{KIND_NOTE[type]}</p>
       <p className="fld-err form-err" aria-live="polite">
         {err("form")}

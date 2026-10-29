@@ -27,9 +27,12 @@ describe("BudgetBook", () => {
   it("lists spending in unbudgeted categories and totals 已用 across every row", () => {
     render(ui);
     expect(screen.getByLabelText("飲食 預算金額")).toHaveProperty("value", "");
-    const total = screen.getByRole("row", { name: /合計/ });
+    // 已設合計: budget, spent and remaining all over the budgeted rows; 未設 carries only what is outside them.
+    const total = screen.getByRole("row", { name: /已設合計/ });
     expect(total.textContent).toContain("8,000");
-    expect(total.textContent).toContain("4,500");
+    expect(total.textContent).toContain("3,000");
+    expect(total.textContent).toContain("5,000");
+    expect(screen.getByRole("row", { name: /^未設/ }).textContent).toContain("1,500");
   });
 
   it("saves a changed amount when the field loses focus, with the row's reminder percentage", async () => {

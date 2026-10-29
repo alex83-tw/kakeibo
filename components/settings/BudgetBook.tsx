@@ -31,10 +31,12 @@ export function BudgetBook({ year, month, rows, addable, hasAny }: { year: numbe
     if (focusMain) document.getElementById(`bud-${focusMain}-a`)?.focus();
   }, [focusMain]);
 
+  // Two rows, each on one basis: what is budgeted (預算, 已用, 餘額 all over the same categories), and what is not.
   const budgeted = shown.filter((r) => r.amount !== null);
   const totalBudget = budgeted.reduce((s, r) => s + r.available, 0);
-  const totalSpent = shown.reduce((s, r) => s + r.spent, 0);
-  const remaining = totalBudget - budgeted.reduce((s, r) => s + r.spent, 0);
+  const budgetedSpent = budgeted.reduce((s, r) => s + r.spent, 0);
+  const remaining = totalBudget - budgetedSpent;
+  const unbudgetedSpent = shown.filter((r) => r.amount === null).reduce((s, r) => s + r.spent, 0);
 
   return (
     <>
@@ -59,11 +61,10 @@ export function BudgetBook({ year, month, rows, addable, hasAny }: { year: numbe
         <table className="ledger bb">
           <caption className="sr">各主分類本月預算、已用、餘額；預算與提醒比例可直接修改</caption>
           <colgroup>
-            <col style={{ width: 68 }} />
-            <col />
-            <col style={{ width: 56 }} />
-            <col style={{ width: 56 }} />
-            <col style={{ width: 46 }} />
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "22%" }} />
           </colgroup>
           <thead>
             <tr>
@@ -71,7 +72,6 @@ export function BudgetBook({ year, month, rows, addable, hasAny }: { year: numbe
               <th scope="col" className="n">預算</th>
               <th scope="col" className="n">已用</th>
               <th scope="col" className="n">餘額</th>
-              <th scope="col" className="n tight">提醒%</th>
             </tr>
           </thead>
           <tbody>
@@ -79,12 +79,19 @@ export function BudgetBook({ year, month, rows, addable, hasAny }: { year: numbe
               <Line key={r.main} row={r} year={year} month={month} report={(text, bad) => setStatus({ text, bad })} />
             ))}
             <tr className="sum">
-              <th scope="row">合計</th>
+              <th scope="row">已設合計</th>
               <td className="n">{formatAmount(totalBudget)}</td>
-              <td className="n">{formatAmount(totalSpent)}</td>
+              <td className="n">{formatAmount(budgetedSpent)}</td>
               <td className={remaining < 0 ? "n bad" : "n"}>{formatSigned(remaining)}</td>
-              <td />
             </tr>
+            {unbudgetedSpent > 0 ? (
+              <tr className="sub">
+                <th scope="row">未設</th>
+                <td className="n dim">－</td>
+                <td className="n">{formatAmount(unbudgetedSpent)}</td>
+                <td className="n dim">－</td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </Block>
@@ -145,7 +152,17 @@ function Line({ row, year, month, report }: { row: BudgetBookRow; year: number; 
   const remaining = row.amount === null ? null : row.available - row.spent;
   return (
     <tr>
-      <th scope="row">{row.main}</th>
+      <th scope="row" className={amount.trim() !== "" ? "bb-name two" : "bb-name"}>
+        <span>{row.main}</span>
+        {amount.trim() !== "" ? (
+          <label className="bb-pct" htmlFor={`${id}-p`}>
+            <span className="sr">{row.main} 提醒比例（用到幾成時提醒，%）</span>
+            <span aria-hidden="true">提醒</span>
+            <input id={`${id}-p`} inputMode="numeric" autoComplete="off" value={pct} onChange={(e) => setPct(e.target.value)} onBlur={commit} />
+            <span aria-hidden="true">%</span>
+          </label>
+        ) : null}
+      </th>
       <td className="n in">
         <label htmlFor={`${id}-a`} className="sr">
           {row.main} 預算金額
@@ -154,12 +171,6 @@ function Line({ row, year, month, report }: { row: BudgetBookRow; year: number; 
       </td>
       <td className={row.spent > 0 ? "n" : "n dim"}>{row.spent > 0 ? formatAmount(row.spent) : "－"}</td>
       <td className={remaining !== null && remaining < 0 ? "n bad" : "n dim"}>{remaining === null ? "－" : formatSigned(remaining)}</td>
-      <td className="n in">
-        <label htmlFor={`${id}-p`} className="sr">
-          {row.main} 提醒比例（用到幾成時提醒，%）
-        </label>
-        <input id={`${id}-p`} inputMode="numeric" autoComplete="off" value={pct} onChange={(e) => setPct(e.target.value)} onBlur={commit} />
-      </td>
     </tr>
   );
 }

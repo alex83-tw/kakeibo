@@ -38,8 +38,8 @@ export function TodayBlock({ rows, accountNames }: { rows: Entry[]; accountNames
             <tbody>
               {rows.map((e) => (
                 <tr key={e.id}>
-                  <td>
-                    {e.entry_type === "transfer" ? "轉帳" : `${e.main_category}／${subLabel(e.sub_category ?? "other")}`}
+                  <td className="m">
+                    <span className="wc">{e.entry_type === "transfer" ? "轉帳" : `${e.main_category}／${subLabel(e.sub_category ?? "other")}`}</span>
                   </td>
                   <td className="m">
                     <span className="clamp">{foldWidth(e.notes ?? "")}</span>

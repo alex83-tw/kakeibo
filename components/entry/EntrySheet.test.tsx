@@ -79,6 +79,22 @@ describe("EntrySheet from an alert", () => {
   });
 });
 
+describe("EntrySheet states where the entry will be filed", () => {
+  it("spells out the default category above 儲存, follows the select, and is absent for transfers", async () => {
+    const user = await open();
+    expect(screen.getByRole("button", { name: "餐飲／午餐" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("科目"), "交通::other");
+    expect(screen.getByRole("button", { name: "交通／一般" })).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "轉帳" }));
+    expect(screen.queryByText(/^記為/)).toBeNull();
+  });
+  it("says so when no category is chosen yet (income starts blank)", async () => {
+    const user = await open();
+    await user.click(screen.getByRole("radio", { name: "收入" }));
+    expect(screen.getByRole("button", { name: "（尚未選科目）" })).toBeInTheDocument();
+  });
+});
+
 describe("EntrySheet transfer without enough accounts", () => {
   it("explains what is missing and does not offer a save", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
