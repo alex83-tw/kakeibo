@@ -15,6 +15,8 @@ export interface Entry {
   transfer_account_id: string | null;
   deleted_at: string | null;
   is_recurring: boolean;
+  /** Set when `amount`/`currency` above were converted to TWD at the entry-date rate; holds what is stored. */
+  foreign?: { currency: string; amount: number; rate: number };
 }
 
 export interface LedgerAccount {

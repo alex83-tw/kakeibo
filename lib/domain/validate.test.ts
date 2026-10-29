@@ -179,3 +179,15 @@ describe("validateRuleInput", () => {
     expect(!v.ok && v.errors[field as keyof typeof v.errors]).toBeTruthy();
   });
 });
+
+describe("currency", () => {
+  it("defaults to TWD and accepts USD and JPY", () => {
+    const r = (currency?: string) => validateEntryInput({ ...ok, currency });
+    expect(r()).toMatchObject({ ok: true, value: { currency: "TWD" } });
+    expect(r("JPY")).toMatchObject({ ok: true, value: { currency: "JPY" } });
+    expect(errorsFor({ currency: "EUR" }).currency).toBe("幣別不正確");
+  });
+  it("a transfer is TWD only", () => {
+    expect(errorsFor({ entry_type: "transfer", currency: "USD", account_id: "a", transfer_account_id: "b" }).currency).toBe("轉帳只能用台幣");
+  });
+});

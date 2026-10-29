@@ -64,3 +64,14 @@ describe("buildLedger (October 2026, today = 28th)", () => {
     expect(empty).toMatchObject({ income: 0, expense: 0, net: 0, weeks: [] });
   });
 });
+
+describe("buildLedger with a converted foreign entry", () => {
+  it("counts the TWD amount and carries the stored one in orig", () => {
+    const l = buildLedger({
+      year: 2026, month: 10, today: "2026-10-28",
+      entries: [entry({ entry_date: "2026-10-04", amount: 252, foreign: { currency: "JPY", amount: 1200, rate: 0.21 } })],
+    });
+    expect(l.expense).toBe(252);
+    expect(l.weeks.flatMap((w) => w.lines)[0]).toMatchObject({ foreign: false, orig: "JPY 1,200" });
+  });
+});

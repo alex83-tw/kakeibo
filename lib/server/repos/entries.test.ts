@@ -46,16 +46,21 @@ describe("listEntries", () => {
 });
 
 const valid: ValidEntry = {
-  entry_type: "expense", amount: 180, main_category: "餐飲", sub_category: "other",
+  entry_type: "expense", amount: 180, currency: "TWD", main_category: "餐飲", sub_category: "other",
   account_id: null, transfer_account_id: null, entry_date: "2026-10-28", notes: null,
 };
 
 describe("entry writes", () => {
-  it("insert stamps the user and TWD explicitly", async () => {
+  it("insert stamps the user and writes the entry\u2019s currency", async () => {
     const { client, calls } = fakeClient([{ id: "new" }]);
     expect(await insertEntry(client, "u1", valid)).toBe("new");
     const ins = calls.find((c) => c[0] === "insert");
     expect(ins?.[1]).toMatchObject({ user_id: "u1", currency: "TWD", amount: 180 });
+  });
+  it("update writes the currency too, so an edit can change JPY to TWD", async () => {
+    const { client, calls } = fakeClient([{ id: "e1" }]);
+    await updateEntryRow(client, "u1", "e1", { ...valid, currency: "JPY" });
+    expect(calls.find((c) => c[0] === "update")?.[1]).toMatchObject({ currency: "JPY" });
   });
   it("update is scoped to user and live rows, and reports a miss", async () => {
     const hit = fakeClient([{ id: "e1" }]);

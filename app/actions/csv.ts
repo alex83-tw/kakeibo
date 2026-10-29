@@ -25,7 +25,7 @@ async function plan(text: string) {
   const dates = rows.map((r) => r.entry_date).sort();
   // Only TWD rows are comparable: the CSV carries no currency, and an exported file holds TWD only.
   const existing =
-    rows.length === 0 ? [] : (await listEntries(client, userId, { start: dates[0], end: dates[dates.length - 1] })).filter((e) => e.currency === "TWD");
+    rows.length === 0 ? [] : (await listEntries(client, userId, { start: dates[0], end: dates[dates.length - 1] })).filter((e) => e.currency === "TWD" && !e.foreign);
   return { userId, client, errors, ...planImport(rows, existing) };
 }
 

@@ -219,6 +219,7 @@ input.r { display: block; width: 100%; height: var(--row); padding: 0; backgroun
 .amtrow { height: calc(var(--row) * 2); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--ink); }
 .amtrow label { font-weight: 700; margin-right: auto; }
 .amtrow .cur { font-size: var(--fs-label); font-weight: 700; }
+.amtrow select.cur { border: 0; background: none; color: var(--ink); font-family: inherit; min-height: 44px; padding: 0 2px; }
 .amtrow input { flex: 0 1 9ch; width: 9ch; min-width: 0; height: 56px; border: 0; background: none; text-align: right; font: 700 1.625rem var(--serif); font-variant-numeric: tabular-nums; color: var(--ink); }
 .fld { min-height: 48px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--hair); }
 .fld > label { width: 56px; flex: none; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; }

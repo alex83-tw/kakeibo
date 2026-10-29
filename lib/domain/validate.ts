@@ -1,11 +1,14 @@
 import { MAX_AMOUNT, parseAmountInput } from "@/lib/money";
 import { isRealDate } from "@/lib/time";
 import { normalizeSub } from "./categories";
+import { CURRENCIES } from "./fx";
 import type { AccountKind, EntryType } from "./types";
 
 export interface EntryInput {
   entry_type: EntryType;
   amount: string;
+  /** TWD when absent (CSV rows) */
+  currency?: string;
   main_category: string;
   sub_category: string;
   account_id: string;
@@ -17,6 +20,7 @@ export interface EntryInput {
 export interface ValidEntry {
   entry_type: EntryType;
   amount: number;
+  currency: string;
   main_category: string;
   sub_category: string;
   account_id: string | null;
@@ -48,6 +52,10 @@ export function validateEntryInput(input: EntryInput): ValidationResult {
   const amount = checkAmount(input.amount);
   if ("error" in amount) errors.amount = amount.error;
 
+  const currency = input.currency ?? "TWD";
+  if (!(CURRENCIES as readonly string[]).includes(currency)) errors.currency = "幣別不正確";
+  else if (transfer && currency !== "TWD") errors.currency = "轉帳只能用台幣";
+
   if (!transfer && input.main_category.trim() === "") errors.main_category = "請選擇科目";
 
   if (transfer) {
@@ -68,6 +76,7 @@ export function validateEntryInput(input: EntryInput): ValidationResult {
     value: {
       entry_type: input.entry_type,
       amount: amount.amount,
+      currency,
       main_category: transfer ? "轉帳" : input.main_category.trim(),
       sub_category: transfer ? "other" : normalizeSub(input.sub_category),
       account_id: input.account_id === "" ? null : input.account_id,

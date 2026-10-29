@@ -20,7 +20,7 @@ export async function GET() {
     listEntries(client, userId, { start: "0001-01-01", end: "9999-12-31" }),
     listAccounts(client, userId),
   ]);
-  const csv = entriesToCsv(entries.filter((e) => e.currency === "TWD"), accounts);
+  const csv = entriesToCsv(entries.filter((e) => e.currency === "TWD" && !e.foreign), accounts);
   return new Response(`﻿${csv}`, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

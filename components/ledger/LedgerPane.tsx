@@ -95,7 +95,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
                 {w.lines.map((l, i) => {
                   const e = l.entry;
                   const dim = l.transfer || l.foreign;
-                  const note = [l.det, l.foreign && e ? `${e.currency} ${formatAmount(e.amount)}` : ""].filter(Boolean).join("　");
+                  const note = [l.det, l.orig].filter(Boolean).join("　");
                   const muted = l.transfer ? `(${formatAmount(e!.amount)})` : "未納入";
                   return (
                     <tr key={e?.id ?? `t${l.day}`} id={l.first ? `d-${String(l.day).padStart(2, "0")}` : undefined} className={[l.isToday ? "today" : "", l.first && i > 0 ? "nd" : ""].join(" ").trim() || undefined}>

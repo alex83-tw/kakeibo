@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { validateEntryInput, type EntryInput } from "@/lib/domain/validate";
 import { getUserId } from "@/lib/server/auth";
-import { insertEntry, setEntryDeleted, updateEntryRow } from "@/lib/server/repos/entries";
+import { insertEntry, rateFor, setEntryDeleted, updateEntryRow } from "@/lib/server/repos/entries";
 import { createServerClient } from "@/lib/server/supabase";
 
 export type EntryActionResult =
@@ -45,4 +45,14 @@ export async function softDeleteEntry(id: string): Promise<EntryActionResult> {
 
 export async function restoreEntry(id: string): Promise<EntryActionResult> {
   return guarded(async (userId, client) => ((await setEntryDeleted(client, userId, id, false)) ? { ok: true, id } : NOT_FOUND));
+}
+
+/** TWD per 1 unit of `currency` on `date`, for the form's ≈ preview; null when unknown or signed out. */
+export async function previewRate(currency: string, date: string): Promise<number | null> {
+  try {
+    await getUserId();
+    return await rateFor(await createServerClient(), currency, date);
+  } catch {
+    return null;
+  }
 }

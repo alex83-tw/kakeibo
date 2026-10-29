@@ -55,6 +55,10 @@ function seed(): Store {
       { main_category: "交通", budget_amount: 2000, rollover_amount: 300, warning_threshold: 0.8 },
       { main_category: "居住", budget_amount: 13000, rollover_amount: 0, warning_threshold: 0.9 },
     ].map((b) => ({ id: uid(), user_id: FIXTURE_USER, sub_category: "other", currency: "TWD", period_year: year, period_month: month, ...b })),
+    exchange_rates: [
+      { from_currency: "JPY", to_currency: "TWD", rate: 0.21, date: `${year}-01-01` },
+      { from_currency: "USD", to_currency: "TWD", rate: 31.5, date: `${year}-01-01` },
+    ],
     reconciliations: [],
     category_rules: [],
     recurring_rules: [

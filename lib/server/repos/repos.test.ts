@@ -157,9 +157,9 @@ describe("rules repo", () => {
 import { insertEntries } from "./entries";
 
 describe("insertEntries", () => {
-  it("writes every row in chunks of 500, each stamped with the user, TWD and not recurring", async () => {
+  it("writes every row in chunks of 500, each stamped with the user and not recurring, keeping its currency", async () => {
     const { client, calls } = fakeClient([]);
-    const v = { entry_type: "expense" as const, amount: 1, main_category: "餐飲", sub_category: "other", account_id: null, transfer_account_id: null, entry_date: "2026-10-01", notes: null };
+    const v = { entry_type: "expense" as const, amount: 1, currency: "TWD", main_category: "餐飲", sub_category: "other", account_id: null, transfer_account_id: null, entry_date: "2026-10-01", notes: null };
     await insertEntries(client, "u1", Array.from({ length: 1001 }, () => v));
     const inserts = calls.filter((c) => c[0] === "insert").map((c) => c[1] as Record<string, unknown>[]);
     expect(inserts.map((i) => i.length)).toEqual([500, 500, 1]);

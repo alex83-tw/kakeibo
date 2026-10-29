@@ -41,7 +41,7 @@ export function TodayBlock({ rows, accountNames }: { rows: Entry[]; accountNames
                   <span className="sr">，{amountCell(e)}，修改或刪除</span>
                 </LineButton>
               </td>
-              <td className="dim">{foldWidth(e.notes ?? "")}</td>
+              <td className="dim">{[foldWidth(e.notes ?? ""), e.foreign ? `${e.foreign.currency} ${formatAmount(e.foreign.amount)}` : ""].filter(Boolean).join("　")}</td>
               <td className="c-a dim">{e.entry_type === "transfer" ? `${name(e.account_id)}→${name(e.transfer_account_id)}` : name(e.account_id)}</td>
               <td className={e.currency === "TWD" && e.entry_type !== "transfer" ? "n" : "n dim"}>{amountCell(e)}</td>
             </tr>

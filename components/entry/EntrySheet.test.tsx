@@ -5,8 +5,10 @@ import type { LedgerAccount } from "@/lib/domain/types";
 
 const createEntry = vi.fn();
 const softDeleteEntry = vi.fn();
+const updateEntry = vi.fn();
 vi.mock("@/app/actions/entries", () => ({
-  updateEntry: vi.fn(),
+  updateEntry: (...a: unknown[]) => updateEntry(...a),
+  previewRate: async () => 0.21,
   restoreEntry: vi.fn(),
   createEntry: (...a: unknown[]) => createEntry(...a),
   softDeleteEntry: (...a: unknown[]) => softDeleteEntry(...a),
@@ -32,6 +34,7 @@ beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   createEntry.mockReset().mockResolvedValue({ ok: true, id: "new1" });
   softDeleteEntry.mockReset().mockResolvedValue({ ok: true, id: "new1" });
+  updateEntry.mockReset().mockResolvedValue({ ok: true, id: "e1" });
 });
 afterEach(() => vi.useRealTimers());
 
@@ -147,14 +150,32 @@ describe("EntrySheet editing a ledger line", () => {
     expect(screen.getByRole("button", { name: "復原" })).toBeInTheDocument();
   });
 
-  it("a foreign-currency entry can be read and deleted, not edited", () => {
+  it("a foreign-currency entry edits what is stored (JPY), previews the TWD, and saves with its currency", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(<EntrySheet accounts={accounts} recentCategories={[]} />);
     act(() => {
-      window.dispatchEvent(new CustomEvent(EDIT_EVENT, { detail: { ...entry, currency: "USD", amount: 77.22 } }));
+      window.dispatchEvent(
+        new CustomEvent(EDIT_EVENT, { detail: { ...entry, currency: "TWD", amount: 252, foreign: { currency: "JPY", amount: 1200, rate: 0.21 } } }),
+      );
     });
-    expect(screen.getByRole("dialog", { name: "外幣帳目" })).toHaveTextContent("USD 77.22");
-    expect(screen.queryByLabelText("金額")).toBeNull();
-    expect(screen.getByRole("button", { name: "刪除這筆" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "編輯帳目" })).toBeInTheDocument();
+    expect(screen.getByLabelText("幣別")).toHaveValue("JPY");
+    expect(screen.getByLabelText("金額")).toHaveValue("1200");
+    expect(await screen.findByText(/≈ NT\$252/)).toBeInTheDocument();
+    await user.clear(screen.getByLabelText("金額"));
+    await user.type(screen.getByLabelText("金額"), "2000");
+    await user.click(screen.getByRole("button", { name: "儲存" }));
+    expect(updateEntry).toHaveBeenCalledWith("e1", expect.objectContaining({ currency: "JPY", amount: "2000" }));
+  });
+
+  it("a transfer is always in TWD", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={accounts} recentCategories={[]} />);
+    await user.click(screen.getByRole("button", { name: "記一筆" }));
+    await user.selectOptions(screen.getByLabelText("幣別"), "USD");
+    await user.click(screen.getByRole("radio", { name: "轉帳" }));
+    expect(screen.getByLabelText("幣別")).toHaveValue("TWD");
+    expect(screen.getByLabelText("幣別")).toBeDisabled();
   });
 });
 

@@ -25,6 +25,11 @@ describe("fixture client through the real repositories", () => {
     expect(after).toHaveLength(all.length - 1);
     expect(await setEntryDeleted(c, "someone-else", all[1].id, true)).toBe(false);
   });
+  it("converts a foreign entry to TWD with the exchange_rates row, keeping what is stored", async () => {
+    const all = await listEntries(fixtureClient(), FIXTURE_USER, { start: "2000-01-01", end: "2999-12-31" });
+    const yen = all.find((e) => e.foreign);
+    expect(yen).toMatchObject({ currency: "TWD", amount: 5, foreign: { currency: "JPY", amount: 25, rate: 0.21 } }); // 25 × 0.21 = 5.25
+  });
   it("lists accounts in order", async () => {
     expect((await listAccounts(fixtureClient(), FIXTURE_USER)).map((a) => a.name)).toEqual(["現金", "銀行", "信用卡"]);
   });

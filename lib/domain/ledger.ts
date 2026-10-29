@@ -1,3 +1,4 @@
+import { formatAmount } from "@/lib/money";
 import { monthRange } from "@/lib/time";
 import { foldWidth } from "@/lib/text";
 import { subLabel } from "./categories";
@@ -19,8 +20,10 @@ export interface LedgerLine {
   income: number;
   expense: number;
   transfer: boolean;
-  /** another currency: listed, never counted */
+  /** a currency with no known rate: listed, never counted */
   foreign: boolean;
+  /** what is stored when it was converted to TWD (JPY 1,200), else "" */
+  orig: string;
 }
 export interface LedgerWeek {
   start: number;
@@ -52,6 +55,7 @@ function line(e: Entry, first: boolean, isToday: boolean): LedgerLine {
     expense: counted && e.entry_type === "expense" ? e.amount : 0,
     transfer,
     foreign,
+    orig: e.foreign ? `${e.foreign.currency} ${formatAmount(e.foreign.amount)}` : foreign ? `${e.currency} ${formatAmount(e.amount)}` : "",
   };
 }
 
@@ -72,7 +76,7 @@ export function buildLedger(input: { year: number; month: number; entries: Entry
     const list = byDay.get(day);
     if (list) return list.map((e, i) => line(e, i === 0, day === todayDay));
     if (day !== todayDay) return [];
-    return [{ entry: null, day, first: true, isToday: true, cat: "", det: "", income: 0, expense: 0, transfer: false, foreign: false }];
+    return [{ entry: null, day, first: true, isToday: true, cat: "", det: "", income: 0, expense: 0, transfer: false, foreign: false, orig: "" }];
   };
   const daily = Array.from({ length: range.days }, (_, i) =>
     linesOf(i + 1).reduce((t, l) => ({ income: t.income + l.income, expense: t.expense + l.expense }), { income: 0, expense: 0 }),

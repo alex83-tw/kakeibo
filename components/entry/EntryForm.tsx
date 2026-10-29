@@ -2,11 +2,11 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { createEntry, updateEntry } from "@/app/actions/entries";
+import { createEntry, previewRate, updateEntry } from "@/app/actions/entries";
 import { EXPENSE_TAXONOMY, INCOME_TAXONOMY, normalizeSub, subLabel } from "@/lib/domain/categories";
 import type { Entry, EntryType, LedgerAccount } from "@/lib/domain/types";
 import { validateEntryInput, type EntryInput } from "@/lib/domain/validate";
-import { formatAmount } from "@/lib/money";
+import { formatAmount, parseAmountInput } from "@/lib/money";
 import { twToday } from "@/lib/time";
 import { AmountField } from "./AmountField";
 import { useCategoryOptions } from "./CategoryOptions";
@@ -25,6 +25,7 @@ const KIND_NOTE: Record<EntryType, string> = {
 
 const FIELD_ID: Record<keyof EntryInput | "form", string> = {
   amount: "entry-amount",
+  currency: "entry-amount-cur",
   main_category: "entry-category",
   account_id: "entry-account",
   transfer_account_id: "entry-to",
@@ -34,7 +35,7 @@ const FIELD_ID: Record<keyof EntryInput | "form", string> = {
   sub_category: "entry-category",
   form: "entry-save",
 };
-const FIELD_ORDER: (keyof EntryInput)[] = ["amount", "main_category", "account_id", "transfer_account_id", "entry_date", "notes"];
+const FIELD_ORDER: (keyof EntryInput)[] = ["amount", "currency", "main_category", "account_id", "transfer_account_id", "entry_date", "notes"];
 
 type Errors = Partial<Record<keyof EntryInput | "form", string>>;
 
@@ -74,7 +75,9 @@ export function EntryForm({
   const presetCategory = preset && !initial ? joinCategory(preset.main, normalizeSub(preset.sub)) : null;
 
   const [type, setType] = useState<EntryType>(initial?.entry_type ?? "expense");
-  const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
+  // A foreign entry arrives converted to TWD; the form edits what is stored.
+  const [currency, setCurrency] = useState(initial?.foreign?.currency ?? initial?.currency ?? "TWD");
+  const [amount, setAmount] = useState(initial ? String((initial.foreign ?? initial).amount) : "");
   const [category, setCategory] = useState(
     initial
       ? initial.entry_type === "transfer"
@@ -88,6 +91,7 @@ export function EntryForm({
   const [notes, setNotes] = useState(initial?.notes ?? (initial ? "" : (preset?.notes ?? "")));
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
+  const [rate, setRate] = useState<{ key: string; value: number | null } | null>(null);
   const [focusTick, setFocusTick] = useState<{ id: string; n: number } | null>(null);
   const amountRef = useRef<HTMLInputElement>(null);
   const radios = useRef<(HTMLButtonElement | null)[]>([]);
@@ -96,8 +100,22 @@ export function EntryForm({
     if (focusTick) document.getElementById(focusTick.id)?.focus();
   }, [focusTick]);
 
+  // The ≈ NT$ preview: the rate on the entry date, looked up when the currency or date changes.
+  const rateKey = `${currency}|${date}`;
+  useEffect(() => {
+    if (currency === "TWD") return;
+    let stale = false;
+    previewRate(currency, date).then((value) => {
+      if (!stale) setRate({ key: rateKey, value });
+    });
+    return () => {
+      stale = true;
+    };
+  }, [currency, date, rateKey]);
+
   function pickType(next: EntryType) {
     setType(next);
+    if (next === "transfer") setCurrency("TWD");
     setCategory(defaultCategory(next));
     setErrors({});
   }
@@ -121,6 +139,7 @@ export function EntryForm({
     const input: EntryInput = {
       entry_type: type,
       amount,
+      currency,
       main_category: type === "transfer" ? "" : splitCategory(category).main,
       sub_category: type === "transfer" ? "" : splitCategory(category).sub,
       account_id: accountId,
@@ -137,7 +156,7 @@ export function EntryForm({
     if (!res.ok) return fail(res.errors);
 
     const kind = KINDS.find((k) => k.type === type)?.label ?? "";
-    onSaved({ id: res.id, text: `${initial ? "已更新" : "已記錄"} NT$${formatAmount(v.value.amount)} ${kind}` });
+    onSaved({ id: res.id, text: `${initial ? "已更新" : "已記錄"} ${currency === "TWD" ? "NT$" : `${currency} `}${formatAmount(v.value.amount)} ${kind}` });
   }
 
   const options = useCategoryOptions();
@@ -173,7 +192,16 @@ export function EntryForm({
         ))}
       </div>
 
-      <AmountField id="entry-amount" value={amount} onChange={setAmount} error={err("amount")} inputRef={amountRef} />
+      <AmountField
+        id="entry-amount"
+        value={amount}
+        onChange={setAmount}
+        error={err("amount") ?? err("currency")}
+        inputRef={amountRef}
+        currency={currency}
+        onCurrency={type === "transfer" ? null : setCurrency}
+      />
+      {currency !== "TWD" ? <p className="entry-n" aria-live="polite">{twdPreview(amount, rate?.key === rateKey ? rate.value : undefined)}</p> : null}
 
       {type === "transfer" && live.length < 2 ? (
         <p className="entry-n" id="entry-transfer-need">
@@ -272,6 +300,14 @@ export function EntryForm({
       </button>
     </>
   );
+}
+
+/** The line under a foreign amount; `rate` undefined while it is being looked up. */
+function twdPreview(amount: string, rate: number | null | undefined): string {
+  const n = parseAmountInput(amount);
+  if (rate === undefined) return "換算中…";
+  if (rate === null) return "查不到匯率，這筆暫不計入收支";
+  return n === null ? `匯率 ${rate}` : `≈ NT$${formatAmount(Math.round(n * rate))}（匯率 ${rate}）`;
 }
 
 function Field({ id, label, error, children }: { id: string; label: string; error?: string; children: ReactNode }) {

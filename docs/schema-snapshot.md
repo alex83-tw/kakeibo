@@ -22,7 +22,7 @@ Schema：**`financial`**。所有表 RLS 已開，政策皆為 `auth.uid() = use
 - `categories`：UNIQUE(user_id,type,label)；v1 不使用。
 - `category_rules`：UNIQUE(user_id,keyword)；keyword, main_category, sub_category (null), entry_type。
 - `recurring_rules`：見上；CHECK 限制 entry_type（income｜expense）、frequency、importance、source、金額區間、日期區間。
-- `exchange_rates`：存在，v1 不使用（非 TWD 不納入）。
+- `exchange_rates`：欄位依舊 repo 為 `from_currency, to_currency, rate, date`（**尚未對線上確認**，見 `migrations/008a_exchange_rates_introspect.sql`）。外幣帳目以 entry 當天匯率換算成 TWD。
 
 ## 資料規模（`entry_type` × `currency`）
 
@@ -31,4 +31,4 @@ Schema：**`financial`**。所有表 RLS 已開，政策皆為 `auth.uid() = use
 | expense | 899 | 67 | 12 |
 | income | 30 | 10 | 61 |
 
-沒有任何 `transfer` 列。非 TWD 共 150 筆，v1 顯示「未納入」。
+沒有任何 `transfer` 列。非 TWD 共 150 筆，以匯率換算後計入。

@@ -28,9 +28,9 @@ Built like an accountant's ledger rather than a spending-tracker toy: every entr
 
 ## Capabilities and Constraints
 - Reuses the existing `financial` schema in the shared Supabase project: entries, categories, category rules, recurring rules, budget plans, soft delete, CSV import and export.
-- Single user, existing sign-in. Multi-currency is not yet decided.
+- Single user, existing sign-in. Multi-currency: TWD/USD/JPY, stored in the original currency and converted to TWD at the entry-date rate when read (same as financial-advisor).
 - Known bugs in the old alert logic to fix when the code is ported: the "一般" budget key mismatch, the warning threshold being ignored in overspend alerts, and the UTC month boundary error in Taiwan time.
-- Undecided: whether old entries get re-categorised into the new minor categories (current lean: no rewrite, optional batch re-categorise later), the final default category list, multi-currency support.
+- Undecided: whether old entries get re-categorised into the new minor categories (current lean: no rewrite, optional batch re-categorise later), the final default category list.
 
 ## Brand Commitments
 The name kakeibo comes from the Japanese 家計簿. The user wants the visual concept to start from Japanese household ledger culture. No logo, palette or typeface is pinned. The old app's MUJI-style green palette may be replaced.
