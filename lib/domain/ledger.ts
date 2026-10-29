@@ -1,6 +1,6 @@
 import { formatAmount } from "@/lib/money";
 import { monthRange } from "@/lib/time";
-import { foldWidth } from "@/lib/text";
+import { foldWidth, stripImported } from "@/lib/text";
 import { subLabel } from "./categories";
 import type { Entry } from "./types";
 import { groupByWeek } from "./weeks";
@@ -50,7 +50,7 @@ function line(e: Entry, first: boolean, isToday: boolean): LedgerLine {
     first,
     isToday,
     cat: transfer ? "轉帳" : e.main_category,
-    det: foldWidth(e.notes?.trim() ?? "") || (transfer ? "" : sub),
+    det: foldWidth(stripImported(e.notes?.trim() ?? "")) || (transfer ? "" : sub),
     income: counted && e.entry_type === "income" ? e.amount : 0,
     expense: counted && e.entry_type === "expense" ? e.amount : 0,
     transfer,

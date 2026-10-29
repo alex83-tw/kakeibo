@@ -80,6 +80,14 @@ describe("recentCategories", () => {
     );
     expect(out).toEqual([{ main: "餐飲", sub: "other" }, { main: "餐飲", sub: "午餐" }, { main: "交通", sub: "捷運" }]);
   });
+  it("on the same day the entry later in the list wins (input is oldest-first), so a day's last entry is the default", () => {
+    const out = recentCategories([e("2026-10-05", "學習成長", null), e("2026-10-05", "餐飲", null)], 1);
+    expect(out).toEqual([{ main: "餐飲", sub: "other" }]);
+  });
+  it("ignores entries dated after today, so a pre-booked future entry is never the default", () => {
+    const out = recentCategories([e("2026-10-20", "餐飲", null), e("2026-10-31", "學習成長", null)], 5, "2026-10-29");
+    expect(out).toEqual([{ main: "餐飲", sub: "other" }]);
+  });
   it("respects the limit", () => {
     expect(recentCategories([e("2026-10-01", "A", "a"), e("2026-10-02", "B", "b"), e("2026-10-03", "C", "c")], 2)).toHaveLength(2);
   });

@@ -91,6 +91,17 @@ export async function listEntries(
   return out.map((e) => toTwd(e, rates));
 }
 
+/** The newest `n` entries (oldest-first, like listEntries), unconverted: enough to learn which categories are in use without paging the whole year or touching exchange_rates. */
+export async function listRecentEntries(client: SupabaseClient, userId: string, n = 300): Promise<Entry[]> {
+  const { data, error } = await scopedEntries(client, userId)
+    .order("entry_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(0, n - 1);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as EntryRow[]).map(toEntry).reverse();
+}
+
 /** Returns the new id. user_id is written explicitly: the column default is auth.uid(), which is null for a dev bypass. */
 export async function insertEntry(client: SupabaseClient, userId: string, value: ValidEntry): Promise<string> {
   const { data, error } = await client

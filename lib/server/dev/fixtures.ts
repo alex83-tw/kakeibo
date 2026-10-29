@@ -62,8 +62,8 @@ function seed(): Store {
     reconciliations: [],
     category_rules: [],
     recurring_rules: [
-      { id: uid(), user_id: FIXTURE_USER, label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, frequency: "monthly", start_date: "2026-01-02", end_date: null, is_active: true },
-      { id: uid(), user_id: FIXTURE_USER, label: "網路", entry_type: "expense", main_category: "居住", sub_category: "網路", amount_twd_min: 599, amount_twd_max: 699, frequency: "monthly", start_date: "2026-01-01", end_date: null, is_active: true },
+      { id: uid(), user_id: FIXTURE_USER, label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, frequency: "monthly", anchor_month: null, start_date: "2026-01-02", end_date: null, is_active: true },
+      { id: uid(), user_id: FIXTURE_USER, label: "網路", entry_type: "expense", main_category: "居住", sub_category: "網路", amount_twd_min: 599, amount_twd_max: 699, frequency: "monthly", anchor_month: null, start_date: "2026-01-01", end_date: null, is_active: true },
     ],
   };
 }

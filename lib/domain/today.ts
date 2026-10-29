@@ -40,7 +40,7 @@ export function buildToday(input: {
   accounts: LedgerAccount[];
   budgets: BudgetInput[];
   reconciliations: ReconciliationRecord[];
-  /** Active monthly recurring items, as dueRules() returns them. */
+  /** Recurring items due this month, as dueRules() returns them. */
   recurring?: { id: string; name: string; due_day: number; main?: string; sub?: string }[];
 }): TodayView {
   const { today, entries, budgets } = input;

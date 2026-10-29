@@ -3,6 +3,7 @@ import {
   WEEKDAY_JP,
   currentMonth,
   parseMonthParam,
+  resolveMonth,
   shiftMonth,
   dayOfMonth,
   monthRange,
@@ -85,6 +86,13 @@ describe("parseMonthParam", () => {
     for (const bad of ["", "2026-13", "2026-00", "2026-1", "26-10", "2026/10", "2026-10-01", "abc", "1999-12", "2101-01"]) {
       expect(parseMonthParam(bad)).toBeNull();
     }
+  });
+});
+
+describe("resolveMonth", () => {
+  it("uses a valid ?m=, and falls back to this month for anything else", () => {
+    expect(resolveMonth("2026-09")).toEqual({ year: 2026, month: 9 });
+    for (const bad of [undefined, "", "garbage", "2026-13", ["2026-09"]]) expect(resolveMonth(bad)).toEqual(currentMonth());
   });
 });
 

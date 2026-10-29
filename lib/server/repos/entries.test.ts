@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ValidEntry } from "@/lib/domain/validate";
-import { insertEntry, listEntries, scopedEntries, setEntryDeleted, updateEntryRow } from "./entries";
+import { insertEntry, listEntries, listRecentEntries, scopedEntries, setEntryDeleted, updateEntryRow } from "./entries";
 import { fakeClient } from "./fake-client";
 
 describe("scopedEntries", () => {
@@ -49,6 +49,23 @@ const valid: ValidEntry = {
   entry_type: "expense", amount: 180, currency: "TWD", main_category: "餐飲", sub_category: "other",
   account_id: null, transfer_account_id: null, entry_date: "2026-10-28", notes: null,
 };
+
+describe("listRecentEntries", () => {
+  const row = (id: string) => ({ id, entry_type: "expense", main_category: "餐飲", sub_category: null, amount: "1", currency: "TWD", entry_date: "2026-10-01", notes: null, account_id: null, transfer_account_id: null, deleted_at: null, is_recurring: false });
+  it("reads only the newest n rows of this user, no exchange-rate query", async () => {
+    const { client, calls } = fakeClient([row("b"), row("a")]);
+    await listRecentEntries(client, "u1", 2);
+    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
+    expect(calls).toContainEqual(["is", "deleted_at", null]);
+    expect(calls).toContainEqual(["order", "entry_date", { ascending: false }]);
+    expect(calls).toContainEqual(["range", 0, 1]);
+    expect(calls.some((c) => c[0] === "from" && c[1] === "exchange_rates")).toBe(false);
+  });
+  it("returns them oldest-first, the same order as listEntries", async () => {
+    const { client } = fakeClient([row("b"), row("a")]);
+    expect((await listRecentEntries(client, "u1", 2)).map((e) => e.id)).toEqual(["a", "b"]);
+  });
+});
 
 describe("entry writes", () => {
   it("insert stamps the user and writes the entry\u2019s currency", async () => {

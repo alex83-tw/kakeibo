@@ -3,7 +3,7 @@ import { RecurringManager, type RecurringItem } from "@/components/settings/Recu
 import { Head } from "@/components/paper/Head";
 import { Run } from "@/components/paper/Run";
 import { subLabel } from "@/lib/domain/categories";
-import { ruleName } from "@/lib/domain/recurring";
+import { anchorMonth, ruleName } from "@/lib/domain/recurring";
 import { getUserId } from "@/lib/server/auth";
 import { listRecurring } from "@/lib/server/repos/rules";
 import { createServerClient } from "@/lib/server/supabase";
@@ -20,7 +20,7 @@ export default async function RecurringSettingsPage() {
     name: ruleName(r),
     category: `${r.main_category}／${subLabel(r.sub_category)}`,
     amount: r.amount_twd_min === r.amount_twd_max ? formatAmount(r.amount_twd_min) : `${formatAmount(r.amount_twd_min)}～${formatAmount(r.amount_twd_max)}`,
-    schedule: `${FREQUENCY[r.frequency] ?? r.frequency} ${Number(r.start_date.slice(8, 10))} 日`,
+    schedule: `${FREQUENCY[r.frequency] ?? r.frequency}${r.frequency === "monthly" ? "" : ` ${r.frequency === "annual" ? anchorMonth(r) : [0, 3, 6, 9].map((n) => ((anchorMonth(r) - 1 + n) % 12) + 1).sort((a, b) => a - b).join("、")} 月`} ${Number(r.start_date.slice(8, 10))} 日`,
     active: r.is_active,
   }));
   return (

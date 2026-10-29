@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { foldWidth, pathOf } from "./text";
+import { foldWidth, pathOf, stripImported } from "./text";
 
 describe("foldWidth", () => {
   it("folds full-width letters and digits", () => {
@@ -18,5 +18,17 @@ describe("pathOf", () => {
   it("keeps a decoded segment from becoming another origin", () => {
     expect(pathOf(["//evil.com"])).toBe("/%2F%2Fevil.com");
     expect(pathOf(["\\evil.com"])).toBe("/%5Cevil.com");
+  });
+});
+
+describe("stripImported", () => {
+  it("drops the trailing (Imported) tag left by the CSV import, for display only", () => {
+    expect(stripImported("優步－飯研所 (Imported)")).toBe("優步－飯研所");
+    expect(stripImported("UBER（Imported）")).toBe("UBER");
+    expect(stripImported("(Imported)")).toBe("");
+  });
+  it("leaves other notes alone", () => {
+    expect(stripImported("Imported goods")).toBe("Imported goods");
+    expect(stripImported("午餐")).toBe("午餐");
   });
 });

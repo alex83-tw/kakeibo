@@ -119,15 +119,16 @@ import { deleteCategoryRule, deleteRecurring, insertCategoryRule, insertRecurrin
 
 describe("rules repo", () => {
   it("listRecurring is scoped to the user and maps numbers", async () => {
-    const { client, calls } = fakeClient([{ id: "r1", label: null, entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: "12000", amount_twd_max: "12500", frequency: "monthly", start_date: "2026-01-05", end_date: null, is_active: true }]);
+    const { client, calls } = fakeClient([{ id: "r1", label: null, entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: "12000", amount_twd_max: "12500", frequency: "quarterly", anchor_month: "4", start_date: "2026-01-05", end_date: null, is_active: true }]);
     const [r] = await listRecurring(client, "u1");
     expect(r.amount_twd_min).toBe(12000);
     expect(r.amount_twd_max).toBe(12500);
+    expect(r.anchor_month).toBe(4);
     expect(calls).toContainEqual(["eq", "user_id", "u1"]);
   });
   it("insertRecurring writes user_id explicitly and leaves importance/source to their defaults", async () => {
     const { client, calls } = fakeClient([{ id: "r9" }]);
-    await insertRecurring(client, "u1", { label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, start_date: "2026-01-05" });
+    await insertRecurring(client, "u1", { label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, frequency: "monthly", start_date: "2026-01-05" });
     const insert = calls.find((c) => c[0] === "insert")![1] as Record<string, unknown>;
     expect(insert).toMatchObject({ user_id: "u1", frequency: "monthly", is_active: true });
     expect(insert).not.toHaveProperty("importance");

@@ -4,6 +4,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createEntry, previewRate, updateEntry } from "@/app/actions/entries";
 import { EXPENSE_TAXONOMY, INCOME_TAXONOMY, normalizeSub, subLabel } from "@/lib/domain/categories";
+import type { CategoryRule } from "@/lib/domain/recurring";
+import { matchRule } from "@/lib/domain/rules";
 import type { Entry, EntryType, LedgerAccount } from "@/lib/domain/types";
 import { validateEntryInput, type EntryInput } from "@/lib/domain/validate";
 import { formatAmount, parseAmountInput } from "@/lib/money";
@@ -57,12 +59,15 @@ function splitCategory(v: string): { main: string; sub: string } {
 export function EntryForm({
   accounts,
   recentCategories,
+  rules,
   initial,
   preset,
   onSaved,
 }: {
   accounts: LedgerAccount[];
   recentCategories: { main: string; sub: string }[];
+  /** 自動分類: while the category is untouched, a keyword typed in the notes picks it. */
+  rules: CategoryRule[];
   initial?: Entry;
   /** Prefill for a new entry (an alert's 記帳); ignored when editing. */
   preset?: RecordPreset;
@@ -88,6 +93,8 @@ export function EntryForm({
   const [accountId, setAccountId] = useState(initial ? (initial.account_id ?? "") : (live[0]?.id ?? ""));
   const [toId, setToId] = useState(initial ? (initial.transfer_account_id ?? "") : (live[1]?.id ?? ""));
   const [date, setDate] = useState(() => initial?.entry_date ?? twToday());
+  // Once the user picks a category (or the form starts from an entry or an alert's preset) no rule overrides it.
+  const [categoryTouched, setCategoryTouched] = useState(Boolean(initial || presetCategory));
   const [notes, setNotes] = useState(initial?.notes ?? (initial ? "" : (preset?.notes ?? "")));
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
@@ -117,7 +124,15 @@ export function EntryForm({
     setType(next);
     if (next === "transfer") setCurrency("TWD");
     setCategory(defaultCategory(next));
+    setCategoryTouched(false);
     setErrors({});
+  }
+
+  function changeNotes(value: string) {
+    setNotes(value);
+    if (categoryTouched || type === "transfer") return;
+    const hit = matchRule(rules, value, type);
+    if (hit) setCategory(joinCategory(hit.main_category, hit.sub_category));
   }
 
   function onRadioKey(e: KeyboardEvent, i: number) {
@@ -232,7 +247,7 @@ export function EntryForm({
       ) : (
         <>
           <Field id="entry-category" label="科目" error={err("main_category")}>
-            <select id="entry-category" value={category} onChange={(e) => setCategory(e.target.value)} aria-describedby="entry-category-err">
+            <select id="entry-category" value={category} onChange={(e) => { setCategory(e.target.value); setCategoryTouched(true); }} aria-describedby="entry-category-err">
               <option value="">請選擇</option>
               {legacy ? (
                 <option value={legacy}>
@@ -280,7 +295,7 @@ export function EntryForm({
         <input id="entry-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-describedby="entry-date-err" />
       </Field>
       <Field id="entry-notes" label="摘要" error={err("notes")}>
-        <input id="entry-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="選填" autoComplete="off" aria-describedby="entry-notes-err" />
+        <input id="entry-notes" value={notes} onChange={(e) => changeNotes(e.target.value)} placeholder="選填" autoComplete="off" aria-describedby="entry-notes-err" />
       </Field>
 
       {type !== "transfer" ? (

@@ -99,6 +99,27 @@ describe("EntrySheet states where the entry will be filed", () => {
   });
 });
 
+describe("EntrySheet 自動分類 rules", () => {
+  const rules = [{ id: "r1", keyword: "全聯", entry_type: "expense" as const, main_category: "日用購物", sub_category: "other" }];
+  const openWithRules = async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={accounts} recentCategories={[{ main: "餐飲", sub: "午餐" }]} rules={rules} />);
+    await user.click(screen.getByRole("button", { name: "記一筆" }));
+    return user;
+  };
+  it("typing a rule's keyword in the notes picks its category", async () => {
+    const user = await openWithRules();
+    await user.type(screen.getByLabelText("摘要"), "全聯 汐止");
+    expect(screen.getByLabelText("科目")).toHaveProperty("value", "日用購物::other");
+  });
+  it("a category the user picked is never overridden by a rule", async () => {
+    const user = await openWithRules();
+    await user.selectOptions(screen.getByLabelText("科目"), "交通::other");
+    await user.type(screen.getByLabelText("摘要"), "全聯");
+    expect(screen.getByLabelText("科目")).toHaveProperty("value", "交通::other");
+  });
+});
+
 describe("EntrySheet transfer without enough accounts", () => {
   it("explains what is missing and does not offer a save", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });

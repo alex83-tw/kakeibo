@@ -53,11 +53,18 @@ export function isUncategorized(
   return m === "" || (m === "其他" && normalizeSub(sub) === DEFAULT_SUB);
 }
 
-/** Distinct expense (main, sub) pairs, most recently used first. */
-export function recentCategories(entries: Entry[], limit = 5): { main: string; sub: string }[] {
+/**
+ * Distinct expense (main, sub) pairs, most recently used first. `entries` is oldest-first (listEntries order), so on one day the later entry wins.
+ * Entries dated after `today` (pre-booked rent, a future-dated import) are skipped when given: they say nothing about what was used lately.
+ */
+export function recentCategories(entries: Entry[], limit = 5, today?: string): { main: string; sub: string }[] {
   const seen = new Set<string>();
   const out: { main: string; sub: string }[] = [];
-  const sorted = entries.filter((e) => e.entry_type === "expense").sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+  const sorted = entries
+    .map((e, i) => ({ e, i }))
+    .filter(({ e }) => e.entry_type === "expense" && (today === undefined || e.entry_date <= today))
+    .sort((a, b) => b.e.entry_date.localeCompare(a.e.entry_date) || b.i - a.i)
+    .map(({ e }) => e);
   for (const e of sorted) {
     const sub = normalizeSub(e.sub_category);
     const key = categoryKey(e.main_category, sub);

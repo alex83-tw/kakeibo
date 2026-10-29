@@ -139,12 +139,28 @@ describe("validateRecurringInput", () => {
     const v = validateRecurringInput(ok, 2026);
     expect(v).toEqual({
       ok: true,
-      value: { label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, start_date: "2026-01-05" },
+      value: { label: "房租", entry_type: "expense", main_category: "居住", sub_category: "房租", amount_twd_min: 12000, amount_twd_max: 12000, frequency: "monthly", start_date: "2026-01-05" },
     });
   });
   it("keeps due day 31 representable", () => {
     const v = validateRecurringInput({ ...ok, due_day: "31" }, 2026);
     expect(v.ok && v.value.start_date).toBe("2026-01-31");
+  });
+  it("a quarterly or annual rule is anchored on the month it is due, kept in start_date", () => {
+    const q = validateRecurringInput({ ...ok, frequency: "quarterly", due_month: "4" }, 2026);
+    expect(q.ok && q.value).toMatchObject({ frequency: "quarterly", start_date: "2026-04-05" });
+    const a = validateRecurringInput({ ...ok, frequency: "annual", due_month: "12" }, 2026);
+    expect(a.ok && a.value).toMatchObject({ frequency: "annual", start_date: "2026-12-05" });
+  });
+  it.each([["", "due_month"], ["0", "due_month"], ["13", "due_month"], ["x", "due_month"]])("a non-monthly rule needs a month 1-12, rejects %j", (due_month, field) => {
+    const v = validateRecurringInput({ ...ok, frequency: "quarterly", due_month }, 2026);
+    expect(!v.ok && v.errors[field as keyof typeof v.errors]).toBeTruthy();
+  });
+  it("a monthly rule ignores due_month, and an unknown frequency is rejected", () => {
+    const m = validateRecurringInput({ ...ok, due_month: "7" }, 2026);
+    expect(m.ok && m.value.start_date).toBe("2026-01-05");
+    const bad = validateRecurringInput({ ...ok, frequency: "weekly" as never }, 2026);
+    expect(!bad.ok && bad.errors.frequency).toBeTruthy();
   });
   it.each([
     [{ label: " " }, "label"],

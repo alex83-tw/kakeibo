@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef } from "react";
+import type { CategoryRule } from "@/lib/domain/recurring";
 import type { Entry, LedgerAccount } from "@/lib/domain/types";
 import { EntryForm, type SavedEntry } from "./EntryForm";
 import type { RecordPreset } from "./RecordButton";
@@ -15,6 +16,7 @@ export function EntryDialog({
   onOpenChange,
   accounts,
   recentCategories,
+  rules,
   initial,
   preset,
   onSaved,
@@ -24,6 +26,7 @@ export function EntryDialog({
   onOpenChange: (open: boolean) => void;
   accounts: LedgerAccount[];
   recentCategories: { main: string; sub: string }[];
+  rules: CategoryRule[];
   initial?: Entry;
   preset?: RecordPreset;
   onSaved: (saved: SavedEntry) => void;
@@ -62,6 +65,7 @@ export function EntryDialog({
           <EntryForm
             accounts={accounts}
             recentCategories={recentCategories}
+            rules={rules}
             initial={initial}
             preset={preset}
             onSaved={(saved) => {

@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { Head } from "@/components/paper/Head";
 import { Hint } from "@/components/paper/Hint";
 import { Run } from "@/components/paper/Run";
@@ -9,7 +8,7 @@ import { getUserId } from "@/lib/server/auth";
 import { loadLedgerMonth } from "@/lib/server/ledger";
 import { listBudgets } from "@/lib/server/repos/budgets";
 import { createServerClient } from "@/lib/server/supabase";
-import { currentMonth, monthRange, parseMonthParam, toKanji } from "@/lib/time";
+import { monthRange, resolveMonth, toKanji } from "@/lib/time";
 
 /**
  * /ledger: on a phone the 帳本 slot is the page and this is hidden; on the desktop spread it is the right page,
@@ -17,9 +16,7 @@ import { currentMonth, monthRange, parseMonthParam, toKanji } from "@/lib/time";
  */
 export default async function LedgerOverview({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const { m } = await searchParams;
-  const target = m === undefined ? currentMonth() : parseMonthParam(m);
-  if (!target) notFound();
-  const { year, month } = target;
+  const { year, month } = resolveMonth(m);
   const range = monthRange(year, month);
   const [{ entries }, budgets] = await Promise.all([loadLedgerMonth(year, month), getUserId().then(async (id) => listBudgets(await createServerClient(), id, year, month))]);
   const spent = spentByMain(entries, range);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { restoreEntry, softDeleteEntry } from "@/app/actions/entries";
 import { ToastSlot, useToast } from "@/components/ui/Toast";
+import type { CategoryRule } from "@/lib/domain/recurring";
 import type { Entry, LedgerAccount } from "@/lib/domain/types";
 import { EntryDialog } from "./EntryDialog";
 import { EDIT_EVENT, RECORD_EVENT, type RecordPreset } from "./RecordButton";
@@ -11,9 +12,11 @@ import { EDIT_EVENT, RECORD_EVENT, type RecordPreset } from "./RecordButton";
 export function EntrySheet({
   accounts,
   recentCategories,
+  rules = [],
 }: {
   accounts: LedgerAccount[];
   recentCategories: { main: string; sub: string }[];
+  rules?: CategoryRule[];
 }) {
   const [open, setOpen] = useState(false);
   const [preset, setPreset] = useState<RecordPreset | undefined>();
@@ -80,6 +83,7 @@ export function EntrySheet({
         onOpenChange={setOpen}
         accounts={accounts}
         recentCategories={recentCategories}
+        rules={rules}
         preset={preset}
         initial={editing}
         onDelete={editing ? () => remove(editing) : undefined}

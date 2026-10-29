@@ -165,7 +165,12 @@ export interface RecurringInput {
   /** Blank means the same as the minimum. */
   amount_max: string;
   due_day: string;
+  /** Default monthly. */
+  frequency?: RecurringFrequency;
+  /** 1-12, the month a quarterly or annual rule falls due in; ignored for monthly. */
+  due_month?: string;
 }
+export type RecurringFrequency = "monthly" | "quarterly" | "annual";
 export interface ValidRecurring {
   label: string;
   entry_type: "income" | "expense";
@@ -173,12 +178,13 @@ export interface ValidRecurring {
   sub_category: string;
   amount_twd_min: number;
   amount_twd_max: number;
+  frequency: RecurringFrequency;
   start_date: string;
 }
 
 /**
- * recurring_rules has no due-day column: the due day is the day of start_date. January has 31 days, so
- * any due day fits; `year` only has to be a real year.
+ * recurring_rules has no due-day column: the due day is the day of start_date. A monthly rule starts in January, which has 31 days, so
+ * any due day fits; a quarterly or annual rule starts in its due month (that month is its anchor). `year` only has to be a real year.
  */
 export function validateRecurringInput(
   input: RecurringInput,
@@ -201,6 +207,15 @@ export function validateRecurringInput(
   const day = /^\d{1,2}$/.test(input.due_day.trim()) ? Number(input.due_day) : 0;
   if (day < 1 || day > 31) errors.due_day = "到期日是 1 到 31 的整數";
 
+  const frequency = input.frequency ?? "monthly";
+  let month = 1;
+  if (frequency !== "monthly" && frequency !== "quarterly" && frequency !== "annual") errors.frequency = "頻率不正確";
+  else if (frequency !== "monthly") {
+    const m = /^\d{1,2}$/.test((input.due_month ?? "").trim()) ? Number(input.due_month) : 0;
+    if (m < 1 || m > 12) errors.due_month = "月份是 1 到 12 的整數";
+    else month = m;
+  }
+
   if (Object.keys(errors).length > 0 || "error" in min || "error" in max) return { ok: false, errors };
   return {
     ok: true,
@@ -211,7 +226,8 @@ export function validateRecurringInput(
       sub_category: normalizeSub(input.sub_category),
       amount_twd_min: min.amount,
       amount_twd_max: max.amount,
-      start_date: `${year}-01-${String(day).padStart(2, "0")}`,
+      frequency,
+      start_date: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
     },
   };
 }

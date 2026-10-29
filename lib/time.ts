@@ -76,6 +76,11 @@ export function parseMonthParam(s: string): { year: number; month: number } | nu
   return year >= 2000 && year <= 2100 && month >= 1 && month <= 12 ? { year, month } : null;
 }
 
+/** `?m=` from a search param (anything, since it comes off the URL): a valid month, else this month. */
+export function resolveMonth(m: unknown): { year: number; month: number } {
+  return (typeof m === "string" && parseMonthParam(m)) || currentMonth();
+}
+
 /** A real calendar date written YYYY-MM-DD (rejects 2026-02-30). */
 export function isRealDate(s: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;

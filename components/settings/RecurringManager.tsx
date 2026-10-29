@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createRecurring, removeRecurring, toggleRecurring } from "@/app/actions/recurring";
+import type { RecurringFrequency } from "@/lib/domain/validate";
 import { CategoryPick, type PickKind } from "./CategoryPick";
 
 export interface RecurringItem {
@@ -19,25 +20,28 @@ export function RecurringManager({ items }: { items: RecurringItem[] }) {
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
   const [day, setDay] = useState("");
+  const [frequency, setFrequency] = useState<RecurringFrequency>("monthly");
+  const [dueMonth, setDueMonth] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState("");
 
   async function create() {
     setMsg("");
-    const res = await createRecurring({ label, entry_type: pick.kind, main_category: pick.main, sub_category: pick.sub, amount_min: min, amount_max: max, due_day: day });
+    const res = await createRecurring({ label, entry_type: pick.kind, main_category: pick.main, sub_category: pick.sub, amount_min: min, amount_max: max, due_day: day, frequency, due_month: dueMonth });
     if (!res.ok) return setErrors(res.errors as Record<string, string>);
     setErrors({});
     setLabel("");
     setMin("");
     setMax("");
     setDay("");
+    setDueMonth("");
     setMsg("已新增週期帳目");
   }
 
   return (
     <>
       {items.length === 0 ? (
-        <p className="r hint">還沒有週期帳目。房租、保費這類每月固定的收支可以記在這裡，過了到期日還沒記帳，今日頁會提醒你。</p>
+        <p className="r hint">還沒有週期帳目。房租、保費這類固定的收支可以記在這裡（每月、每季或每年），過了到期日還沒記帳，今日頁會提醒你。</p>
       ) : (
         <ul className="acc-list">
           {items.map((it) => (
@@ -59,7 +63,19 @@ export function RecurringManager({ items }: { items: RecurringItem[] }) {
         <Field id="rc-max" label="上限" error={errors.amount_max}>
           <input id="rc-max" inputMode="decimal" value={max} onChange={(e) => setMax(e.target.value)} autoComplete="off" placeholder="金額會變動才填" aria-describedby="rc-max-err" />
         </Field>
-        <Field id="rc-day" label="每月" error={errors.due_day}>
+        <Field id="rc-freq" label="頻率" error={errors.frequency}>
+          <select id="rc-freq" value={frequency} onChange={(e) => setFrequency(e.target.value as RecurringFrequency)} aria-describedby="rc-freq-err">
+            <option value="monthly">每月</option>
+            <option value="quarterly">每季（每三個月）</option>
+            <option value="annual">每年</option>
+          </select>
+        </Field>
+        {frequency === "monthly" ? null : (
+          <Field id="rc-month" label="到期月" error={errors.due_month}>
+            <input id="rc-month" inputMode="numeric" value={dueMonth} onChange={(e) => setDueMonth(e.target.value)} autoComplete="off" placeholder={frequency === "quarterly" ? "其中一個到期月（1–12）" : "哪一個月（1–12）"} aria-describedby="rc-month-err" />
+          </Field>
+        )}
+        <Field id="rc-day" label="到期日" error={errors.due_day}>
           <input id="rc-day" inputMode="numeric" value={day} onChange={(e) => setDay(e.target.value)} autoComplete="off" placeholder="幾號到期（1–31）" aria-describedby="rc-day-err" />
         </Field>
         <p className="entry-n">只提醒，不會自動記帳。月底沒有的日子（例如 31 號）以當月最後一天計。</p>
@@ -95,16 +111,26 @@ function RecurringRow({ it }: { it: RecurringItem }) {
           {it.active ? "" : "（已停用）"}
         </span>
       </span>
-      <span className="acc-r">
+      <span
+        className="acc-r"
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setConfirming(false);
+        }}
+      >
         <button type="button" className="ghost" onClick={() => run(toggleRecurring(it.id, !it.active))}>
           {it.active ? "停用" : "啟用"}
           <span className="sr">：{it.name}</span>
         </button>
         {confirming ? (
-          <button type="button" className="ghost" onClick={() => run(removeRecurring(it.id))}>
-            確定刪除
-            <span className="sr">：{it.name}</span>
-          </button>
+          <>
+            <button type="button" className="ghost" onClick={() => run(removeRecurring(it.id))}>
+              確定刪除
+              <span className="sr">：{it.name}</span>
+            </button>
+            <button type="button" className="ghost" onClick={() => setConfirming(false)}>
+              取消
+            </button>
+          </>
         ) : (
           <button type="button" className="ghost" onClick={() => setConfirming(true)}>
             刪除
