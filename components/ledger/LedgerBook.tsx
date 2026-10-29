@@ -6,6 +6,9 @@ import type { LedgerView } from "@/lib/domain/ledger";
 import { formatAmount } from "@/lib/money";
 import { toKanji, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
 
+/** "晚餐　交通" without the leading "・" the narrow single-cell layout used to need. */
+const detail = (r: { det: string; excluded?: boolean }) => `${r.det.replace(/^[・\s]+/, "")}${r.excluded ? "　含外幣" : ""}`;
+
 /** The month's day-by-day table with weekly and month totals; each day links to its detail page. */
 export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: number; month: number }) {
   const date = (day: number) => `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -19,14 +22,18 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
             <caption className="sr">{toKanji(month)}月每日收支</caption>
             <colgroup>
               <col style={{ width: 46 }} />
-              <col />
+              <col className="c-cat" />
+              <col className="c-det" />
               <col style={{ width: 62 }} />
               <col style={{ width: 62 }} />
             </colgroup>
             <thead>
               <tr>
                 <th scope="col">日</th>
-                <th scope="col">科目・摘要</th>
+                <th scope="col">科目</th>
+                <th scope="col" className="c-det">
+                  摘要
+                </th>
                 <th scope="col" className="n">
                   收入
                 </th>
@@ -58,11 +65,14 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
                       <td className="m">
                         <span className="clamp">
                           <span className="cat">{r.cat}</span>
-                          <span className="det">
+                          <span className="det c-narrow">
                             {r.det}
                             {r.excluded ? "　含外幣" : ""}
                           </span>
                         </span>
+                      </td>
+                      <td className="m c-det det">
+                        <span className="clamp">{detail(r)}</span>
                       </td>
                       <td className={r.income > 0 ? "n" : "n dim"}>{r.income > 0 ? formatAmount(r.income) : "－"}</td>
                       <td className={r.expense > 0 ? "n" : "n dim"}>{r.expense > 0 ? formatAmount(r.expense) : "－"}</td>
@@ -70,8 +80,9 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
                   ))}
                   <tr className="wk">
                     <td colSpan={2}>
-                      週計　{toKanji(w.start)}至{toKanji(w.end)}日
+                      週計 {toKanji(w.start)}至{toKanji(w.end)}
                     </td>
+                    <td className="c-det" />
                     <td className="n">{formatAmount(w.income)}</td>
                     <td className="n">{formatAmount(w.expense)}</td>
                   </tr>
@@ -79,6 +90,7 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
               ))}
               <tr className="sum">
                 <td colSpan={2}>本月累計</td>
+                <td className="c-det" />
                 <td className="n">{formatAmount(ledger.income)}</td>
                 <td className="n">{formatAmount(ledger.expense)}</td>
               </tr>

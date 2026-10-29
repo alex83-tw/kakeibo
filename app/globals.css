@@ -116,6 +116,7 @@ table.ledger td.m { white-space: normal; text-overflow: clip; }
 .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: var(--fs-label); line-height: 17px; color: var(--ink-2); overflow-wrap: anywhere; }
 table.ledger tr.today td { background-image: radial-gradient(circle at 25% 25%, rgba(26, 29, 27, 0.26) 0.6px, transparent 0.85px), radial-gradient(circle at 75% 75%, rgba(26, 29, 27, 0.26) 0.6px, transparent 0.85px); background-size: 4px 4px; }
 table.ledger tr.sum td { font-weight: 700; border-top: 1px solid var(--ink); }
+table.ledger tr.wk td:first-child { font-size: var(--fs-label); }
 table.ledger tr.wk td { font-weight: 700; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
 .dayno { display: inline-grid; place-items: center; min-width: 30px; height: 26px; border: 2px solid var(--ink); font-weight: 700; background: var(--paper); }
 .bad { font-weight: 700; color: var(--shu); white-space: nowrap; }
@@ -196,6 +197,14 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 /* 帳本 */
 .cat { font-size: var(--fs-body); color: var(--ink); }
 .det { font-size: var(--fs-label); color: var(--ink-2); }
+/* 窄版：摘要併在科目格下一行；寬版（≥560px）拆成獨立欄 */
+.c-det { display: none; }
+@media (min-width: 560px) {
+  col.c-cat { width: 7em; }
+  .c-det { display: table-cell; }
+  col.c-det { display: table-column; }
+  .c-narrow { display: none; }
+}
 table.ledger tr.today .dim, table.ledger tr.today .det, table.ledger tr.today .clamp { color: var(--ink); }
 table.ledger td.d { overflow: visible; position: relative; }
 a.dlink { color: var(--ink); text-decoration: none; display: block; }
@@ -319,4 +328,3 @@ a.ub-link { display: flex; align-items: center; height: 44px; color: var(--ink);
 table.bt tr.sum th { width: 112px; }
 .bt-name > span:first-child { font-size: var(--fs-body); }
 table.bt tr.sum th { font-size: var(--fs-body); font-weight: 700; }
-
