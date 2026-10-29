@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { archiveAccount, createAccount } from "@/app/actions/accounts";
+import { useToast } from "@/components/ui/Toast";
 import type { AccountKind } from "@/lib/domain/types";
 import { formatSigned } from "@/lib/money";
 
@@ -64,7 +65,7 @@ export function AccountManager({ accounts, today }: { accounts: Item[]; today: s
           </div>
         </div>
         <Field id="acc-name" label="名稱" error={errors.name}>
-          <input id="acc-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" aria-describedby="acc-name-err" />
+          <input id="acc-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" placeholder="例如：現金、中信" aria-describedby="acc-name-err" />
         </Field>
         <Field id="acc-bal" label="餘額" error={errors.opening_balance}>
           <input id="acc-bal" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} autoComplete="off" placeholder={kind === "credit_card" ? "欠款用 △，例如 △3,150" : "0"} aria-describedby="acc-bal-err" />
@@ -101,6 +102,7 @@ export function AccountManager({ accounts, today }: { accounts: Item[]; today: s
 
 function AccountRow({ a }: { a: Item }) {
   const [err, setErr] = useState("");
+  const { show, clear } = useToast();
   return (
     <li className="acc">
       <span>
@@ -113,7 +115,19 @@ function AccountRow({ a }: { a: Item }) {
           className="ghost"
           onClick={async () => {
             const res = await archiveAccount(a.id, !a.archived);
-            if (!res.ok) setErr(res.errors.form ?? "失敗");
+            if (!res.ok) return setErr(res.errors.form ?? "失敗");
+            if (!a.archived)
+              show({
+                text: `已封存「${a.name}」`,
+                action: {
+                  label: "復原",
+                  run: async () => {
+                    clear();
+                    const back = await archiveAccount(a.id, false);
+                    show({ text: back.ok ? "已復原" : "復原失敗" });
+                  },
+                },
+              });
           }}
         >
           {a.archived ? "取消封存" : "封存"}

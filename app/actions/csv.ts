@@ -12,7 +12,7 @@ const MAX_CHARS = 1_000_000;
 const MAX_ROWS = 5000;
 
 export type ImportPreview =
-  | { ok: true; toAdd: number; duplicates: number; errors: { line: number; message: string }[] }
+  | { ok: true; toAdd: number; duplicates: number; errors: { line: number; message: string }[]; sample: { date: string; text: string; amount: string }[] }
   | { ok: false; error: string };
 
 /** Always re-derived on the server from the text: the client's preview is never what gets written. */
@@ -38,7 +38,13 @@ function failure(e: unknown): { ok: false; error: string } {
 export async function previewImport(text: string): Promise<ImportPreview> {
   try {
     const p = await plan(text);
-    return { ok: true, toAdd: p.toAdd.length, duplicates: p.duplicates, errors: p.errors };
+    return {
+      ok: true,
+      toAdd: p.toAdd.length,
+      duplicates: p.duplicates,
+      errors: p.errors,
+      sample: p.toAdd.slice(0, 5).map((r) => ({ date: r.entry_date, text: [r.main_category, r.notes].filter(Boolean).join("　"), amount: r.amount })),
+    };
   } catch (e) {
     return failure(e);
   }

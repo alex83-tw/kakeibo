@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { CategoryOptionsProvider } from "@/components/entry/CategoryOptions";
 import { EntrySheet } from "@/components/entry/EntrySheet";
 import { BookmarkNav } from "@/components/nav/BookmarkNav";
+import { ToastProvider } from "@/components/ui/Toast";
 import { loadEntryChrome } from "@/lib/server/chrome";
 
 /**
@@ -11,15 +12,17 @@ import { loadEntryChrome } from "@/lib/server/chrome";
 export default async function AppLayout({ children, ledger }: { children: ReactNode; ledger: ReactNode }) {
   const { accounts, recentCategories, rules, categoryOptions } = await loadEntryChrome();
   return (
-    <div className="book">
-      <BookmarkNav />
-      <CategoryOptionsProvider value={categoryOptions}>
-        <section className="pane pane-l" aria-label="帳本">
-          {ledger}
-        </section>
-        <main className="pane pane-r">{children}</main>
-        <EntrySheet accounts={accounts} recentCategories={recentCategories} rules={rules} />
-      </CategoryOptionsProvider>
-    </div>
+    <ToastProvider>
+      <div className="book">
+        <BookmarkNav />
+        <CategoryOptionsProvider value={categoryOptions}>
+          <section className="pane pane-l" aria-label="帳本">
+            {ledger}
+          </section>
+          <main className="pane pane-r">{children}</main>
+          <EntrySheet accounts={accounts} recentCategories={recentCategories} rules={rules} />
+        </CategoryOptionsProvider>
+      </div>
+    </ToastProvider>
   );
 }

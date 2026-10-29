@@ -11,7 +11,7 @@ export type RuleResult = { ok: true } | { ok: false; errors: Partial<Record<keyo
 async function guarded(run: (userId: string, client: Awaited<ReturnType<typeof createServerClient>>) => Promise<RuleResult>): Promise<RuleResult> {
   try {
     const res = await run(await getUserId(), await createServerClient());
-    if (res.ok) revalidatePath("/settings", "layout");
+    if (res.ok) revalidatePath("/", "layout"); // the entry form reads these rules from the layout
     return res;
   } catch (e) {
     if (e instanceof Error && e.message === "UNAUTHENTICATED") return { ok: false, errors: { form: "請先登入" } };

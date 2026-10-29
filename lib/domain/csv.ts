@@ -8,6 +8,11 @@ const TYPE_BY_LABEL = { 收入: "income", 支出: "expense", 轉帳: "transfer" 
 
 const cell = (s: string) => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
 
+/** A header plus one example line, so a file typed by hand starts from the right shape. */
+export function csvTemplate(): string {
+  return [HEADER.join(","), "2026-10-29,支出,餐飲,午餐,120,,,全聯"].join("\r\n");
+}
+
 export function entriesToCsv(entries: Entry[], accounts: LedgerAccount[]): string {
   const name = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? "";
   const lines = entries.map((e) =>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DaySlider } from "@/components/today/DaySlider";
+import { FirstAccount } from "@/components/today/FirstAccount";
 import { TodayBlock } from "@/components/today/TodayBlock";
 import { AlertList } from "@/components/paper/AlertList";
 import { Head } from "@/components/paper/Head";
@@ -106,9 +107,7 @@ export default async function TodayPage() {
           </tbody>
         </table>
       ) : (
-        <Hint>
-          還沒有帳戶，<Link href="/settings/accounts">先到設定建立</Link>。
-        </Hint>
+        <FirstAccount today={today} />
       )}
     </>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { restoreEntry, softDeleteEntry } from "@/app/actions/entries";
-import { ToastSlot, useToast } from "@/components/ui/Toast";
+import { useToast } from "@/components/ui/Toast";
 import type { CategoryRule } from "@/lib/domain/recurring";
 import type { Entry, LedgerAccount } from "@/lib/domain/types";
 import { EntryDialog } from "./EntryDialog";
@@ -21,7 +21,7 @@ export function EntrySheet({
   const [open, setOpen] = useState(false);
   const [preset, setPreset] = useState<RecordPreset | undefined>();
   const [editing, setEditing] = useState<Entry | undefined>();
-  const { toast, show, clear } = useToast();
+  const { show, clear } = useToast();
 
   // An alert can open the form with a category and note filled in (see RecordButton); a ledger line opens its entry.
   useEffect(() => {
@@ -89,7 +89,6 @@ export function EntrySheet({
         onDelete={editing ? () => remove(editing) : undefined}
         onSaved={(s) => show(editing ? { text: s.text } : { text: s.text, action: { label: "復原", run: () => undoCreate(s.id) } })}
       />
-      <ToastSlot toast={toast} />
     </>
   );
 }

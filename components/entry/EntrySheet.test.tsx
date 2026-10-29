@@ -14,9 +14,16 @@ vi.mock("@/app/actions/entries", () => ({
   softDeleteEntry: (...a: unknown[]) => softDeleteEntry(...a),
 }));
 
-import { EntrySheet } from "./EntrySheet";
+import { ToastProvider } from "@/components/ui/Toast";
+import { EntrySheet as Sheet } from "./EntrySheet";
 import { CategoryOptionsProvider } from "./CategoryOptions";
 import { EDIT_EVENT, RECORD_EVENT } from "./RecordButton";
+
+const EntrySheet = (props: React.ComponentProps<typeof Sheet>) => (
+  <ToastProvider>
+    <Sheet {...props} />
+  </ToastProvider>
+);
 
 const acct = (id: string, name: string, kind: LedgerAccount["kind"], sort_order: number): LedgerAccount => ({
   id, name, kind, sort_order, opening_balance: 0, opening_date: "2026-01-01", archived: false,

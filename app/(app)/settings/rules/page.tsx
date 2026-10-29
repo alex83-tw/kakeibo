@@ -9,7 +9,12 @@ import { createServerClient } from "@/lib/server/supabase";
 
 export default async function RulesSettingsPage() {
   const rules = await listCategoryRules(await createServerClient(), await getUserId());
-  const items: RuleItem[] = rules.map((r) => ({ id: r.id, keyword: r.keyword, category: `${r.main_category}／${subLabel(r.sub_category)}` }));
+  const items: RuleItem[] = rules.map((r) => ({
+    id: r.id,
+    keyword: r.keyword,
+    category: `${r.main_category}／${subLabel(r.sub_category)}`,
+    rule: { entry_type: r.entry_type, main_category: r.main_category, sub_category: r.sub_category },
+  }));
   return (
     <>
       <Run label="自動分類" />

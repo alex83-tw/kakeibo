@@ -71,6 +71,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .solo { max-width: 560px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
 
 .gap { height: var(--row); }
+.cl summary { height: var(--row); display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; font-weight: 700; }
+.cl summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.cl li, .cl p.note { height: var(--row); display: flex; align-items: center; justify-content: space-between; padding-left: 20px; margin: 0; list-style: none; }
+.cl ul { margin: 0; padding: 0; }
 .nb { white-space: nowrap; }
 .dim { color: var(--ink-2); }
 .run { height: var(--row); flex: none; display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-label); letter-spacing: 0.04em; color: var(--ink-2); box-shadow: inset 0 -1px 0 var(--ink); }
@@ -320,4 +324,8 @@ a.btn { display: flex; align-items: center; justify-content: center; text-decora
 .acc .note { overflow-wrap: anywhere; }
 .pane .fld { min-height: var(--row); border-bottom: 0; }
 .pane .fld select, .pane .fld input { height: var(--row); }
-.pane .fld input[type="file"] { font-size: var(--fs-label); padding-top: 10px; }
+/* .pane .fld 把外層底線拿掉了，輸入框自己補一條，空的時候才看得出是欄位 */
+.pane .fld input:not([type="file"]):not([type="date"]) { box-shadow: inset 0 -2px 0 var(--ink); }
+.pick { position: relative; }
+.pick:has(input:focus-visible) .btn { outline: 3px solid var(--ink); outline-offset: 2px; }
+.pick .btn { display: flex; align-items: center; justify-content: center; cursor: pointer; }

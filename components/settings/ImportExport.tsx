@@ -38,7 +38,7 @@ export function ImportExport() {
     <>
       <h2 className="sec">匯出</h2>
       <div className="form-block">
-        <p className="entry-n">所有以台幣記的帳目（含轉帳），不含已刪除與外幣帳目。</p>
+        <p className="entry-n">所有以台幣記的帳目（含轉帳）。不含已刪除與外幣帳目，所以不是完整備份。</p>
         <a className="btn" href="/settings/import-export/export" download>
           下載 CSV
         </a>
@@ -47,13 +47,19 @@ export function ImportExport() {
       <div className="gap" />
       <h2 className="sec">匯入</h2>
       <div className="form-block">
-        <p className="entry-n">表頭須是「日期,類型,科目,子科目,金額,帳戶,轉入帳戶,備註」。已經在帳本裡的相同帳目會自動略過。</p>
-        <div className="fld-wrap">
-          <div className="fld">
-            <label htmlFor="imp-file">檔案</label>
-            <input id="imp-file" type="file" accept=".csv,text/csv" onChange={(e) => pick(e.target.files?.[0])} />
-          </div>
+        <p className="entry-n">
+          表頭須是「日期,類型,科目,子科目,金額,帳戶,轉入帳戶,備註」。已經在帳本裡的相同帳目會自動略過。
+          <a href="/settings/import-export/template" download>
+            下載範本
+          </a>
+        </p>
+        <div className="pick">
+          <input id="imp-file" className="sr" type="file" accept=".csv,text/csv" onChange={(e) => pick(e.target.files?.[0])} />
+          <label htmlFor="imp-file" className="btn">
+            選擇 CSV 檔案
+          </label>
         </div>
+        {fileName && text !== null ? <p className="note">{fileName}</p> : null}
 
         {preview && !preview.ok ? <p className="fld-err" role="alert">{preview.error}</p> : null}
         {preview?.ok ? (
@@ -62,6 +68,16 @@ export function ImportExport() {
               {fileName}：<b>{preview.toAdd} 筆將新增</b>，{preview.duplicates} 筆已存在，{preview.errors.length} 行有問題
               {preview.errors.length > 0 ? "（會略過）" : ""}。
             </p>
+            {preview.sample.length > 0 ? (
+              <ul className="note">
+                {preview.sample.map((s, n) => (
+                  <li key={n}>
+                    {s.date}　{s.text}　{s.amount}
+                  </li>
+                ))}
+                {preview.toAdd > preview.sample.length ? <li>…另有 {preview.toAdd - preview.sample.length} 筆</li> : null}
+              </ul>
+            ) : null}
             {preview.errors.length > 0 ? (
               <ul className="note">
                 {preview.errors.slice(0, SHOWN_ERRORS).map((e) => (

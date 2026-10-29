@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { createRule, removeRule } from "@/app/actions/rules";
+import { useToast } from "@/components/ui/Toast";
+import type { CategoryRule } from "@/lib/domain/recurring";
 import { CategoryPick, type PickKind } from "./CategoryPick";
 
 export interface RuleItem {
   id: string;
   keyword: string;
   category: string;
+  /** What 復原 needs to put the rule back. */
+  rule: Pick<CategoryRule, "entry_type" | "main_category" | "sub_category">;
 }
 
 export function RuleManager({ items }: { items: RuleItem[] }) {
@@ -66,6 +70,7 @@ export function RuleManager({ items }: { items: RuleItem[] }) {
 
 function RuleRow({ it }: { it: RuleItem }) {
   const [err, setErr] = useState("");
+  const { show, clear } = useToast();
   return (
     <li className="acc">
       <span>
@@ -76,7 +81,18 @@ function RuleRow({ it }: { it: RuleItem }) {
         className="ghost"
         onClick={async () => {
           const res = await removeRule(it.id);
-          if (!res.ok) setErr(res.errors.form ?? "失敗");
+          if (!res.ok) return setErr(res.errors.form ?? "失敗");
+          show({
+            text: `已刪除規則「${it.keyword}」`,
+            action: {
+              label: "復原",
+              run: async () => {
+                clear();
+                const back = await createRule({ keyword: it.keyword, ...it.rule });
+                show({ text: back.ok ? "已復原" : "復原失敗，請重新新增這條規則" });
+              },
+            },
+          });
         }}
       >
         刪除<span className="sr">：{it.keyword}</span>

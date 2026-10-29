@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entriesToCsv, parseEntriesCsv } from "./csv";
+import { csvTemplate, entriesToCsv, parseEntriesCsv } from "./csv";
 import type { Entry, LedgerAccount } from "./types";
 
 const accounts: LedgerAccount[] = [
@@ -132,5 +132,14 @@ describe("planImport", () => {
     const entries = [entry({ id: "1" }), entry({ id: "2", entry_type: "transfer", main_category: "轉帳", account_id: "a1", transfer_account_id: "a2" })];
     const { rows } = parseEntriesCsv(entriesToCsv(entries, accounts), accounts);
     expect(planImport(rows, entries)).toEqual({ toAdd: [], duplicates: 2 });
+  });
+});
+
+describe("csvTemplate", () => {
+  it("is a file the importer accepts as is", () => {
+    const { rows, errors } = parseEntriesCsv(csvTemplate(), []);
+    expect(errors).toEqual([]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ entry_type: "expense", main_category: "餐飲", amount: "120" });
   });
 });
