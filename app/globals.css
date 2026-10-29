@@ -71,6 +71,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .solo { max-width: 560px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
 
 .gap { height: var(--row); }
+.nb { white-space: nowrap; }
 .dim { color: var(--ink-2); }
 .run { height: var(--row); flex: none; display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-label); letter-spacing: 0.04em; color: var(--ink-2); box-shadow: inset 0 -1px 0 var(--ink); }
 .run b { font-weight: 700; color: var(--ink); }
@@ -154,6 +155,14 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
   .no-a .c-a, .no-a col.c-a { display: none; }
 }
 .rt.no-a .c-a { display: none; }
+.lg-tools { height: var(--row); flex: none; display: flex; align-items: center; gap: 8px; }
+.lg-tools input { flex: 1; min-width: 0; height: calc(var(--row) - 8px); border: 0; border-radius: 0; background: transparent; box-shadow: inset 0 -2px 0 var(--ink); font: inherit; font-size: var(--fs-label); color: var(--ink); padding: 0 4px; }
+.lg-tools input:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+.lg-tools .lg-n { font-size: var(--fs-label); color: var(--ink-2); white-space: nowrap; }
+.lg-tools .act { margin-left: 0; }
+.lg-t tr[hidden] { display: none; }
+/* 篩選時同日的第二筆也要看得到日期 */
+.lg-t.filtering td.d:empty::before { content: attr(data-d); }
 .lg-empty { margin: 0; line-height: var(--row); font-size: var(--fs-label); color: var(--ink-2); }
 .dayno { display: inline-grid; place-items: center; min-width: 30px; height: 26px; border: 2px solid var(--ink); font-weight: 700; }
 
@@ -203,6 +212,7 @@ a.act, button.act { margin-left: auto; color: var(--ink); font-weight: 700; text
   .book .pane-r, .book:has(.lg-overview) .pane-r { display: flex; grid-column: 2; grid-row: 2; border-left: 0; box-shadow: inset 22px 0 22px -22px rgba(26, 29, 27, 0.4); }
   .dock { grid-column: 2; grid-row: 3; position: static; border-left: 0; border-bottom: 1px solid var(--ink); display: flex; justify-content: flex-end; }
   .dock .btn { width: 280px; }
+  .pane-r .mnav { display: none; }
   .book { box-shadow: none; }
 }
 

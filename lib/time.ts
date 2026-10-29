@@ -67,6 +67,11 @@ export function shiftMonth(year: number, month: number, delta: number): { year: 
   return { year: Math.floor(idx / 12), month: (idx % 12) + 1 };
 }
 
+/** `{2026, 10}` → `2026-10`, the `?m=` spelling. */
+export function formatMonthParam(year: number, month: number): string {
+  return `${year}-${pad(month)}`;
+}
+
 /** `?m=2026-10` → { year, month }, or null when it is not a month between 2000 and 2100. */
 export function parseMonthParam(s: string): { year: number; month: number } | null {
   const m = /^(\d{4})-(\d{2})$/.exec(s);

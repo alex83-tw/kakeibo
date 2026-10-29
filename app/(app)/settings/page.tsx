@@ -4,12 +4,10 @@ import { Run } from "@/components/paper/Run";
 import { getUserId } from "@/lib/server/auth";
 import { listAccounts } from "@/lib/server/repos/accounts";
 import { createServerClient } from "@/lib/server/supabase";
-import { currentMonth, toKanji } from "@/lib/time";
 
 export default async function SettingsPage() {
   const userId = await getUserId();
   const client = await createServerClient();
-  const { month } = currentMonth();
   const accounts = await listAccounts(client, userId);
   const rows: { href: string; label: string; note: string }[] = [
     { href: "/settings/categories", label: "科目", note: "改名・合併" },
@@ -20,8 +18,8 @@ export default async function SettingsPage() {
   ];
   return (
     <>
-      <Run label={`${toKanji(month)}月　設定`} />
-      <Head month={month} title="設定" />
+      <Run label="設定" />
+      <Head title="設定" />
       <nav className="menu" aria-label="設定項目">
           {rows.map((r) => (
             <Link key={r.href} href={r.href}>

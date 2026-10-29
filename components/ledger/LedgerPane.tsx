@@ -1,14 +1,14 @@
-import Link from "next/link";
 import { Fragment } from "react";
 import { Head } from "@/components/paper/Head";
+import { MonthNav } from "@/components/paper/MonthNav";
+import { NegNote } from "@/components/paper/NegNote";
 import { Run } from "@/components/paper/Run";
 import { buildLedger, type LedgerLine } from "@/lib/domain/ledger";
 import { formatAmount, formatSigned } from "@/lib/money";
 import { loadLedgerMonth } from "@/lib/server/ledger";
-import { shiftMonth, toKanji, twToday, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
+import { currentMonth, formatMonthParam, toKanji, twToday, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
+import { LedgerTools } from "./LedgerTools";
 import { LineButton } from "./LineButton";
-
-const ym = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}`;
 
 /**
  * 帳本：一筆一行寫在橫線上，欄線印到頁底。日期只寫在當天第一行；週計、月計之後畫實線與雙線。
@@ -18,9 +18,9 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
   const { entries, accountNames } = await loadLedgerMonth(year, month);
   const today = twToday();
   const ledger = buildLedger({ year, month, entries, today });
-  const prev = shiftMonth(year, month, -1);
-  const next = shiftMonth(year, month, 1);
-  const date = (day: number) => `${ym(year, month)}-${String(day).padStart(2, "0")}`;
+  const monthKey = formatMonthParam(year, month);
+  const cur = currentMonth();
+  const date = (day: number) => `${monthKey}-${String(day).padStart(2, "0")}`;
   const account = (l: LedgerLine) => {
     const e = l.entry;
     if (!e) return "";
@@ -46,19 +46,8 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
           </span>
         }
       />
-      <nav className="mnav" aria-label="切換月份">
-        <Link href={`${path}?m=${ym(prev.year, prev.month)}`} scroll={false}>
-          ◀ <span className="sr">上個月：</span>
-          {toKanji(prev.month)}月
-        </Link>
-        <span aria-current="date">
-          {year} 年 {toKanji(month)}月
-        </span>
-        <Link href={`${path}?m=${ym(next.year, next.month)}`} scroll={false}>
-          <span className="sr">下個月：</span>
-          {toKanji(next.month)}月 ▶
-        </Link>
-      </nav>
+      <MonthNav year={year} month={month} path={path} />
+      <LedgerTools monthKey={monthKey} currentKey={formatMonthParam(cur.year, cur.month)} todayId={`d-${today.slice(8, 10)}`} path={path} />
 
       <div className={showAccounts ? "lg-sheet" : "lg-sheet no-a"}>
         <table className="lg-t">
@@ -98,8 +87,8 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
                   const note = [l.det, l.orig].filter(Boolean).join("　");
                   const muted = l.transfer ? `(${formatAmount(e!.amount)})` : "未納入";
                   return (
-                    <tr key={e?.id ?? `t${l.day}`} id={l.first ? `d-${String(l.day).padStart(2, "0")}` : undefined} className={[l.isToday ? "today" : "", l.first && i > 0 ? "nd" : ""].join(" ").trim() || undefined}>
-                      <td className="d">
+                    <tr key={e?.id ?? `t${l.day}`} data-q={`${l.cat} ${note} ${account(l)}`.toLowerCase()} id={l.first ? `d-${String(l.day).padStart(2, "0")}` : undefined} className={[l.isToday ? "today" : "", l.first && i > 0 ? "nd" : ""].join(" ").trim() || undefined}>
+                      <td className="d" data-d={l.day}>
                         {l.first ? (
                           l.isToday ? (
                             <span className="dayno">
@@ -155,6 +144,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
         </table>
         {ledger.weeks.length === 0 ? <p className="lg-empty">這個月還沒有帳目。按「記一筆」開始。</p> : null}
       </div>
+      <NegNote />
     </div>
   );
 }

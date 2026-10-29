@@ -4,6 +4,7 @@ import {
   currentMonth,
   parseMonthParam,
   resolveMonth,
+  formatMonthParam,
   shiftMonth,
   dayOfMonth,
   monthRange,
@@ -86,6 +87,13 @@ describe("parseMonthParam", () => {
     for (const bad of ["", "2026-13", "2026-00", "2026-1", "26-10", "2026/10", "2026-10-01", "abc", "1999-12", "2101-01"]) {
       expect(parseMonthParam(bad)).toBeNull();
     }
+  });
+});
+
+describe("formatMonthParam", () => {
+  it("is the inverse of parseMonthParam", () => {
+    expect(formatMonthParam(2026, 9)).toBe("2026-09");
+    expect(parseMonthParam(formatMonthParam(2026, 12))).toEqual({ year: 2026, month: 12 });
   });
 });
 

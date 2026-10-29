@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AccountManager } from "@/components/settings/AccountManager";
 import { AlertRow } from "@/components/paper/AlertRow";
 import { Head } from "@/components/paper/Head";
+import { NegNote } from "@/components/paper/NegNote";
 import { Hint } from "@/components/paper/Hint";
 import { Run } from "@/components/paper/Run";
 import { ReconcileForm } from "@/components/recon/ReconcileForm";
@@ -14,7 +15,7 @@ import { listAccounts } from "@/lib/server/repos/accounts";
 import { listEntries } from "@/lib/server/repos/entries";
 import { listAllReconciliations } from "@/lib/server/repos/reconciliations";
 import { createServerClient } from "@/lib/server/supabase";
-import { currentMonth, toKanji, twToday } from "@/lib/time";
+import { twToday } from "@/lib/time";
 
 /** 帳戶：餘額與對帳（帳簿／實際／差額），輸入實際餘額，以及新增與封存帳戶。 */
 export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ a?: string }> }) {
@@ -29,13 +30,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
     accounts.length > 0 ? await Promise.all([listEntries(client, userId, { start, end: today }), listAllReconciliations(client, userId)]) : [[], []];
   const recon = buildRecon({ accounts: live, entries, reconciliations });
   const differing = recon.rows.filter((r) => r.matched === false);
-  const { month } = currentMonth();
 
   return (
     <>
-      <Run label={`${toKanji(month)}月　帳戶`} />
+      <Run label="帳戶" />
       <Head
-        month={month}
         title="帳戶"
         aside={
           <Link className="act" href="/settings">
@@ -47,6 +46,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         <>
           <h2 className="sec">對帳</h2>
           <ReconTable recon={recon} linkAccounts />
+          <NegNote />
           {differing.map((r) => (
             <AlertRow key={r.id} tone="action" href="/ledger" actionLabel="查看帳目">
               <strong>{r.name}</strong> {reconcile(r.kind, r.book, r.statement ?? 0).sentence}，{reconcileHint(r.kind, r.diff ?? 0)}

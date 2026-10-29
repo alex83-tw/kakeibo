@@ -8,13 +8,11 @@ import { getUserId } from "@/lib/server/auth";
 import { listRecurring } from "@/lib/server/repos/rules";
 import { createServerClient } from "@/lib/server/supabase";
 import { formatAmount } from "@/lib/money";
-import { currentMonth, toKanji } from "@/lib/time";
 
 const FREQUENCY: Record<string, string> = { monthly: "每月", quarterly: "每季", annual: "每年" };
 
 export default async function RecurringSettingsPage() {
   const rules = await listRecurring(await createServerClient(), await getUserId());
-  const { month } = currentMonth();
   const items: RecurringItem[] = rules.map((r) => ({
     id: r.id,
     name: ruleName(r),
@@ -25,9 +23,8 @@ export default async function RecurringSettingsPage() {
   }));
   return (
     <>
-      <Run label={`${toKanji(month)}月　週期帳目`} />
+      <Run label="週期帳目" />
       <Head
-        month={month}
         title="週期帳目"
         aside={
           <Link className="act" href="/settings">

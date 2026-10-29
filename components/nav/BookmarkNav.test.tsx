@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const pathname = vi.hoisted(() => ({ current: "/" }));
-vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
+const pathname = vi.hoisted(() => ({ current: "/", search: "" }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname.current, useSearchParams: () => new URLSearchParams(pathname.search) }));
 
 import { BookmarkNav, BOOKMARKS } from "./BookmarkNav";
 
@@ -19,6 +19,18 @@ describe("BookmarkNav", () => {
     ]);
     expect(links[1]).toHaveClass("tab-l");
     expect(BOOKMARKS).toHaveLength(4);
+  });
+
+  it("carries a valid ?m= to every bookmark so the left page keeps its month, and drops a bad one", () => {
+    pathname.current = "/budget";
+    pathname.search = "m=2026-09";
+    const { unmount } = render(<BookmarkNav />);
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/?m=2026-09", "/ledger?m=2026-09", "/budget?m=2026-09", "/settings?m=2026-09"]);
+    unmount();
+    pathname.search = "m=junk";
+    render(<BookmarkNav />);
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/", "/ledger", "/budget", "/settings"]);
+    pathname.search = "";
   });
 
   it("marks only the current page", () => {

@@ -1,6 +1,8 @@
 import { BudgetBook, type BudgetBookRow } from "@/components/settings/BudgetBook";
 import { Head } from "@/components/paper/Head";
 import { Hint } from "@/components/paper/Hint";
+import { MonthNav } from "@/components/paper/MonthNav";
+import { NegNote } from "@/components/paper/NegNote";
 import { Run } from "@/components/paper/Run";
 import { spentByMain } from "@/lib/domain/balances";
 import { EXPENSE_TAXONOMY } from "@/lib/domain/categories";
@@ -8,10 +10,11 @@ import { getUserId } from "@/lib/server/auth";
 import { listBudgets } from "@/lib/server/repos/budgets";
 import { listEntries } from "@/lib/server/repos/entries";
 import { createServerClient } from "@/lib/server/supabase";
-import { currentMonth, monthRange, toKanji } from "@/lib/time";
+import { monthRange, resolveMonth, toKanji } from "@/lib/time";
 
-export default async function BudgetPage() {
-  const { year, month } = currentMonth();
+/** `?m=` picks the month; on the desktop spread the left page shares it, so only the phone shows this page's own month nav. */
+export default async function BudgetPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
+  const { year, month } = resolveMonth((await searchParams).m);
   const client = await createServerClient();
   const userId = await getUserId();
   const range = monthRange(year, month);
@@ -38,8 +41,10 @@ export default async function BudgetPage() {
     <>
       <Run label={`${toKanji(month)}月　預算`} />
       <Head month={month} title="預算" />
-      <Hint>點金額直接改，離開欄位就存；清空＝取消這項預算。「提醒 %」＝用到幾成時提醒。</Hint>
+      <MonthNav year={year} month={month} path="/budget" />
+      <Hint>點金額直接改，離開欄位就存；清空＝取消這項預算。<span className="nb">「提醒 %」</span>＝用到幾成時提醒。</Hint>
       <BudgetBook year={year} month={month} rows={rows} addable={taxonomy.filter((m) => !used.has(m))} hasAny={budgets.length > 0} />
+      <NegNote />
     </>
   );
 }

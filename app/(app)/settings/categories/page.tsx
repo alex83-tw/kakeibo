@@ -7,7 +7,7 @@ import { categoryInventory } from "@/lib/domain/inventory";
 import { getUserId } from "@/lib/server/auth";
 import { listEntries } from "@/lib/server/repos/entries";
 import { createServerClient } from "@/lib/server/supabase";
-import { currentMonth, monthRange, shiftMonth, toKanji, twToday } from "@/lib/time";
+import { currentMonth, monthRange, shiftMonth, twToday } from "@/lib/time";
 
 export default async function CategoriesSettingsPage() {
   const { year, month } = currentMonth();
@@ -20,9 +20,8 @@ export default async function CategoriesSettingsPage() {
 
   return (
     <>
-      <Run label={`${toKanji(month)}月　科目`} />
+      <Run label="科目" />
       <Head
-        month={month}
         title="科目"
         aside={
           <Link className="act" href="/settings">
