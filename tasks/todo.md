@@ -107,3 +107,18 @@ Plan: docs/superpowers/plans/2026-10-29-kakeibo-v1.md
 - 轉址：`/settings/budget`→`/budget`、`/recon`→`/settings/accounts`、`/ledger/2026-10-05`→`/ledger?m=2026-10#d-05`。
 - tsc 0 錯誤（需先 `next typegen` 產生 `@ledger` slot 型別）；eslint 0；vitest 29 檔／305 測試通過；impeccable detect 0 項。
 - 未處理：帳戶頁「名稱」輸入框沒有底線，空的時候看不出是欄位；`/favicon.ico` 404（皆為既有問題）。
+
+## 2026-10-29 全站掃描後的改善（branch design/critique-fixes）
+
+來源：全站掃描（程式碼＋桌面 1280／平板 820／手機 390 實際走查）。計畫：`~/.claude/plans/ux-layout-sunny-dusk.md`。
+範圍外（已與使用者確認）：登入閘門、深色模式、匯出含外幣、結轉計算、PWA 二進位圖示、`loadToday` 有界化（要 migration）。
+
+- [x] A 資料與邏輯：`resolveMonth`（壞月份一律退回本月）、記一筆預設科目（同日取最後一筆、略過未來日期）、`chrome.ts` 改讀最近 300 筆、顯示時去掉 “(Imported)”、季繳／年繳週期帳目可建立並提醒、自動分類規則在記一筆時依摘要帶入科目（使用者選過就不蓋）、移除 `raw`
+- [x] B 殼層：`error`／`global-error`／`not-found`／`loading`（含 `@ledger` 自己的 error／loading）、`viewport` theme-color、`manifest.ts`
+- [x] C 帳本／預算：`LedgerTools`（篩選、回到今日／本月）、`MonthNav`（預算頁可換月）、書籤保留 `?m=`、設定頁不再印月份、△ 一行說明
+- [x] D 設定與回饋：今日頁建立第一個帳戶、輸入框底線、Toast 佇列＋hover／focus 暫停、規則刪除與帳戶封存可復原、週期帳目刪除可取消、科目唯讀清單、CSV 範本與預覽前幾筆
+- [x] E 版面：平板單欄放寬到 720px、注意列不拆「接近預算」、`prefers-reduced-motion`
+- 與計畫的差異：篩選只有一個文字框（科目、摘要、帳戶都比對），沒有另外的科目下拉；只有本月會自動捲到今日，其他月份停在 1 號；`anchor_month` 只讀不寫（型別未驗證），新建季繳／年繳以 `start_date` 的月份為準。
+- 走查中發現並修正：桌面 `.sr`（absolute）沒被 `.pane` 裝住，整份文件多出 ~200px 可捲，`scrollIntoView` 會連整頁一起捲；`.pane` 改 `position: relative`，捲動改直接設 `scrollTop`。
+- 加了 `loading.tsx` 之後，`redirect()`／`notFound()` 的 HTTP 狀態變成 200（內容仍是轉址／找不到頁），瀏覽器行為正常。
+- 驗證：tsc 0 錯誤；eslint 0；vitest 34 檔／352 測試通過（起點 29 檔／320）。Playwright（fixtures 伺服器，隔離 worktree）走過：桌面首頁→篩選→換月→回到本月→預算（月份與書籤）→規則新增、記一筆自動帶科目、刪除、復原；科目清單；平板帳本與匯入匯出；錯誤頁（頁面、左頁、整個 layout）與重試；舊網址轉址。**手機 390 只看了帳本（捲到今日），沒有逐頁走完；FirstAccount 只有單元測試，沒有在瀏覽器裡建立；真實資料庫路徑（3000）沒有寫入驗證。**
