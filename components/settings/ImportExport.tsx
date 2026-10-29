@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { applyImport, previewImport, type ImportPreview } from "@/app/actions/csv";
+import { Hint } from "@/components/paper/Hint";
 
 const SHOWN_ERRORS = 20;
 
@@ -47,12 +48,13 @@ export function ImportExport() {
       <div className="gap" />
       <h2 className="sec">匯入</h2>
       <div className="form-block">
-        <p className="entry-n">
-          表頭須是「日期,類型,科目,子科目,金額,帳戶,轉入帳戶,備註」。已經在帳本裡的相同帳目會自動略過。
+        <p className="entry-n">表頭須是「日期,類型,科目,子科目,金額,帳戶,轉入帳戶,備註」。已經在帳本裡的相同帳目會自動略過。</p>
+        <Hint>
           <a href="/settings/import-export/template" download>
             下載範本
           </a>
-        </p>
+          （表頭加一行範例）
+        </Hint>
         <div className="pick">
           <input id="imp-file" className="sr" type="file" accept=".csv,text/csv" onChange={(e) => pick(e.target.files?.[0])} />
           <label htmlFor="imp-file" className="btn">
