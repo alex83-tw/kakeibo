@@ -62,6 +62,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   border-bottom: 0;
   text-shadow: 0 0 0.5px rgba(26, 29, 27, 0.45);
 }
+/* 平板直放（600–1023px）：還沒到見開き，單欄放寬到 720px，內容寬 > 520px 時帳本與預算自動用寬欄版型 */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .book { max-width: 720px; }
+}
+
 /* 手機：一次一頁。/ledger 的帳本在左頁，所以那一頁顯示左頁、藏右頁。 */
 .pane-l { display: none; }
 .book:has(.lg-overview) .pane-l { display: flex; }
@@ -188,7 +193,8 @@ tr:has(> td > button.ln:hover) td { background-color: rgba(26, 29, 27, 0.05); }
 .alert { min-height: var(--row); flex: none; display: flex; align-items: flex-start; gap: 10px; line-height: var(--row); }
 .alert .tag { flex: none; margin-top: calc((var(--row) - 24px) / 2); padding: 0 5px; font-size: var(--fs-label); font-weight: 700; line-height: 21px; letter-spacing: 0.04em; background: var(--shu); color: var(--paper); border: 1.5px solid var(--shu); text-shadow: none; }
 .alert .tag.q { background: transparent; color: var(--ink); border-color: var(--ink); }
-.alert > span:nth-child(2) { text-wrap: pretty; }
+/* 只在空白與標點斷行，「接近預算」不會被拆開；一個詞比整行還長時才退回任意位置斷行 */
+.alert > span:nth-child(2) { text-wrap: pretty; word-break: keep-all; overflow-wrap: anywhere; }
 button.act { appearance: none; background: none; border: 0; font: inherit; font-weight: 700; cursor: pointer; }
 a.act, button.act { margin-left: auto; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 0 0 0 10px; height: var(--row); display: inline-flex; align-items: center; white-space: nowrap; }
 
@@ -226,6 +232,7 @@ input.r { display: block; width: 100%; height: var(--row); padding: 0; backgroun
 /* 記一筆：從底部升起的輸入單。類型切換在最上面，轉帳不選科目 */
 .scrim { position: fixed; inset: 0; background: rgba(26, 29, 27, 0.38); z-index: 40; }
 .entry { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(100%, 480px); max-height: 92dvh; overflow-y: auto; z-index: 41; background: var(--paper); border-top: 2px solid var(--ink); padding: 0 var(--pad) var(--pad); }
+@media (min-width: 600px) and (max-width: 1023px) { .entry { width: min(100%, 560px); } }
 .entry-h { height: 48px; display: flex; align-items: center; justify-content: space-between; }
 .entry-h h2 { margin: 0; font-size: var(--fs-title); font-weight: 700; }
 .ghost { appearance: none; border: 0; background: none; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; min-height: 44px; padding: 0 0 0 16px; cursor: pointer; color: var(--ink); }
@@ -329,3 +336,8 @@ a.btn { display: flex; align-items: center; justify-content: center; text-decora
 .pick { position: relative; }
 .pick:has(input:focus-visible) .btn { outline: 3px solid var(--ink); outline-offset: 2px; }
 .pick .btn { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* 動態只有 toast 與對話框的出現；要求減少動態時一律不動 */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
