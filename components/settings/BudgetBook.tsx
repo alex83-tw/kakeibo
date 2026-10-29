@@ -129,6 +129,7 @@ function Line({ row, year, month, report }: { row: BudgetBookRow; year: number; 
   const [amount, setAmount] = useState(saved);
   const [pct, setPct] = useState(String(row.thresholdPct));
   const [bad, setBad] = useState(false);
+  const [editing, setEditing] = useState(false);
   const pending = useRef(false);
   const id = `bud-${row.main}`;
 
@@ -167,7 +168,7 @@ function Line({ row, year, month, report }: { row: BudgetBookRow; year: number; 
         <label htmlFor={`${id}-a`} className="sr">
           {row.main} 預算金額
         </label>
-        <input id={`${id}-a`} inputMode="decimal" autoComplete="off" placeholder="未設" value={amount} aria-invalid={bad || undefined} onChange={(e) => setAmount(e.target.value)} onBlur={commit} />
+        <input id={`${id}-a`} inputMode="decimal" autoComplete="off" placeholder="未設" value={editing || !/^\d+$/.test(amount.trim()) ? amount : formatAmount(Number(amount))} aria-invalid={bad || undefined} onFocus={() => setEditing(true)} onChange={(e) => setAmount(e.target.value)} onBlur={() => { setEditing(false); void commit(); }} />
       </td>
       <td className={row.spent > 0 ? "n" : "n dim"}>{row.spent > 0 ? formatAmount(row.spent) : "－"}</td>
       <td className={remaining !== null && remaining < 0 ? "n bad" : "n dim"}>{remaining === null ? "－" : formatSigned(remaining)}</td>

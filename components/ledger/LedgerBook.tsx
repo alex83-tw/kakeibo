@@ -46,7 +46,8 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
               {ledger.weeks.map((w) => (
                 <Fragment key={w.start}>
                   {w.rows.map((r) => (
-                    <tr key={r.day} className={r.isToday ? "day today" : "day"}>
+                    <Fragment key={r.day}>
+                    <tr className={r.isToday ? "day today" : "day"}>
                       <td className="d">
                         <Link className="dlink" href={`/ledger/${date(r.day)}`}>
                           {r.isToday ? (
@@ -62,14 +63,8 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
                           <span className="sr">，看這天的明細</span>
                         </Link>
                       </td>
-                      <td className="m">
-                        <span className="clamp">
-                          <span className="cat">{r.cat}</span>
-                          <span className="det c-narrow">
-                            {r.det}
-                            {r.excluded ? "　含外幣" : ""}
-                          </span>
-                        </span>
+                      <td className="m cat">
+                        <span className="wc">{r.cat}</span>
                       </td>
                       <td className="m c-det det">
                         <span className="clamp">{detail(r)}</span>
@@ -77,6 +72,15 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
                       <td className={r.income > 0 ? "n" : "n dim"}>{r.income > 0 ? formatAmount(r.income) : "－"}</td>
                       <td className={r.expense > 0 ? "n" : "n dim"}>{r.expense > 0 ? formatAmount(r.expense) : "－"}</td>
                     </tr>
+                      {detail(r) ? (
+                        <tr className={r.isToday ? "detrow today" : "detrow"}>
+                          <td />
+                          <td colSpan={3} className="det">
+                            {detail(r)}
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
                   ))}
                   <tr className="wk">
                     <td colSpan={2}>

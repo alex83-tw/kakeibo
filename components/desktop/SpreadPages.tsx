@@ -85,6 +85,7 @@ export function RightPage({ data }: { data: Data }) {
       <div className="rows">
         <section id="p-today">
           <Head
+            level={2}
             month={month}
             title={
               <>

@@ -52,6 +52,7 @@ function Pages({ left, right }: { left: ReactNode; right: ReactNode }) {
 
   return (
     <div className="spread">
+      <h1 className="sr">家計簿</h1>
       <nav className="sp-tabs" aria-label="頁面">
         <div className="sp-tabs-l">{LEFT.map(tab)}</div>
         <div className="sp-tabs-r">

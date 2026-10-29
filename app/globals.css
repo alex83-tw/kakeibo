@@ -12,7 +12,7 @@
   --desk: #dadbd6;
   --row: 36px;
   --pad: 14px;
-  --fs-figure: 2rem;
+  --fs-figure: 1.5rem;
   --fs-title: 1.25rem;
   --fs-body: 0.9375rem;
   --fs-label: 0.8125rem;
@@ -157,7 +157,7 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 .amtrow { height: calc(var(--row) * 2); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--ink); }
 .amtrow label { font-weight: 700; margin-right: auto; }
 .amtrow .cur { font-size: var(--fs-label); font-weight: 700; }
-.amtrow input { width: 60%; min-width: 0; height: 56px; border: 0; background: none; text-align: right; font: 700 var(--fs-figure) var(--serif); font-variant-numeric: tabular-nums; color: var(--ink); }
+.amtrow input { flex: 0 1 9ch; width: 9ch; min-width: 0; height: 56px; border: 0; background: none; text-align: right; font: 700 1.625rem var(--serif); font-variant-numeric: tabular-nums; color: var(--ink); }
 .fld { min-height: 48px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--hair); }
 .fld > label { width: 56px; flex: none; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; }
 .fld select, .fld input { flex: 1; min-width: 0; height: 44px; border: 0; border-radius: 0; background: none; font: inherit; color: var(--ink); text-align: left; padding: 0; text-overflow: ellipsis; }
@@ -198,12 +198,17 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 .cat { font-size: var(--fs-body); color: var(--ink); }
 .det { font-size: var(--fs-label); color: var(--ink-2); }
 /* 窄版：摘要併在科目格下一行；寬版（≥560px）拆成獨立欄 */
-.c-det { display: none; }
+.c-det, tr.detrow { display: none; }
+@media (max-width: 559.98px) {
+  table.ledger tr.detrow { display: table-row; }
+  table.ledger tr.detrow td { display: table-cell; height: auto; padding: 0 4px 8px; white-space: normal; text-overflow: clip; overflow: visible; line-height: 17px; overflow-wrap: anywhere; font-size: var(--fs-label); color: var(--ink-2); border-left: 0; border-bottom: 1px solid var(--hair); }
+  table.ledger tr.day:has(+ tr.detrow) td { border-bottom: 0; }
+  .vl { background-image: radial-gradient(circle at 25% 25%, rgba(26, 29, 27, 0.55) 1.05px, transparent 1.35px), radial-gradient(circle at 75% 75%, rgba(26, 29, 27, 0.55) 1.05px, transparent 1.35px); }
+}
 @media (min-width: 560px) {
   col.c-cat { width: 7em; }
   .c-det { display: table-cell; }
   col.c-det { display: table-column; }
-  .c-narrow { display: none; }
 }
 table.ledger tr.today .dim, table.ledger tr.today .det, table.ledger tr.today .clamp { color: var(--ink); }
 table.ledger td.d { overflow: visible; position: relative; }
@@ -226,12 +231,13 @@ a.dlink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 .de-act .ghost { padding: 0 8px; }
 
 /* 預算帳頁：預算與提醒比例是表格裡的輸入格，整格 44px 高，底線標出可改 */
-table.bb th[scope="row"] { font-weight: 400; font-size: var(--fs-body); }
+table.bb th[scope="row"] { font-weight: 400; font-size: 0.875rem; }
+table.bb td { font-size: 0.875rem; }
 table.bb tr:not(.sum):not(.sub) td, table.bb tr:not(.sum):not(.sub) th { height: 44px; }
-table.bb th.two, table.bb tr:has(th.two) td { height: 64px; }
+table.bb th.two, table.bb tr:has(th.two) td { height: 72px; }
 .bb-name { white-space: normal; }
 .bb-name > span { display: block; }
-.bb-pct { display: flex; align-items: center; gap: 1px; font-size: var(--fs-label); font-weight: 400; color: var(--ink-2); }
+.bb-pct { display: flex; align-items: center; gap: 1px; min-height: 44px; cursor: text; font-size: var(--fs-label); font-weight: 400; color: var(--ink-2); }
 .bb-pct input { width: 28px; height: 36px; border: 0; border-radius: 0; background: transparent; padding: 0 1px; font: inherit; text-align: right; color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
 .bb-pct input:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 table.bb th, table.bb td { padding: 0 3px; }
