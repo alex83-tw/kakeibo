@@ -217,7 +217,8 @@ a.act, button.act { margin-left: auto; color: var(--ink); font-weight: 700; text
   .tabs { grid-column: 1 / -1; display: grid; grid-template-columns: 50% repeat(3, auto) 1fr; justify-items: start; gap: 0 4px; padding-left: 0; }
   .tabs .tab-l { grid-column: 1; grid-row: 1; margin-left: 18px; }
   .tabs .tab:nth-child(1) { margin-left: 18px; }
-  .pane { overflow-y: auto; background-attachment: local; min-height: 0; }
+  /* position: relative 讓 .sr 這類 absolute 元素被頁面的捲動區裝住，不然會撐高整份文件、整頁跟著捲 */
+  .pane { position: relative; overflow-y: auto; background-attachment: local; min-height: 0; }
   .book .pane-l, .book:has(.lg-overview) .pane-l { display: flex; grid-column: 1; grid-row: 2 / 4; border-bottom: 1px solid var(--ink); box-shadow: inset -22px 0 22px -22px rgba(26, 29, 27, 0.4); }
   .book .pane-r, .book:has(.lg-overview) .pane-r { display: flex; grid-column: 2; grid-row: 2; border-left: 0; box-shadow: inset 22px 0 22px -22px rgba(26, 29, 27, 0.4); }
   .dock { grid-column: 2; grid-row: 3; position: static; border-left: 0; border-bottom: 1px solid var(--ink); display: flex; justify-content: flex-end; }
