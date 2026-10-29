@@ -2,7 +2,8 @@ import { AlertRow } from "@/components/paper/AlertRow";
 import { Hint } from "@/components/paper/Hint";
 import type { Alert } from "@/lib/domain/alerts";
 
-const QUESTION = ["uncategorized", "duplicate", "abnormal", "missing-recurring"];
+// 「需處理」只留給真的出事的（超支、對帳有差）；預估與接近預算只是提醒，歸「待確認」。
+const QUESTION = ["budget-projected", "budget-warning", "uncategorized", "duplicate", "abnormal", "missing-recurring"];
 
 export function AlertList({ alerts }: { alerts: Alert[] }) {
   return (

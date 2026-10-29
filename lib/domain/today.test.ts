@@ -76,7 +76,36 @@ describe("alerts", () => {
       ...base, budgets,
       entries: [entry({ amount: 1200 }), entry({ main_category: "其他", sub_category: "other", amount: 10 })],
     });
-    expect(v.alerts[0]).toMatchObject({ kind: "budget-over", subject: "餐飲", emphasis: "NT$ 200" });
+    expect(v.alerts[0]).toMatchObject({ kind: "budget-over", subject: "餐飲", emphasis: "NT$ 200", href: "/settings/budget" });
+  });
+  it("several budget problems share one row, worst first, and leave the other slots to the books", () => {
+    const two = [
+      { main_category: "餐飲", budget_amount: 1000, rollover_amount: 0, warning_threshold: 0.8 },
+      { main_category: "交通", budget_amount: 1000, rollover_amount: 0, warning_threshold: 0.8 },
+      { main_category: "居住", budget_amount: 1000, rollover_amount: 0, warning_threshold: 0.8 },
+    ];
+    const v = buildToday({
+      ...base,
+      budgets: two,
+      entries: [
+        entry({ amount: 1200 }),
+        entry({ amount: 1300, main_category: "交通", sub_category: "捷運" }),
+        entry({ amount: 850, main_category: "居住", sub_category: "房租" }),
+        entry({ amount: 80, entry_date: "2026-10-12", notes: "x" }),
+        entry({ amount: 80, entry_date: "2026-10-12", notes: "x" }),
+      ],
+    });
+    expect(v.alerts.map((a) => a.kind)).toEqual(["budget-over", "duplicate"]);
+    expect(v.alerts[0]).toMatchObject({ subject: "3 個科目", body: "餐飲、交通 超支；居住 接近預算", href: "/settings/budget" });
+  });
+  it("a merged row with only warnings is a warning, not an overrun", () => {
+    const two = [
+      { main_category: "餐飲", budget_amount: 1000, rollover_amount: 0, warning_threshold: 0.8 },
+      { main_category: "交通", budget_amount: 1000, rollover_amount: 0, warning_threshold: 0.8 },
+    ];
+    const v = buildToday({ ...base, budgets: two, entries: [entry({ amount: 850 }), entry({ amount: 900, main_category: "交通", sub_category: "捷運" })] });
+    expect(v.alerts).toHaveLength(1);
+    expect(v.alerts[0]).toMatchObject({ kind: "budget-warning", body: "餐飲、交通 接近預算" });
   });
   it("a reconcile difference shows the stored sentence", () => {
     const v = buildToday({

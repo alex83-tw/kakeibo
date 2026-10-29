@@ -107,15 +107,30 @@ export function buildToday(input: {
     text: [a.subject, a.body, a.emphasis].filter(Boolean).join(" "),
   });
 
+  // One budget alert row, however many categories are off: several rows would fill the three slots and push
+  // the bookkeeping alerts (duplicates, missed recurring items) out of sight. The detail lives on the budget page.
+  const href = "/settings/budget";
+  const flagged: { main: string; kind: "budget-over" | "budget-projected" | "budget-warning"; one: Omit<Alert, "text"> & { subject: string; body: string } }[] = [];
   for (const { b, p, spent: s } of progress) {
-    const href = "/ledger";
     if (p.status === "over") {
-      alerts.push(mk({ kind: "budget-over", subject: b.main_category, body: "已超支", emphasis: nt(s - p.available), href, actionLabel: `查看${b.main_category}` }));
+      flagged.push({ main: b.main_category, kind: "budget-over", one: { kind: "budget-over", subject: b.main_category, body: "已超支", emphasis: nt(s - p.available), href, actionLabel: "看預算" } });
     } else if (p.status === "projected-over") {
-      alerts.push(mk({ kind: "budget-projected", subject: b.main_category, body: "預估月底超支", emphasis: nt(Math.max(10, roundToTen(p.projected - p.available))), href, actionLabel: `查看${b.main_category}` }));
+      flagged.push({ main: b.main_category, kind: "budget-projected", one: { kind: "budget-projected", subject: b.main_category, body: "預估月底超支", emphasis: nt(Math.max(10, roundToTen(p.projected - p.available))), href, actionLabel: "看預算" } });
     } else if (p.status === "warning") {
-      alerts.push(mk({ kind: "budget-warning", subject: b.main_category, body: `已用 ${Math.round(p.ratio * 100)}%，接近預算`, href, actionLabel: `查看${b.main_category}` }));
+      flagged.push({ main: b.main_category, kind: "budget-warning", one: { kind: "budget-warning", subject: b.main_category, body: `已用 ${Math.round(p.ratio * 100)}%，接近預算`, href, actionLabel: "看預算" } });
     }
+  }
+  if (flagged.length === 1) {
+    alerts.push(mk(flagged[0].one));
+  } else if (flagged.length > 1) {
+    const names = (k: (typeof flagged)[number]["kind"]) => flagged.filter((f) => f.kind === k).map((f) => f.main).join("、");
+    const parts = [
+      ["budget-over", "超支"],
+      ["budget-projected", "預估超支"],
+      ["budget-warning", "接近預算"],
+    ].flatMap(([k, word]) => (names(k as (typeof flagged)[number]["kind"]) ? [`${names(k as (typeof flagged)[number]["kind"])} ${word}`] : []));
+    const worst = flagged.some((f) => f.kind === "budget-over") ? "budget-over" : flagged.some((f) => f.kind === "budget-projected") ? "budget-projected" : "budget-warning";
+    alerts.push(mk({ kind: worst, subject: `${flagged.length} 個科目`, body: parts.join("；"), href, actionLabel: "看預算" }));
   }
 
   const latest = latestByAccount(input.reconciliations);
