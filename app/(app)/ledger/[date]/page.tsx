@@ -9,7 +9,7 @@ import { loadEntryChrome } from "@/lib/server/chrome";
 import { getUserId } from "@/lib/server/auth";
 import { listEntries } from "@/lib/server/repos/entries";
 import { createServerClient } from "@/lib/server/supabase";
-import { dayOfMonth, isRealDate, toKanji, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
+import { dayOfMonth, isRealDate, toKanji, twToday, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
 
 export default async function DayPage({ params }: { params: Promise<{ date: string }> }) {
   const { date } = await params;
@@ -39,7 +39,7 @@ export default async function DayPage({ params }: { params: Promise<{ date: stri
             </Link>
           }
         />
-        <TotalLine label="當日支出合計" amount={spent} />
+        <TotalLine label={date === twToday() ? "今日支出合計" : "當日支出合計"} amount={spent} />
         {entries.length === 0 ? (
           <Hint>這天沒有帳目。</Hint>
         ) : (

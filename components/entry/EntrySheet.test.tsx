@@ -79,6 +79,18 @@ describe("EntrySheet from an alert", () => {
   });
 });
 
+describe("EntrySheet transfer without enough accounts", () => {
+  it("explains what is missing and does not offer a save", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={[]} recentCategories={[]} />);
+    await user.click(screen.getByRole("button", { name: "記一筆" }));
+    await user.click(screen.getByRole("radio", { name: "轉帳" }));
+    expect(screen.getByText(/請先到「設定 → 帳戶」建立至少兩個帳戶/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("轉出")).toBeNull();
+    expect(screen.getByRole("button", { name: "儲存" })).toBeDisabled();
+  });
+});
+
 describe("EntrySheet as a modal dialog", () => {
   it("is aria-modal, and the bookmark bar and page behind it are inert only while it is open", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });

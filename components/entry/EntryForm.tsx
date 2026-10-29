@@ -175,7 +175,11 @@ export function EntryForm({
 
       <AmountField id="entry-amount" value={amount} onChange={setAmount} error={err("amount")} inputRef={amountRef} />
 
-      {type === "transfer" ? (
+      {type === "transfer" && live.length < 2 ? (
+        <p className="entry-n" id="entry-transfer-need">
+          轉帳要在兩個帳戶之間移動，請先到「設定 → 帳戶」建立至少兩個帳戶。
+        </p>
+      ) : type === "transfer" ? (
         <>
           <Field id="entry-account" label="轉出" error={err("account_id")}>
             <select id="entry-account" value={accountId} onChange={(e) => setAccountId(e.target.value)} aria-describedby="entry-account-err">
@@ -255,7 +259,7 @@ export function EntryForm({
       <p className="fld-err form-err" aria-live="polite">
         {err("form")}
       </p>
-      <button id="entry-save" type="button" className="btn" disabled={pending} onClick={save}>
+      <button id="entry-save" type="button" className="btn" disabled={pending || (type === "transfer" && live.length < 2)} onClick={save}>
         儲存
       </button>
     </>
