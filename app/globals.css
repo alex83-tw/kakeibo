@@ -67,6 +67,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .book:has(.lg-overview) .pane-l { display: flex; }
 .book:has(.lg-overview) .pane-r { display: none; }
 
+/* 沒有導覽的單頁（整個 layout 壞了、網址不存在）：一張帳簿紙置中 */
+.solo { max-width: 560px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+
 .gap { height: var(--row); }
 .dim { color: var(--ink-2); }
 .run { height: var(--row); flex: none; display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-label); letter-spacing: 0.04em; color: var(--ink-2); box-shadow: inset 0 -1px 0 var(--ink); }

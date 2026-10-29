@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Serif, Noto_Serif_TC } from "next/font/google";
 import "./globals.css";
 
@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   title: "家計簿",
   description: "每天記帳，看見趨勢、預算與帳是否對得上。",
 };
+
+export const viewport: Viewport = { themeColor: "#f7f7f3" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
