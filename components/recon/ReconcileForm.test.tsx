@@ -20,14 +20,14 @@ beforeEach(() => {
 async function submit(text: string) {
   const user = userEvent.setup();
   render(<ReconcileForm accounts={card} />);
-  if (text) await user.type(screen.getByLabelText(/帳單/), text);
+  if (text) await user.type(screen.getByLabelText(/實際/), text);
   await user.click(screen.getByRole("button", { name: "對帳" }));
 }
 
 describe("ReconcileForm", () => {
   it("a credit card statement of △2,830 against a book of △3,150 owes 320 more", async () => {
     await submit("△2,830");
-    expect(await screen.findByText("帳面比帳單多欠 320")).toBeInTheDocument();
+    expect(await screen.findByText("帳簿比實際多欠 320")).toBeInTheDocument();
     expect(screen.getByText("△320")).toBeInTheDocument();
     expect(screen.getByText(/可能多記或退款未記/)).toBeInTheDocument();
     expect(saveReconciliation).toHaveBeenCalledWith(expect.objectContaining({ account_id: "card", statement: "△2,830" }));
@@ -43,8 +43,8 @@ describe("ReconcileForm", () => {
   });
   it("announces results politely", async () => {
     await submit("△2,830");
-    await screen.findByText("帳面比帳單多欠 320");
-    expect(document.querySelector("[aria-live=polite]")).toContainElement(screen.getByText("帳面比帳單多欠 320"));
+    await screen.findByText("帳簿比實際多欠 320");
+    expect(document.querySelector("[aria-live=polite]")).toContainElement(screen.getByText("帳簿比實際多欠 320"));
   });
   it("shows the server's error", async () => {
     saveReconciliation.mockResolvedValue({ ok: false, error: "儲存失敗，請稍後再試" });
@@ -55,7 +55,7 @@ describe("ReconcileForm", () => {
     const user = userEvent.setup();
     render(<ReconcileForm accounts={[...card, { id: "cash", name: "現金", kind: "cash", book: 8200 }]} />);
     await user.selectOptions(screen.getByLabelText("帳戶"), "cash");
-    await user.type(screen.getByLabelText(/帳單/), "8,000");
+    await user.type(screen.getByLabelText(/實際/), "8,000");
     await user.click(screen.getByRole("button", { name: "對帳" }));
     expect(saveReconciliation).toHaveBeenCalledWith(expect.objectContaining({ account_id: "cash" }));
   });

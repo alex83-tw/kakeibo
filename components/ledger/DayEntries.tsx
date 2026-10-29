@@ -7,6 +7,7 @@ import { ToastSlot, useToast } from "@/components/ui/Toast";
 import { subLabel } from "@/lib/domain/categories";
 import type { Entry, LedgerAccount } from "@/lib/domain/types";
 import { formatAmount } from "@/lib/money";
+import { foldWidth } from "@/lib/text";
 
 /** One day's entries, each editable and deletable (delete = soft delete with a 5-second 復原). */
 export function DayEntries({
@@ -54,7 +55,7 @@ export function DayEntries({
                 </span>
               </div>
               <div className="de-sub">
-                {[e.notes, where, counted ? null : `${e.currency} ${formatAmount(e.amount)}`].filter(Boolean).join("　")}
+                {[e.notes ? foldWidth(e.notes) : null, where, counted ? null : `${e.currency} ${formatAmount(e.amount)}`].filter(Boolean).join("　")}
               </div>
               <div className="de-act">
                 {counted ? (

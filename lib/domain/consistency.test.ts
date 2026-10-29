@@ -127,7 +127,7 @@ describe("one month, every screen", () => {
     expect(sum(view.budgetRows.map((r) => r.progress.remaining))).toBe(13580);
     expect(recon.rows.find((r) => r.id === "card")).toMatchObject({ book: -3150, statement: -2830, diff: -320, matched: false });
     expect(recon.totalDiff).toBe(-320);
-    expect(view.alerts.find((a) => a.kind === "reconcile")?.text).toContain("帳面比帳單多欠 320");
+    expect(view.alerts.find((a) => a.kind === "reconcile")?.text).toContain("帳簿比實際多欠 320");
   });
 });
 

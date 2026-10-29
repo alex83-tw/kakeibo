@@ -10,6 +10,7 @@ import { formatAmount } from "@/lib/money";
 import { twToday } from "@/lib/time";
 import { AmountField } from "./AmountField";
 import { useCategoryOptions } from "./CategoryOptions";
+import type { RecordPreset } from "./RecordButton";
 
 const KINDS: { type: EntryType; label: string }[] = [
   { type: "expense", label: "支出" },
@@ -56,17 +57,21 @@ export function EntryForm({
   accounts,
   recentCategories,
   initial,
+  preset,
   onSaved,
 }: {
   accounts: LedgerAccount[];
   recentCategories: { main: string; sub: string }[];
   initial?: Entry;
+  /** Prefill for a new entry (an alert's 記帳); ignored when editing. */
+  preset?: RecordPreset;
   onSaved: (saved: SavedEntry) => void;
 }) {
   const live = accounts.filter((a) => !a.archived || a.id === initial?.account_id || a.id === initial?.transfer_account_id);
   const recent = recentCategories.slice(0, 5);
   const defaultCategory = (type: EntryType) =>
     type === "expense" && recent[0] ? joinCategory(recent[0].main, recent[0].sub) : "";
+  const presetCategory = preset && !initial ? joinCategory(preset.main, normalizeSub(preset.sub)) : null;
 
   const [type, setType] = useState<EntryType>(initial?.entry_type ?? "expense");
   const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
@@ -75,12 +80,12 @@ export function EntryForm({
       ? initial.entry_type === "transfer"
         ? ""
         : joinCategory(initial.main_category, normalizeSub(initial.sub_category))
-      : defaultCategory("expense"),
+      : (presetCategory ?? defaultCategory("expense")),
   );
   const [accountId, setAccountId] = useState(initial ? (initial.account_id ?? "") : (live[0]?.id ?? ""));
   const [toId, setToId] = useState(initial ? (initial.transfer_account_id ?? "") : (live[1]?.id ?? ""));
   const [date, setDate] = useState(() => initial?.entry_date ?? twToday());
-  const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [notes, setNotes] = useState(initial?.notes ?? (initial ? "" : (preset?.notes ?? "")));
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
   const [focusTick, setFocusTick] = useState<{ id: string; n: number } | null>(null);
@@ -139,6 +144,7 @@ export function EntryForm({
   const taxonomy = type === "income" ? (options?.income ?? INCOME_TAXONOMY) : (options?.expense ?? EXPENSE_TAXONOMY);
   const err = (k: keyof Errors) => errors[k];
   const known = new Set(Object.entries(taxonomy).flatMap(([main, subs]) => ["other", ...subs].map((s) => joinCategory(main, s))));
+  const recentKeys = new Set(recent.map((r) => joinCategory(r.main, r.sub)));
   const legacy = category !== "" && !known.has(category) && !recent.some((r) => joinCategory(r.main, r.sub) === category) ? category : null;
 
   return (
@@ -210,15 +216,19 @@ export function EntryForm({
                   ))}
                 </optgroup>
               ) : null}
-              {Object.entries(taxonomy).map(([main, subs]) => (
-                <optgroup key={main} label={main}>
-                  {["other", ...subs].map((s) => (
-                    <option key={s} value={joinCategory(main, s)}>
-                      {main}／{subLabel(s)}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
+              {Object.entries(taxonomy).map(([main, subs]) => {
+                // 常用 already lists these; listing them again would put the same choice in the picker twice.
+                const rest = ["other", ...subs].filter((s) => type !== "expense" || !recentKeys.has(joinCategory(main, s)));
+                return rest.length === 0 ? null : (
+                  <optgroup key={main} label={main}>
+                    {rest.map((s) => (
+                      <option key={s} value={joinCategory(main, s)}>
+                        {main}／{subLabel(s)}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
             </select>
           </Field>
           <Field id="entry-account" label="帳戶" error={err("account_id")}>

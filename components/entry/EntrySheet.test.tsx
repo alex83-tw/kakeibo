@@ -13,6 +13,7 @@ vi.mock("@/app/actions/entries", () => ({
 
 import { EntrySheet } from "./EntrySheet";
 import { CategoryOptionsProvider } from "./CategoryOptions";
+import { RECORD_EVENT } from "./RecordButton";
 
 const acct = (id: string, name: string, kind: LedgerAccount["kind"], sort_order: number): LedgerAccount => ({
   id, name, kind, sort_order, opening_balance: 0, opening_date: "2026-01-01", archived: false,
@@ -47,6 +48,34 @@ describe("EntrySheet category options", () => {
     expect(options).toContain("吃喝／一般");
     await user.click(screen.getByRole("radio", { name: "收入" }));
     expect(within(screen.getByLabelText("科目")).getAllByRole("option").map((o) => o.textContent)).toContain("薪資／一般");
+  });
+});
+
+describe("EntrySheet from an alert", () => {
+  it("opens with the rule's category and note filled in when a record event arrives", async () => {
+    render(<EntrySheet accounts={accounts} recentCategories={[{ main: "餐飲", sub: "午餐" }]} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(RECORD_EVENT, { detail: { main: "居住", sub: "房租", notes: "房租" } }));
+    });
+    expect((await screen.findByLabelText("科目")) as HTMLSelectElement).toHaveProperty("value", "居住::房租");
+    expect(screen.getByLabelText("摘要")).toHaveProperty("value", "房租");
+  });
+
+  it("lists a recently used category once, not again under its main category", async () => {
+    await open();
+    const labels = within(screen.getByLabelText("科目")).getAllByRole("option").map((o) => o.textContent);
+    expect(labels.filter((l) => l === "餐飲／午餐")).toHaveLength(1);
+  });
+
+  it("the plain 記一筆 button starts blank after an alert opened it with a preset", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={accounts} recentCategories={[]} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(RECORD_EVENT, { detail: { main: "居住", sub: "房租", notes: "房租" } }));
+    });
+    await user.click(await screen.findByRole("button", { name: "取消" }));
+    await user.click(screen.getByRole("button", { name: "記一筆" }));
+    expect(screen.getByLabelText("摘要")).toHaveProperty("value", "");
   });
 });
 

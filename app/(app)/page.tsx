@@ -16,7 +16,7 @@ export default async function TodayPage() {
   const data = await loadToday();
   const { view, today, year, month, accountNames } = data;
   const day = dayOfMonth(today);
-  const { budget } = view;
+  const { budget, unbudgeted } = view;
 
   return (
     <Spread left={<LeftPage data={data} />} right={<RightPage data={data} />}>
@@ -61,16 +61,26 @@ export default async function TodayPage() {
           </>
         ) : (
           <Hint>
-            還沒設定本月預算。<Link href="/settings">到設定建立</Link>
+            還沒設定本月預算。<Link href="/settings/budget">到設定建立</Link>
           </Hint>
         )}
+        {unbudgeted.total > 0 ? (
+          <div className="r kv">
+            <span>
+              未設預算的支出 <b>{formatAmount(unbudgeted.total)}</b>
+            </span>
+            <Link className="act" href="/settings/budget">
+              設定預算
+            </Link>
+          </div>
+        ) : null}
         <DaySlider amounts={view.daily} today={day} year={year} month={month} />
         {budget ? (
           <div className="r kv">
             <span>預估月底</span>
             <span>
               <b>{formatAmount(roundToTen(budget.projected))}</b>　
-              {budget.overall === "ok" ? "整體仍在預算內" : budget.overall === "over" ? <span className="bad">已超出預算</span> : <span className="bad">預估超出預算</span>}
+              {budget.overall === "ok" ? (unbudgeted.total > 0 ? "已設預算的科目仍在預算內" : "整體仍在預算內") : budget.overall === "over" ? <span className="bad">已超出預算</span> : <span className="bad">預估超出預算</span>}
             </span>
           </div>
         ) : null}
@@ -98,7 +108,7 @@ export default async function TodayPage() {
           </div>
         ) : (
           <Hint>
-            還沒有帳戶，<Link href="/settings">先到設定建立</Link>。
+            還沒有帳戶，<Link href="/settings/accounts">先到設定建立</Link>。
           </Hint>
         )}
         <div className="gap" />

@@ -9,8 +9,8 @@ import { twToday } from "@/lib/time";
 
 type Outcome = { sentence: string; hint: string; diff: number; matched: boolean } | { error: string };
 
-export function ReconcileForm({ accounts }: { accounts: { id: string; name: string; kind: AccountKind; book: number }[] }) {
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
+export function ReconcileForm({ accounts, initialAccountId }: { accounts: { id: string; name: string; kind: AccountKind; book: number }[]; initialAccountId?: string }) {
+  const [accountId, setAccountId] = useState(accounts.find((a) => a.id === initialAccountId)?.id ?? accounts[0]?.id ?? "");
   const [statement, setStatement] = useState("");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [pending, setPending] = useState(false);
@@ -29,9 +29,9 @@ export function ReconcileForm({ accounts }: { accounts: { id: string; name: stri
     setOutcome({ sentence: r.sentence, hint: reconcileHint(account!.kind, res.diff), diff: res.diff, matched: res.matched });
   }
 
-  const label = accounts.length > 1 ? "帳單" : `${account.name}　帳單`;
+  const label = accounts.length > 1 ? "實際餘額" : `${account.name}　實際餘額`;
   return (
-    <>
+    <div id="recon-form">
       {accounts.length > 1 ? (
         <div className="chkrow">
           <label htmlFor="recon-account">帳戶</label>
@@ -77,8 +77,8 @@ export function ReconcileForm({ accounts }: { accounts: { id: string; name: stri
         ) : null}
       </div>
       <p className="r hint" id="recon-hint">
-        差＝帳面−帳單，△ 代表帳面較少（信用卡＝多欠）；對上顯示青緑「對上」
+        差額＝帳簿−實際，△ 代表帳簿較少（信用卡＝多欠）；對上顯示青緑「對上」
       </p>
-    </>
+    </div>
   );
 }

@@ -24,6 +24,8 @@ export interface TodayView {
   budget: null | { spent: number; available: number; budget: number; percent: number; projected: number; overall: "over" | "projected-over" | "ok" };
   /** One row per budgeted main category; `budget` includes rollover, so budget − spent = progress.remaining. */
   budgetRows: { main: string; budget: number; spent: number; progress: BudgetProgress }[];
+  /** This month's spending in categories with no budget, largest first. Budget progress never sees it. */
+  unbudgeted: { total: number; rows: { main: string; spent: number }[] };
   /** expense per day of the month, TWD only */
   daily: number[];
   alerts: Alert[];
@@ -39,7 +41,7 @@ export function buildToday(input: {
   budgets: BudgetInput[];
   reconciliations: ReconciliationRecord[];
   /** Active monthly recurring items, as dueRules() returns them. */
-  recurring?: { id: string; name: string; due_day: number }[];
+  recurring?: { id: string; name: string; due_day: number; main?: string; sub?: string }[];
 }): TodayView {
   const { today, entries, budgets } = input;
   const accounts = input.accounts.filter((a) => !a.archived);
@@ -70,6 +72,12 @@ export function buildToday(input: {
     }),
     spent: spent[b.main_category] ?? 0,
   }));
+
+  const budgeted = new Set(budgets.map((b) => b.main_category));
+  const unbudgetedRows = Object.entries(spent)
+    .filter(([main, s]) => !budgeted.has(main) && s > 0)
+    .map(([main, s]) => ({ main, spent: s }))
+    .sort((a, b) => b.spent - a.spent);
 
   let budget: TodayView["budget"] = null;
   if (budgets.length > 0) {
@@ -119,17 +127,32 @@ export function buildToday(input: {
     alerts.push(mk({ kind: "reconcile", subject: a.name, body: "", emphasis: res.sentence, href: "/recon", actionLabel: "去對帳" }));
   }
 
-  const uncategorized = monthTwd.filter((e) => e.entry_type !== "transfer" && isUncategorized(e.main_category, e.sub_category)).length;
-  if (uncategorized > 0) alerts.push(mk({ kind: "uncategorized", subject: `${uncategorized} 筆`, body: "帳目未歸類", href: "/ledger", actionLabel: "去歸類" }));
+  // Each alert lands on the page that shows the offending rows, not on the whole book.
+  const day = (date: string) => `/ledger/${date}`;
+
+  const uncategorizedRows = monthTwd.filter((e) => e.entry_type !== "transfer" && isUncategorized(e.main_category, e.sub_category));
+  if (uncategorizedRows.length > 0) {
+    const first = uncategorizedRows.reduce((a, e) => (e.entry_date < a ? e.entry_date : a), uncategorizedRows[0].entry_date);
+    alerts.push(mk({ kind: "uncategorized", subject: `${uncategorizedRows.length} 筆`, body: "帳目未歸類", href: day(first), actionLabel: "去歸類" }));
+  }
 
   const dupes = findDuplicates(monthTwd);
-  if (dupes.length > 0) alerts.push(mk({ kind: "duplicate", subject: `${dupes.length} 組`, body: "疑似重複帳目", href: "/ledger", actionLabel: "去檢查" }));
+  if (dupes.length > 0) alerts.push(mk({ kind: "duplicate", subject: `${dupes.length} 組`, body: "疑似重複帳目", href: day(dupes[0][0].entry_date), actionLabel: "去檢查" }));
 
   const abnormal = findAbnormal(twd, today)[0];
-  if (abnormal) alerts.push(mk({ kind: "abnormal", subject: abnormal.main_category, body: "今日金額偏高", emphasis: nt(abnormal.amount), href: "/ledger", actionLabel: "去確認" }));
+  if (abnormal) alerts.push(mk({ kind: "abnormal", subject: abnormal.main_category, body: "今日金額偏高", emphasis: nt(abnormal.amount), href: day(today), actionLabel: "去確認" }));
 
   for (const r of findMissingRecurring(input.recurring ?? [], monthTwd, today)) {
-    alerts.push(mk({ kind: "missing-recurring", subject: r.name, body: "本月還沒記帳", href: "/ledger", actionLabel: "去記帳" }));
+    alerts.push(
+      mk({
+        kind: "missing-recurring",
+        subject: r.name,
+        body: "本月還沒記帳",
+        href: "/settings/recurring",
+        actionLabel: "去記帳",
+        preset: r.main ? { main: r.main, sub: r.sub ?? "other", notes: r.name } : undefined,
+      }),
+    );
   }
 
   // Balances are "as of today"; a future-dated entry this month counts for the month's budget, not for what is in the account now.
@@ -142,6 +165,7 @@ export function buildToday(input: {
     totalBalance: totalBalance(accounts, sofar),
     budget,
     budgetRows: progress.map(({ b, p, spent: s }) => ({ main: b.main_category, budget: p.available, spent: s, progress: p })),
+    unbudgeted: { total: unbudgetedRows.reduce((s, r) => s + r.spent, 0), rows: unbudgetedRows },
     daily: dailyExpenses(entries, range),
     alerts: topAlerts(alerts, 3),
   };

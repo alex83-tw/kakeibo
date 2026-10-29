@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ReconcileForm } from "@/components/recon/ReconcileForm";
 import { ReconTable } from "@/components/recon/ReconTable";
 import { AlertRow } from "@/components/paper/AlertRow";
@@ -15,7 +14,8 @@ import { listAllReconciliations } from "@/lib/server/repos/reconciliations";
 import { createServerClient } from "@/lib/server/supabase";
 import { currentMonth, toKanji, twToday } from "@/lib/time";
 
-export default async function ReconPage() {
+export default async function ReconPage({ searchParams }: { searchParams: Promise<{ a?: string }> }) {
+  const { a } = await searchParams;
   const userId = await getUserId();
   const client = await createServerClient();
   const accounts = (await listAccounts(client, userId)).filter((a) => !a.archived);
@@ -27,9 +27,8 @@ export default async function ReconPage() {
         <Run label={`${toKanji(month)}月　對帳`} />
         <div className="rows">
           <Head month={month} title="對帳" />
-          <Hint>
-            還沒有帳戶，<Link href="/settings">先到設定建立</Link>。
-          </Hint>
+          <div className="gap" />
+          <ReconTable recon={buildRecon({ accounts: [], entries: [], reconciliations: [] })} />
         </div>
       </>
     );
@@ -59,17 +58,17 @@ export default async function ReconPage() {
           }
         />
         <div className="gap" />
-        <ReconTable recon={recon} />
+        <ReconTable recon={recon} linkAccounts />
         {differing.map((r) => (
           <AlertRow key={r.id} tone="action" href="/ledger" actionLabel="查看帳目">
             <strong>{r.name}</strong> {reconcile(r.kind, r.book, r.statement ?? 0).sentence}，{reconcileHint(r.kind, r.diff ?? 0)}
           </AlertRow>
         ))}
-        <Hint>表中是各帳戶最近一次對帳時的數字。</Hint>
+        <Hint>表中是各帳戶最近一次對帳時的數字；點帳戶名稱可直接輸入新的實際餘額。</Hint>
 
         <div className="gap" />
-        <h2 className="sec">輸入帳單餘額</h2>
-        <ReconcileForm accounts={accounts.map((a) => ({ id: a.id, name: a.name, kind: a.kind, book: accountBalance(a, entries) }))} />
+        <h2 className="sec">輸入實際餘額</h2>
+        <ReconcileForm initialAccountId={a} accounts={accounts.map((a) => ({ id: a.id, name: a.name, kind: a.kind, book: accountBalance(a, entries) }))} />
         <div className="gap" />
       </div>
     </>

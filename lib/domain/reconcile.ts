@@ -16,8 +16,8 @@ export function reconcile(
   const n = abs2(diff).toLocaleString("en-US");
   const sentence =
     kind === "credit_card"
-      ? `帳面比帳單${diff < 0 ? "多" : "少"}欠 ${n}`
-      : `帳面比帳單${diff < 0 ? "少" : "多"} ${n}`;
+      ? `帳簿比實際${diff < 0 ? "多" : "少"}欠 ${n}`
+      : `帳簿比實際${diff < 0 ? "少" : "多"} ${n}`;
   return { diff, matched: false, sentence };
 }
 

@@ -1,4 +1,5 @@
 import { monthRange } from "@/lib/time";
+import { foldWidth } from "@/lib/text";
 import { subLabel } from "./categories";
 import type { Entry } from "./types";
 import { groupByWeek } from "./weeks";
@@ -31,7 +32,7 @@ export interface LedgerView {
 export function daySummary(entries: Entry[]): { cat: string; det: string } {
   const first = entries[0];
   const cat = first.entry_type === "transfer" ? "轉帳" : first.main_category;
-  const lead = first.entry_type === "transfer" ? "" : first.notes?.trim() || (first.sub_category ? subLabel(first.sub_category) : "");
+  const lead = first.entry_type === "transfer" ? "" : foldWidth(first.notes?.trim() ?? "") || (first.sub_category ? subLabel(first.sub_category) : "");
   const others = [...new Set(entries.slice(1).map((e) => (e.entry_type === "transfer" ? "轉帳" : e.main_category)))].filter((c) => c !== cat);
   const tail = entries.length > 3 ? `（${entries.length} 筆）` : "";
   const det = `${lead ? `・${lead}` : ""}${others.length ? `　${others.join("　")}` : ""}${tail}`;

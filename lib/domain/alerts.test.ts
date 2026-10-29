@@ -45,7 +45,7 @@ describe("findAbnormal", () => {
 describe("findMissingRecurring", () => {
   const rules = [{ id: "r1", name: "房租", due_day: 5 }];
   it("reports a rule 3+ days past due with no matching entry this month", () => {
-    expect(findMissingRecurring(rules, [], "2026-10-08")).toEqual([{ id: "r1", name: "房租" }]);
+    expect(findMissingRecurring(rules, [], "2026-10-08")).toEqual(rules);
   });
   it("waits until 3 days after the due date", () => {
     expect(findMissingRecurring(rules, [], "2026-10-07")).toEqual([]);

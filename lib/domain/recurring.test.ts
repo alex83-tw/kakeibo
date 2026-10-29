@@ -26,7 +26,7 @@ describe("ruleName", () => {
 
 describe("dueRules", () => {
   it("takes the due day from start_date", () => {
-    expect(dueRules([rule()], "2026-10-29")).toEqual([{ id: "r1", name: "房租", due_day: 5 }]);
+    expect(dueRules([rule()], "2026-10-29")).toEqual([{ id: "r1", name: "房租", due_day: 5, main: "居住", sub: "房租" }]);
   });
   it("skips inactive, ended, not-yet-started and non-monthly rules", () => {
     expect(dueRules([rule({ is_active: false })], "2026-10-29")).toEqual([]);

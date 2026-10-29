@@ -13,6 +13,7 @@ export function AlertList({ alerts }: { alerts: Alert[] }) {
             key={a.kind + a.text}
             tone={QUESTION.includes(a.kind) ? "question" : "action"}
             href={a.href}
+            preset={a.preset}
             actionLabel={a.actionLabel ?? "查看"}
           >
             <strong>{a.subject}</strong> {a.body}

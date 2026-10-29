@@ -23,7 +23,7 @@ export function Spread({ left, right, children }: { left: ReactNode; right: Reac
 function Pages({ left, right }: { left: ReactNode; right: ReactNode }) {
   // Pages only mounts after useDesktop() turned true on the client, so window is available here.
   const [active, setActive] = useState<string>(
-    () => [...LEFT, ...RIGHT].find((b) => `#${b.id}` === window.location.hash)?.id ?? LEFT[0].id,
+    () => [...LEFT, ...RIGHT].find((b) => `#${b.id}` === window.location.hash)?.id ?? RIGHT[0].id, // 首頁就是「今日」，沒有 hash 時它才是作用中的書籤
   );
   // A bookmark click scrolls the page; ignore the scroll events that follow it so the clicked tab stays active.
   const lockedUntil = useRef(0);

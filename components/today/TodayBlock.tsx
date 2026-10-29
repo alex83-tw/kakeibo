@@ -3,6 +3,7 @@ import { Hint } from "@/components/paper/Hint";
 import { subLabel } from "@/lib/domain/categories";
 import type { Entry } from "@/lib/domain/types";
 import { formatAmount } from "@/lib/money";
+import { foldWidth } from "@/lib/text";
 
 function amountCell(e: Entry): string {
   if (e.currency !== "TWD") return "未納入";
@@ -41,7 +42,7 @@ export function TodayBlock({ rows, accountNames }: { rows: Entry[]; accountNames
                     {e.entry_type === "transfer" ? "轉帳" : `${e.main_category}／${subLabel(e.sub_category ?? "other")}`}
                   </td>
                   <td className="m">
-                    <span className="clamp">{e.notes ?? ""}</span>
+                    <span className="clamp">{foldWidth(e.notes ?? "")}</span>
                   </td>
                   <td className="sm">
                     <span className="clamp">

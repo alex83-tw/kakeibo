@@ -1,20 +1,39 @@
 import Link from "next/link";
-import { BudgetEditor } from "@/components/settings/BudgetEditor";
+import { BudgetBook, type BudgetBookRow } from "@/components/settings/BudgetBook";
 import { Head } from "@/components/paper/Head";
 import { Hint } from "@/components/paper/Hint";
 import { Run } from "@/components/paper/Run";
+import { spentByMain } from "@/lib/domain/balances";
 import { EXPENSE_TAXONOMY } from "@/lib/domain/categories";
 import { getUserId } from "@/lib/server/auth";
 import { listBudgets } from "@/lib/server/repos/budgets";
+import { listEntries } from "@/lib/server/repos/entries";
 import { createServerClient } from "@/lib/server/supabase";
-import { currentMonth, toKanji } from "@/lib/time";
+import { currentMonth, monthRange, toKanji } from "@/lib/time";
 
 export default async function BudgetSettingsPage() {
   const { year, month } = currentMonth();
-  const budgets = await listBudgets(await createServerClient(), await getUserId(), year, month);
+  const client = await createServerClient();
+  const userId = await getUserId();
+  const range = monthRange(year, month);
+  const [budgets, entries] = await Promise.all([listBudgets(client, userId, year, month), listEntries(client, userId, range)]);
   const byMain = new Map(budgets.map((b) => [b.main_category, b]));
-  // Taxonomy order first, then any budgeted category that is not in it.
-  const mains = [...Object.keys(EXPENSE_TAXONOMY), ...budgets.map((b) => b.main_category).filter((m) => !(m in EXPENSE_TAXONOMY))];
+  const spent = spentByMain(entries, range);
+
+  // A category is on the page if it has a budget or has spending this month, so 已用 always adds up to the ledger.
+  const taxonomy = Object.keys(EXPENSE_TAXONOMY);
+  const used = new Set([...byMain.keys(), ...Object.keys(spent).filter((m) => spent[m] > 0)]);
+  const mains = [...taxonomy.filter((m) => used.has(m)), ...[...used].filter((m) => !taxonomy.includes(m)).sort()];
+  const rows: BudgetBookRow[] = mains.map((m) => {
+    const b = byMain.get(m);
+    return {
+      main: m,
+      amount: b?.budget_amount ?? null,
+      available: b ? b.budget_amount + b.rollover_amount : 0,
+      spent: spent[m] ?? 0,
+      thresholdPct: Math.round((b?.warning_threshold ?? 0.8) * 100),
+    };
+  });
 
   return (
     <>
@@ -29,17 +48,8 @@ export default async function BudgetSettingsPage() {
             </Link>
           }
         />
-        <Hint>預算只設在主分類。每個月各自一份；新的一個月可以按「沿用上月」。</Hint>
-        <BudgetEditor
-          year={year}
-          month={month}
-          rows={mains.map((m) => ({
-            main: m,
-            amount: byMain.get(m)?.budget_amount ?? null,
-            thresholdPct: Math.round((byMain.get(m)?.warning_threshold ?? 0.8) * 100),
-          }))}
-          hasAny={budgets.length > 0}
-        />
+        <Hint>點金額直接改，離開欄位就存；清空＝取消這項預算。提醒%＝用到幾成時提醒。</Hint>
+        <BudgetBook year={year} month={month} rows={rows} addable={taxonomy.filter((m) => !used.has(m))} hasAny={budgets.length > 0} />
         <div className="gap" />
       </div>
     </>

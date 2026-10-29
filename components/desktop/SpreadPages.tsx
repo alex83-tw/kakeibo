@@ -39,6 +39,7 @@ export function LeftPage({ data }: { data: Data }) {
       <Run label={`${toKanji(month)}月　帳本`} />
       <div className="rows">
         <Head
+          level={2}
           month={month}
           title="帳本"
           aside={
@@ -111,7 +112,7 @@ export function RightPage({ data }: { data: Data }) {
           <div className="gap" />
           <h2 className="sec">本月預算</h2>
           {view.budgetRows.length > 0 ? (
-            <BudgetTable rows={view.budgetRows} />
+            <BudgetTable rows={view.budgetRows} unbudgeted={view.unbudgeted} />
           ) : (
             <Hint>
               還沒設定本月預算。<Link href="/settings/budget">到設定建立</Link>
@@ -126,18 +127,12 @@ export function RightPage({ data }: { data: Data }) {
         <section id="p-recon">
           <div className="gap" />
           <h2 className="sec">對帳</h2>
+          <ReconTable recon={recon} />
           {recon.rows.length > 0 ? (
-            <>
-              <ReconTable recon={recon} />
-              <Link className="act pg-more" href="/recon">
-                輸入帳單餘額
-              </Link>
-            </>
-          ) : (
-            <Hint>
-              還沒有帳戶，<Link href="/settings/accounts">先到設定建立</Link>。
-            </Hint>
-          )}
+            <Link className="act pg-more" href="/recon">
+              輸入實際餘額
+            </Link>
+          ) : null}
         </section>
         <div className="gap" />
       </div>

@@ -21,6 +21,8 @@ export interface Alert {
   body?: string;
   emphasis?: string;
   actionLabel?: string;
+  /** 記一筆 prefilled from the rule this alert is about; the alert then opens the entry form instead of linking. */
+  preset?: { main: string; sub: string; notes: string };
 }
 
 const live = (e: Entry) => e.deleted_at === null && e.entry_type !== "transfer";
@@ -61,11 +63,11 @@ export function findAbnormal(entries: Entry[], today: string): Entry[] {
 }
 
 /** A rule is missing when 3+ days past its due day this month and no live entry this month names it. */
-export function findMissingRecurring(
-  rules: { id: string; name: string; due_day: number }[],
+export function findMissingRecurring<R extends { id: string; name: string; due_day: number }>(
+  rules: R[],
   entries: Entry[],
   today: string,
-): { id: string; name: string }[] {
+): R[] {
   const month = today.slice(0, 7);
   const days = monthRange(Number(today.slice(0, 4)), Number(today.slice(5, 7))).days;
   return rules
@@ -78,8 +80,7 @@ export function findMissingRecurring(
             e.entry_date.startsWith(month) &&
             ((e.notes ?? "").includes(r.name) || e.sub_category === r.name),
         ),
-    )
-    .map(({ id, name }) => ({ id, name }));
+    );
 }
 
 const ORDER: AlertKind[] = [

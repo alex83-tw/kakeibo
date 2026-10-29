@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { BudgetProgress } from "@/lib/domain/budget";
 import { formatAmount, formatSigned, roundToTen } from "@/lib/money";
 
@@ -11,7 +12,7 @@ export interface BudgetTableRow {
 const overspent = (p: BudgetProgress) => p.status === "over" || p.status === "projected-over";
 
 /** 各主分類的預算、已用、餘額、進度與月底預估；合計列由各列加總而來。 */
-export function BudgetTable({ rows }: { rows: BudgetTableRow[] }) {
+export function BudgetTable({ rows, unbudgeted }: { rows: BudgetTableRow[]; unbudgeted?: { total: number; rows: { main: string; spent: number }[] } }) {
   const sum = (f: (r: BudgetTableRow) => number) => rows.reduce((s, r) => s + f(r), 0);
   const total = { budget: sum((r) => r.budget), spent: sum((r) => r.spent), projected: sum((r) => r.progress.projected) };
   const remaining = total.budget - total.spent;
@@ -60,6 +61,18 @@ export function BudgetTable({ rows }: { rows: BudgetTableRow[] }) {
               {totalOver ? "　預估超支" : ""}
             </td>
           </tr>
+          {unbudgeted && unbudgeted.total > 0 ? (
+            <tr>
+              <th scope="row">
+                <Link href="/settings/budget">未設預算</Link>
+              </th>
+              <td className="n dim">－</td>
+              <td className="n">{formatAmount(unbudgeted.total)}</td>
+              <td className="n dim" colSpan={2}>
+                {unbudgeted.rows.length} 個科目，不在上列合計內
+              </td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
     </div>

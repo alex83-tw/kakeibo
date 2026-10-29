@@ -60,7 +60,7 @@ export function LedgerBook({ ledger, year, month }: { ledger: LedgerView; year: 
                           <span className="cat">{r.cat}</span>
                           <span className="det">
                             {r.det}
-                            {r.excluded ? "　含未納入" : ""}
+                            {r.excluded ? "　含外幣" : ""}
                           </span>
                         </span>
                       </td>

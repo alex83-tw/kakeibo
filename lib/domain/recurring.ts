@@ -32,8 +32,11 @@ export function ruleName(r: Pick<RecurringRule, "label" | "main_category" | "sub
 }
 
 /** Active monthly rules in force today, in the shape findMissingRecurring takes. */
-export function dueRules(rules: RecurringRule[], today: string): { id: string; name: string; due_day: number }[] {
+export function dueRules(
+  rules: RecurringRule[],
+  today: string,
+): { id: string; name: string; due_day: number; main: string; sub: string }[] {
   return rules
     .filter((r) => r.is_active && r.frequency === "monthly" && r.start_date <= today && (r.end_date === null || r.end_date >= today))
-    .map((r) => ({ id: r.id, name: ruleName(r), due_day: Number(r.start_date.slice(8, 10)) }));
+    .map((r) => ({ id: r.id, name: ruleName(r), due_day: Number(r.start_date.slice(8, 10)), main: r.main_category, sub: normalizeSub(r.sub_category) }));
 }

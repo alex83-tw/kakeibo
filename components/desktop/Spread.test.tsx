@@ -41,6 +41,12 @@ describe("Spread", () => {
     ]);
   });
 
+  it("opens on 今日 (the home page) when there is no hash", () => {
+    desktop.current = true;
+    render(ui);
+    expect(screen.getAllByRole("link").filter((a) => a.getAttribute("aria-current") === "location").map((a) => a.textContent)).toEqual(["今日"]);
+  });
+
   it("marks the bookmark for the hash it opened on", () => {
     desktop.current = true;
     window.location.hash = "#p-budget";

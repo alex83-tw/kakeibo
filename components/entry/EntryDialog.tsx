@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef } from "react";
 import type { Entry, LedgerAccount } from "@/lib/domain/types";
 import { EntryForm, type SavedEntry } from "./EntryForm";
+import type { RecordPreset } from "./RecordButton";
 
 /** What sits behind the dialog: the bookmark bar and the page (content, dock, toasts). */
 const BACKGROUND = ".tabs, .page";
@@ -15,6 +16,7 @@ export function EntryDialog({
   accounts,
   recentCategories,
   initial,
+  preset,
   onSaved,
 }: {
   open: boolean;
@@ -22,6 +24,7 @@ export function EntryDialog({
   accounts: LedgerAccount[];
   recentCategories: { main: string; sub: string }[];
   initial?: Entry;
+  preset?: RecordPreset;
   onSaved: (saved: SavedEntry) => void;
 }) {
   // There is no Dialog.Trigger (the opener lives elsewhere), so remember who had focus and hand it back.
@@ -57,6 +60,7 @@ export function EntryDialog({
             accounts={accounts}
             recentCategories={recentCategories}
             initial={initial}
+            preset={preset}
             onSaved={(saved) => {
               onOpenChange(false);
               onSaved(saved);

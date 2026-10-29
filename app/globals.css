@@ -82,8 +82,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 /* 標題區：鋪紙色蓋住行線，字不壓在線上 */
 .head { height: calc(var(--row) * 2); display: flex; align-items: stretch; gap: 14px; margin: 0 calc(var(--pad) * -1); padding: 8px var(--pad) 6px; background: var(--paper); border-bottom: 1px solid var(--hair); }
 .head .mo { writing-mode: vertical-rl; text-orientation: upright; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.1em; line-height: 1.1; border-right: 1px solid var(--ink); padding-right: 10px; display: grid; place-items: center; }
-.head h1 { margin: 0; font-size: var(--fs-title); font-weight: 700; letter-spacing: 0.02em; line-height: 1.25; align-self: center; white-space: nowrap; }
-.head h1 .wd { font-size: var(--fs-label); font-weight: 400; color: var(--ink); letter-spacing: 0.06em; margin-left: 0.5em; }
+.head h1, .head h2 { margin: 0; font-size: var(--fs-title); font-weight: 700; letter-spacing: 0.02em; line-height: 1.25; align-self: center; white-space: nowrap; }
+.head h1 .wd, .head h2 .wd { font-size: var(--fs-label); font-weight: 400; color: var(--ink); letter-spacing: 0.06em; margin-left: 0.5em; }
 .head .sub { margin-left: auto; align-self: flex-end; text-align: right; color: var(--ink-2); font-size: var(--fs-label); line-height: 1.6; white-space: nowrap; }
 a.acctlink { margin-left: auto; align-self: center; min-height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-decoration: none; color: var(--ink); padding: 0 0 0 10px; white-space: nowrap; }
 a.acctlink span { font-size: var(--fs-label); color: var(--ink-2); line-height: 1.3; }
@@ -92,6 +92,7 @@ a.acctlink b { font-size: var(--fs-body); font-weight: 700; line-height: 1.3; bo
 h2.sec { margin: 0; height: var(--row); display: flex; align-items: center; font-weight: 700; font-size: var(--fs-label); letter-spacing: 0.08em; }
 .r { height: var(--row); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .r > span { white-space: nowrap; }
+.r > span.wrap { white-space: normal; text-wrap: pretty; }
 .kv { justify-content: space-between; }
 .r.hint { height: calc(var(--row) * 2); margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); font-size: var(--fs-label); color: var(--ink-2); line-height: 1.5; }
 
@@ -120,10 +121,11 @@ table.ledger tr.wk td { font-weight: 700; border-top: 1px solid var(--ink); bord
 .ok { color: var(--aoi); font-weight: 700; }
 
 .alert { height: 48px; display: flex; align-items: center; gap: 10px; margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); }
-.alert .mk { width: 9px; height: 9px; background: var(--shu); flex: none; }
-.alert .mk.q { background: transparent; border: 1.5px solid var(--ink); }
+.alert .tag { flex: none; padding: 0 5px; font-size: var(--fs-label); font-weight: 700; line-height: 22px; letter-spacing: 0.04em; background: var(--shu); color: var(--paper); border: 1.5px solid var(--shu); text-shadow: none; }
+.alert .tag.q { background: transparent; color: var(--ink); border-color: var(--ink); }
+button.act { appearance: none; background: none; border: 0; font: inherit; font-weight: 700; cursor: pointer; }
 .alert > span:nth-child(2) { line-height: 1.45; text-wrap: pretty; }
-a.act { margin-left: auto; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 0 0 0 10px; min-height: 44px; display: inline-flex; align-items: center; white-space: nowrap; }
+a.act, button.act { margin-left: auto; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 0 0 0 10px; min-height: 44px; display: inline-flex; align-items: center; white-space: nowrap; }
 
 .dock { position: sticky; bottom: 0; border-top: 2px solid var(--ink); padding: 9px var(--pad); height: calc(var(--row) * 2); background: var(--paper); }
 .btn { display: block; width: 100%; height: calc(var(--row) * 1.5); background: var(--ink); color: var(--paper); border: 0; border-radius: 0; font: 700 1.0625rem/1 var(--serif); letter-spacing: 0.2em; text-indent: 0.2em; cursor: pointer; text-shadow: none; }
@@ -186,7 +188,7 @@ input.r { display: block; width: 100%; height: calc(var(--row) * 1.25); min-heig
 .acct > div:nth-child(even) { border-left: 1px solid var(--hair); padding: 0 0 0 12px; }
 .acct > .tot { grid-column: 1 / -1; border-left: 0; border-bottom: 0; padding: 0; font-weight: 700; border-top: 1px solid var(--ink); }
 .acct > .tot b { border-bottom: 3px double var(--ink); padding: 0 2px; }
-.hint a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.hint a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 12px 0; } /* 句中連結：上下加 padding 把點擊區撐到 44px，不影響行高 */
 
 /* 帳本 */
 .cat { font-size: var(--fs-body); color: var(--ink); }
@@ -210,6 +212,27 @@ a.dlink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 .de-sub { font-size: var(--fs-label); color: var(--ink-2); overflow-wrap: anywhere; line-height: 1.5; }
 .de-act { display: flex; justify-content: flex-end; gap: 8px; }
 .de-act .ghost { padding: 0 8px; }
+
+/* 預算帳頁：預算與提醒比例是表格裡的輸入格，整格 44px 高，底線標出可改 */
+table.bb th[scope="row"] { font-weight: 400; font-size: var(--fs-body); }
+table.bb tr:not(.sum) td, table.bb tr:not(.sum) th { height: 44px; }
+table.bb td.in { padding: 0; overflow: visible; }
+table.bb td.in input { display: block; width: 100%; height: 44px; border: 0; border-radius: 0; background: transparent; padding: 0 4px; font: inherit; text-align: right; color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+table.bb td.in input::placeholder { color: var(--ink-2); }
+table.bb td.in input:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
+table.bb td.in input[aria-invalid] { box-shadow: inset 0 -3px 0 var(--shu); }
+table.bb th[scope="row"] { border-bottom: 1px solid var(--hair); }
+table.bb th.tight { letter-spacing: 0; padding-right: 6px; }
+table.bb tr.sum th { font-weight: 700; border-top: 1px solid var(--ink); border-bottom: 0; }
+.bb-live { min-height: var(--row); display: flex; align-items: center; padding: 0; }
+
+/* 對帳表：帳戶名稱是列首，連到輸入單 */
+table.rc th[scope="row"] { font-weight: 400; font-size: var(--fs-body); border-bottom: 1px solid var(--hair); }
+table.rc tr:not(.sum) td, table.rc tr:not(.sum) th { height: 44px; }
+table.rc td.empty { white-space: normal; text-align: left; color: var(--ink-2); font-size: var(--fs-label); }
+table.rc td.empty a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 12px 0; }
+a.rc-name { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; display: block; line-height: 44px; }
+a.rc-name:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
 
 /* 對帳 */
 .chkrow { min-height: calc(var(--row) * 2); display: flex; align-items: center; gap: 10px; margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); background: var(--paper); border-bottom: 1px solid var(--hair); }

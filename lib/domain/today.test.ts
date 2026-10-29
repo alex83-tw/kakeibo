@@ -85,7 +85,7 @@ describe("alerts", () => {
       reconciliations: [{ account_id: "card", statement_date: "2026-10-20", statement_balance: -2830, book_balance: -3150, diff: -320 }],
     });
     expect(v.alerts[0]).toMatchObject({ kind: "reconcile", href: "/recon" });
-    expect(v.alerts[0].text).toContain("帳面比帳單多欠 320");
+    expect(v.alerts[0].text).toContain("帳簿比實際多欠 320");
   });
   it("a matched reconciliation does not alert", () => {
     const v = buildToday({
@@ -117,10 +117,16 @@ describe("alerts", () => {
 });
 
 describe("missing recurring alert", () => {
-  const rent = { id: "r1", name: "房租", due_day: 5 };
+  const rent = { id: "r1", name: "房租", due_day: 5, main: "居住", sub: "房租" };
   it("alerts when a recurring item is 3+ days past due with no entry this month, after the budget and data alerts", () => {
     const v = buildToday({ ...base, recurring: [rent] });
-    expect(v.alerts).toEqual([expect.objectContaining({ kind: "missing-recurring", subject: "房租", body: "本月還沒記帳", href: "/ledger", actionLabel: "去記帳" })]);
+    expect(v.alerts).toEqual([
+      expect.objectContaining({ kind: "missing-recurring", subject: "房租", body: "本月還沒記帳", actionLabel: "去記帳", preset: { main: "居住", sub: "房租", notes: "房租" } }),
+    ]);
+  });
+  it("falls back to the recurring settings page when the rule carries no category", () => {
+    const v = buildToday({ ...base, recurring: [{ id: "r1", name: "房租", due_day: 5 }] });
+    expect(v.alerts[0]).toMatchObject({ href: "/settings/recurring", preset: undefined });
   });
   it("stays quiet once an entry names it", () => {
     const v = buildToday({ ...base, recurring: [rent], entries: [entry({ notes: "房租 10 月" })] });
@@ -169,5 +175,45 @@ describe("account balances are as of today", () => {
     expect(v.accounts[0].balance).toBe(900);
     expect(v.totalBalance).toBe(900);
     expect(v.budget?.spent).toBe(500);
+  });
+});
+
+describe("spending outside any budget", () => {
+  const budgets = [{ main_category: "家庭", budget_amount: 2000, rollover_amount: 0, warning_threshold: 0.8 }];
+  it("totals this month's spending in categories without a budget, largest first, and leaves budget progress alone", () => {
+    const v = buildToday({
+      ...base,
+      budgets,
+      entries: [
+        entry({ main_category: "飲食", amount: 700 }),
+        entry({ main_category: "旅行", amount: 1500, entry_date: "2026-10-05" }),
+        entry({ main_category: "飲食", amount: 300, entry_date: "2026-10-06" }),
+        entry({ main_category: "家庭", amount: 100 }),
+        entry({ main_category: "飲食", amount: 999, entry_date: "2026-09-30" }),
+        entry({ main_category: "薪資", entry_type: "income", amount: 5000 }),
+      ],
+    });
+    expect(v.unbudgeted).toEqual({ total: 2500, rows: [{ main: "旅行", spent: 1500 }, { main: "飲食", spent: 1000 }] });
+    expect(v.budget?.spent).toBe(100);
+  });
+  it("is empty when everything spent is budgeted", () => {
+    expect(buildToday({ ...base, budgets, entries: [entry({ main_category: "家庭", amount: 100 })] }).unbudgeted).toEqual({ total: 0, rows: [] });
+  });
+});
+
+describe("alert destinations", () => {
+  it("a duplicate group links to the day it happened, not the whole book", () => {
+    const v = buildToday({ ...base, entries: [entry({ amount: 80, entry_date: "2026-10-12" }), entry({ amount: 80, entry_date: "2026-10-12" })] });
+    expect(v.alerts[0]).toMatchObject({ kind: "duplicate", href: "/ledger/2026-10-12" });
+  });
+  it("an uncategorized alert links to the earliest such day this month", () => {
+    const v = buildToday({
+      ...base,
+      entries: [
+        entry({ main_category: "其他", sub_category: "other", entry_date: "2026-10-20" }),
+        entry({ main_category: "其他", sub_category: "other", entry_date: "2026-10-03", amount: 55 }),
+      ],
+    });
+    expect(v.alerts[0]).toMatchObject({ kind: "uncategorized", href: "/ledger/2026-10-03" });
   });
 });
