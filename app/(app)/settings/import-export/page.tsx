@@ -9,19 +9,16 @@ export default function ImportExportPage() {
   return (
     <>
       <Run label={`${toKanji(month)}月　匯入・匯出`} />
-      <div className="rows">
-        <Head
-          month={month}
-          title="匯入・匯出"
-          aside={
-            <Link className="act" href="/settings">
-              回設定
-            </Link>
-          }
-        />
-        <ImportExport />
-        <div className="gap" />
-      </div>
+      <Head
+        month={month}
+        title="匯入・匯出"
+        aside={
+          <Link className="act" href="/settings">
+            回設定
+          </Link>
+        }
+      />
+      <ImportExport />
     </>
   );
 }

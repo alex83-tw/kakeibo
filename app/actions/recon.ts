@@ -39,8 +39,7 @@ export async function saveReconciliation(input: {
       statement_balance: statement,
       book_balance: book,
     });
-    revalidatePath("/");
-    revalidatePath("/recon");
+    revalidatePath("/", "layout");
     return { ok: true, diff, matched };
   } catch (e) {
     if (e instanceof Error && e.message === "UNAUTHENTICATED") return { ok: false, error: "請先登入" };

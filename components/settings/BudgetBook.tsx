@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { clearBudget, copyLastMonthBudget, setBudget } from "@/app/actions/budget";
-import { Block } from "@/components/paper/Block";
 import { formatAmount, formatSigned } from "@/lib/money";
 
 export interface BudgetBookRow {
@@ -57,44 +56,36 @@ export function BudgetBook({ year, month, rows, addable, hasAny }: { year: numbe
           </span>
         </div>
       ) : null}
-      <Block label="預算">
-        <table className="ledger bb">
-          <caption className="sr">各主分類本月預算、已用、餘額；預算與提醒比例可直接修改</caption>
-          <colgroup>
-            <col style={{ width: "28%" }} />
-            <col style={{ width: "28%" }} />
-            <col style={{ width: "22%" }} />
-            <col style={{ width: "22%" }} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th scope="col">科目</th>
-              <th scope="col" className="n">預算</th>
-              <th scope="col" className="n">已用</th>
-              <th scope="col" className="n">餘額</th>
+      <table className="rt bb">
+        <caption className="sr">各主分類本月預算、已用、餘額；預算與提醒比例可直接修改</caption>
+        <thead>
+          <tr>
+            <th scope="col">科目</th>
+            <th scope="col" className="n">預算</th>
+            <th scope="col" className="n">已用</th>
+            <th scope="col" className="n">餘額</th>
+          </tr>
+        </thead>
+        <tbody>
+          {shown.map((r) => (
+            <Line key={r.main} row={r} year={year} month={month} report={(text, bad) => setStatus({ text, bad })} />
+          ))}
+          <tr className="sum">
+            <th scope="row">已設合計</th>
+            <td className="n">{formatAmount(totalBudget)}</td>
+            <td className="n">{formatAmount(budgetedSpent)}</td>
+            <td className={remaining < 0 ? "n bad" : "n"}>{formatSigned(remaining)}</td>
+          </tr>
+          {unbudgetedSpent > 0 ? (
+            <tr className="sub">
+              <th scope="row">未設</th>
+              <td className="n dim">－</td>
+              <td className="n">{formatAmount(unbudgetedSpent)}</td>
+              <td className="n dim">－</td>
             </tr>
-          </thead>
-          <tbody>
-            {shown.map((r) => (
-              <Line key={r.main} row={r} year={year} month={month} report={(text, bad) => setStatus({ text, bad })} />
-            ))}
-            <tr className="sum">
-              <th scope="row">已設合計</th>
-              <td className="n">{formatAmount(totalBudget)}</td>
-              <td className="n">{formatAmount(budgetedSpent)}</td>
-              <td className={remaining < 0 ? "n bad" : "n"}>{formatSigned(remaining)}</td>
-            </tr>
-            {unbudgetedSpent > 0 ? (
-              <tr className="sub">
-                <th scope="row">未設</th>
-                <td className="n dim">－</td>
-                <td className="n">{formatAmount(unbudgetedSpent)}</td>
-                <td className="n dim">－</td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </Block>
+          ) : null}
+        </tbody>
+      </table>
       <p className={status.bad ? "fld-err bb-live" : "note bb-live"} aria-live="polite">
         {status.text}
       </p>

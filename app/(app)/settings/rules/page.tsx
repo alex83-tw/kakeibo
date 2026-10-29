@@ -15,19 +15,16 @@ export default async function RulesSettingsPage() {
   return (
     <>
       <Run label={`${toKanji(month)}月　自動分類`} />
-      <div className="rows">
-        <Head
-          month={month}
-          title="自動分類"
-          aside={
-            <Link className="act" href="/settings">
-              回設定
-            </Link>
-          }
-        />
-        <RuleManager items={items} />
-        <div className="gap" />
-      </div>
+      <Head
+        month={month}
+        title="自動分類"
+        aside={
+          <Link className="act" href="/settings">
+            回設定
+          </Link>
+        }
+      />
+      <RuleManager items={items} />
     </>
   );
 }

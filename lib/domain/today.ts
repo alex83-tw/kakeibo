@@ -109,7 +109,7 @@ export function buildToday(input: {
 
   // One budget alert row, however many categories are off: several rows would fill the three slots and push
   // the bookkeeping alerts (duplicates, missed recurring items) out of sight. The detail lives on the budget page.
-  const href = "/settings/budget";
+  const href = "/budget";
   const flagged: { main: string; kind: "budget-over" | "budget-projected" | "budget-warning"; one: Omit<Alert, "text"> & { subject: string; body: string } }[] = [];
   for (const { b, p, spent: s } of progress) {
     if (p.status === "over") {
@@ -139,11 +139,11 @@ export function buildToday(input: {
     if (!r) continue;
     const res = reconcile(a.kind, r.book_balance, r.statement_balance);
     if (res.matched) continue;
-    alerts.push(mk({ kind: "reconcile", subject: a.name, body: "", emphasis: res.sentence, href: "/recon", actionLabel: "去對帳" }));
+    alerts.push(mk({ kind: "reconcile", subject: a.name, body: "", emphasis: res.sentence, href: "/settings/accounts", actionLabel: "去對帳" }));
   }
 
   // Each alert lands on the page that shows the offending rows, not on the whole book.
-  const day = (date: string) => `/ledger/${date}`;
+  const day = (date: string) => `/ledger?m=${date.slice(0, 7)}#d-${date.slice(8, 10)}`;
 
   const uncategorizedRows = monthTwd.filter((e) => e.entry_type !== "transfer" && isUncategorized(e.main_category, e.sub_category));
   if (uncategorizedRows.length > 0) {

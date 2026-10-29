@@ -102,14 +102,14 @@ describe("one month, every screen", () => {
       spent: spentByMain(entries, range),
       total: totalBalance(accounts, entries),
       balances: accounts.map((a) => accountBalance(a, entries)),
-      // A day holding only another currency is still listed (as 含未納入) with 0 and 0, so compare the numbers, not the rows.
+      // A line in another currency is still written (as 未納入) with 0 and 0, so compare the numbers, not the lines.
       ledger: (({ income, expense, net, weeks }) => ({ income, expense, net, weeks: weeks.map((w) => [w.income, w.expense]) }))(
         buildLedger({ year: 2026, month: 10, entries, today: TODAY }),
       ),
     });
     expect(args(all)).toEqual(args(live));
-    const excluded = buildLedger({ year: 2026, month: 10, entries: all, today: TODAY }).weeks.flatMap((w) => w.rows).filter((r) => r.excluded);
-    expect(excluded.map((r) => [r.day, r.income, r.expense])).toEqual([[4, 0, 0]]);
+    const foreign = buildLedger({ year: 2026, month: 10, entries: all, today: TODAY }).weeks.flatMap((w) => w.lines).filter((l) => l.foreign);
+    expect(foreign.map((l) => [l.day, l.income, l.expense])).toEqual([[4, 0, 0], [4, 0, 0]]);
   });
 
   it("今日, 帳本, 對帳 and the desktop budget table report the same numbers", () => {

@@ -4,19 +4,22 @@ import { EntrySheet } from "@/components/entry/EntrySheet";
 import { BookmarkNav } from "@/components/nav/BookmarkNav";
 import { loadEntryChrome } from "@/lib/server/chrome";
 
-export default async function AppLayout({ children }: { children: ReactNode }) {
+/**
+ * 帳簿：電腦版是見開き（左頁帳本常駐、右頁是目前的網址），手機版一次一頁。
+ * 兩種版面是同一份 DOM，由 CSS 切換；左頁由 @ledger slot 提供。
+ */
+export default async function AppLayout({ children, ledger }: { children: ReactNode; ledger: ReactNode }) {
   const { accounts, recentCategories, categoryOptions } = await loadEntryChrome();
   return (
-    <>
+    <div className="book">
       <BookmarkNav />
-      <div className="page">
-        <main className="sheet">
-          <CategoryOptionsProvider value={categoryOptions}>
-            {children}
-            <EntrySheet accounts={accounts} recentCategories={recentCategories} />
-          </CategoryOptionsProvider>
-        </main>
-      </div>
-    </>
+      <CategoryOptionsProvider value={categoryOptions}>
+        <section className="pane pane-l" aria-label="帳本">
+          {ledger}
+        </section>
+        <main className="pane pane-r">{children}</main>
+        <EntrySheet accounts={accounts} recentCategories={recentCategories} />
+      </CategoryOptionsProvider>
+    </div>
   );
 }

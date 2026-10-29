@@ -13,8 +13,7 @@ export type EntryActionResult =
 const NOT_FOUND: EntryActionResult = { ok: false, errors: { form: "找不到這筆帳目" } };
 
 function refresh() {
-  revalidatePath("/");
-  revalidatePath("/ledger", "layout"); // the month view and every day page under it
+  revalidatePath("/", "layout"); // the 帳本 slot sits beside every page
 }
 
 async function guarded(run: (userId: string, client: Awaited<ReturnType<typeof createServerClient>>) => Promise<EntryActionResult>) {

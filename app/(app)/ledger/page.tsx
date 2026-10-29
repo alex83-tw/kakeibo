@@ -1,63 +1,82 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LedgerBook } from "@/components/ledger/LedgerBook";
 import { Head } from "@/components/paper/Head";
+import { Hint } from "@/components/paper/Hint";
 import { Run } from "@/components/paper/Run";
-import { buildLedger } from "@/lib/domain/ledger";
-import { formatAmount } from "@/lib/money";
+import { spentByMain } from "@/lib/domain/balances";
+import { EXPENSE_TAXONOMY } from "@/lib/domain/categories";
+import { formatAmount, formatSigned } from "@/lib/money";
 import { getUserId } from "@/lib/server/auth";
-import { listEntries } from "@/lib/server/repos/entries";
+import { loadLedgerMonth } from "@/lib/server/ledger";
+import { listBudgets } from "@/lib/server/repos/budgets";
 import { createServerClient } from "@/lib/server/supabase";
-import { currentMonth, monthRange, parseMonthParam, shiftMonth, toKanji, twToday } from "@/lib/time";
+import { currentMonth, monthRange, parseMonthParam, toKanji } from "@/lib/time";
 
-const ym = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}`;
-
-export default async function LedgerPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
+/**
+ * /ledger: on a phone the 帳本 slot is the page and this is hidden; on the desktop spread it is the right page,
+ * the month's spending by category against its budget.
+ */
+export default async function LedgerOverview({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const { m } = await searchParams;
   const target = m === undefined ? currentMonth() : parseMonthParam(m);
   if (!target) notFound();
   const { year, month } = target;
-
-  const today = twToday();
   const range = monthRange(year, month);
-  const entries = await listEntries(await createServerClient(), await getUserId(), range);
-  const ledger = buildLedger({ year, month, entries, today });
-  const prev = shiftMonth(year, month, -1);
-  const next = shiftMonth(year, month, 1);
+  const [{ entries }, budgets] = await Promise.all([loadLedgerMonth(year, month), getUserId().then(async (id) => listBudgets(await createServerClient(), id, year, month))]);
+  const spent = spentByMain(entries, range);
+  const budgetOf = new Map(budgets.map((b) => [b.main_category, b.budget_amount + b.rollover_amount]));
+  const taxonomy = Object.keys(EXPENSE_TAXONOMY);
+  const used = new Set([...budgetOf.keys(), ...Object.keys(spent).filter((k) => spent[k] > 0)]);
+  const mains = [...taxonomy.filter((k) => used.has(k)), ...[...used].filter((k) => !taxonomy.includes(k)).sort()];
+  const total = mains.reduce((s, k) => s + (spent[k] ?? 0), 0);
+  const totalBudget = [...budgetOf.values()].reduce((s, v) => s + v, 0);
 
   return (
-    <>
-      <Run label={`${toKanji(month)}月　帳本`} />
-      <div className="rows">
-        <Head
-          month={month}
-          title="帳本"
-          aside={
-            <span className="sub">
-              收入 {formatAmount(ledger.income)}　支出 {formatAmount(ledger.expense)}
-              <br />
-              淨額 {ledger.net < 0 ? "△" : "＋"}
-              {formatAmount(ledger.net)}
-            </span>
-          }
-        />
-        <nav className="mnav" aria-label="切換月份">
-          <Link href={`/ledger?m=${ym(prev.year, prev.month)}`}>
-            ◀ <span className="sr">上個月：</span>
-            {toKanji(prev.month)}月
-          </Link>
-          <span aria-current="date">
-            {year} 年 {toKanji(month)}月
-          </span>
-          <Link href={`/ledger?m=${ym(next.year, next.month)}`}>
-            <span className="sr">下個月：</span>
-            {toKanji(next.month)}月 ▶
-          </Link>
-        </nav>
-
-        <LedgerBook ledger={ledger} year={year} month={month} />
-        <div className="gap" />
-      </div>
-    </>
+    <div className="lg-overview">
+      <Run label={`${toKanji(month)}月　科目總覽`} />
+      <Head month={month} title="科目總覽" />
+      {mains.length === 0 ? (
+        <Hint>這個月沒有支出，也沒有預算。</Hint>
+      ) : (
+        <table className="rt">
+          <caption className="sr">
+            {toKanji(month)}月各科目支出與預算
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">科目</th>
+              <th scope="col" className="n">
+                支出
+              </th>
+              <th scope="col" className="n">
+                預算
+              </th>
+              <th scope="col" className="n">
+                餘額
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {mains.map((k) => {
+              const b = budgetOf.get(k);
+              const left = b === undefined ? null : b - (spent[k] ?? 0);
+              return (
+                <tr key={k}>
+                  <th scope="row">{k}</th>
+                  <td className="n">{spent[k] ? formatAmount(spent[k]) : "－"}</td>
+                  <td className="n dim">{b === undefined ? "未設" : formatAmount(b)}</td>
+                  <td className={left !== null && left < 0 ? "n bad" : "n"}>{left === null ? "" : formatSigned(left)}</td>
+                </tr>
+              );
+            })}
+            <tr className="sum">
+              <th scope="row">合計</th>
+              <td className="n">{formatAmount(total)}</td>
+              <td className="n">{formatAmount(totalBudget)}</td>
+              <td />
+            </tr>
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }

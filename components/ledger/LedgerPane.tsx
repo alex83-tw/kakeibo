@@ -1,0 +1,160 @@
+import Link from "next/link";
+import { Fragment } from "react";
+import { Head } from "@/components/paper/Head";
+import { Run } from "@/components/paper/Run";
+import { buildLedger, type LedgerLine } from "@/lib/domain/ledger";
+import { formatAmount, formatSigned } from "@/lib/money";
+import { loadLedgerMonth } from "@/lib/server/ledger";
+import { shiftMonth, toKanji, twToday, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
+import { LineButton } from "./LineButton";
+
+const ym = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}`;
+
+/**
+ * 帳本：一筆一行寫在橫線上，欄線印到頁底。日期只寫在當天第一行；週計、月計之後畫實線與雙線。
+ * 窄的頁面（手機）把摘要併在科目格、不顯示帳戶欄（container query）。
+ */
+export async function LedgerPane({ year, month, path }: { year: number; month: number; path: string }) {
+  const { entries, accountNames } = await loadLedgerMonth(year, month);
+  const today = twToday();
+  const ledger = buildLedger({ year, month, entries, today });
+  const prev = shiftMonth(year, month, -1);
+  const next = shiftMonth(year, month, 1);
+  const date = (day: number) => `${ym(year, month)}-${String(day).padStart(2, "0")}`;
+  const account = (l: LedgerLine) => {
+    const e = l.entry;
+    if (!e) return "";
+    const name = (id: string | null) => (id ? (accountNames[id] ?? "") : "");
+    return l.transfer ? `${name(e.account_id)}→${name(e.transfer_account_id)}` : name(e.account_id);
+  };
+  const showAccounts = ledger.weeks.some((w) => w.lines.some((l) => account(l) !== ""));
+  const amount = (n: number) => (n === 0 ? "" : formatSigned(n)); // a refund is a negative expense
+
+  return (
+    <div className="lg">
+      <Run label={`${toKanji(month)}月　帳本`} />
+      <Head
+        level={2}
+        month={month}
+        title="帳本"
+        aside={
+          <span className="sub">
+            收入 {formatAmount(ledger.income)}　支出 {formatAmount(ledger.expense)}
+            <br />
+            淨額 {ledger.net < 0 ? "△" : "＋"}
+            {formatAmount(ledger.net)}
+          </span>
+        }
+      />
+      <nav className="mnav" aria-label="切換月份">
+        <Link href={`${path}?m=${ym(prev.year, prev.month)}`} scroll={false}>
+          ◀ <span className="sr">上個月：</span>
+          {toKanji(prev.month)}月
+        </Link>
+        <span aria-current="date">
+          {year} 年 {toKanji(month)}月
+        </span>
+        <Link href={`${path}?m=${ym(next.year, next.month)}`} scroll={false}>
+          <span className="sr">下個月：</span>
+          {toKanji(next.month)}月 ▶
+        </Link>
+      </nav>
+
+      <div className={showAccounts ? "lg-sheet" : "lg-sheet no-a"}>
+        <table className="lg-t">
+          <caption className="sr">{toKanji(month)}月帳目，一筆一行；點一行可以修改或刪除</caption>
+          <colgroup>
+            <col className="c-d" />
+            <col className="c-c" />
+            <col className="c-x" />
+            <col className="c-a" />
+            <col className="c-n" />
+            <col className="c-n" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">日</th>
+              <th scope="col">科目</th>
+              <th scope="col" className="c-x">
+                摘要
+              </th>
+              <th scope="col" className="c-a">
+                帳戶
+              </th>
+              <th scope="col" className="n">
+                收入
+              </th>
+              <th scope="col" className="n">
+                支出
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {ledger.weeks.map((w) => (
+              <Fragment key={w.start}>
+                {w.lines.map((l, i) => {
+                  const e = l.entry;
+                  const dim = l.transfer || l.foreign;
+                  const note = [l.det, l.foreign && e ? `${e.currency} ${formatAmount(e.amount)}` : ""].filter(Boolean).join("　");
+                  const muted = l.transfer ? `(${formatAmount(e!.amount)})` : "未納入";
+                  return (
+                    <tr key={e?.id ?? `t${l.day}`} id={l.first ? `d-${String(l.day).padStart(2, "0")}` : undefined} className={[l.isToday ? "today" : "", l.first && i > 0 ? "nd" : ""].join(" ").trim() || undefined}>
+                      <td className="d">
+                        {l.first ? (
+                          l.isToday ? (
+                            <span className="dayno">
+                              {l.day}
+                              <span className="sr"> 今日</span>
+                            </span>
+                          ) : (
+                            <>
+                              {l.day} <span className="dim">{WEEKDAY_JP[weekdayIndex(date(l.day))]}</span>
+                            </>
+                          )
+                        ) : null}
+                      </td>
+                      <td className="c">
+                        {e ? (
+                          <LineButton entry={e}>
+                            <b>{l.cat}</b>
+                            {note ? <span className="x-in"> {note}</span> : null}
+                            <span className="sr">
+                              ，{l.day}日{l.income > 0 ? `收入 ${formatAmount(l.income)}` : l.expense > 0 ? `支出 ${formatAmount(l.expense)}` : dim ? muted : ""}，修改或刪除
+                            </span>
+                          </LineButton>
+                        ) : (
+                          <span className="dim">今日還沒有帳目</span>
+                        )}
+                      </td>
+                      <td className="c-x dim">{note}</td>
+                      <td className="c-a dim">{account(l)}</td>
+                      <td className="n">{dim && e?.entry_type === "income" ? <span className="dim">{muted}</span> : amount(l.income)}</td>
+                      <td className="n">{dim && e?.entry_type !== "income" && e ? <span className="dim">{muted}</span> : amount(l.expense)}</td>
+                    </tr>
+                  );
+                })}
+                <tr className="wk">
+                  <td colSpan={2}>
+                    週計 {toKanji(w.start)}至{toKanji(w.end)}
+                  </td>
+                  <td className="c-x" />
+                  <td className="c-a" />
+                  <td className="n">{formatAmount(w.income)}</td>
+                  <td className="n">{formatAmount(w.expense)}</td>
+                </tr>
+              </Fragment>
+            ))}
+            <tr className="sum">
+              <td colSpan={2}>本月累計</td>
+              <td className="c-x" />
+              <td className="c-a" />
+              <td className="n">{formatAmount(ledger.income)}</td>
+              <td className="n">{formatAmount(ledger.expense)}</td>
+            </tr>
+          </tbody>
+        </table>
+        {ledger.weeks.length === 0 ? <p className="lg-empty">這個月還沒有帳目。按「記一筆」開始。</p> : null}
+      </div>
+    </div>
+  );
+}

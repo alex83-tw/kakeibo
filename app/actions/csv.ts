@@ -49,8 +49,7 @@ export async function applyImport(text: string): Promise<{ ok: true; added: numb
     const p = await plan(text);
     const values = p.toAdd.map((r) => validateEntryInput(r)).flatMap((v) => (v.ok ? [v.value] : [])) satisfies ValidEntry[];
     await insertEntries(p.client, p.userId, values);
-    revalidatePath("/");
-    revalidatePath("/ledger", "layout");
+    revalidatePath("/", "layout");
     return { ok: true, added: values.length };
   } catch (e) {
     return failure(e);

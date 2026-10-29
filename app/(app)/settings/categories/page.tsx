@@ -21,20 +21,17 @@ export default async function CategoriesSettingsPage() {
   return (
     <>
       <Run label={`${toKanji(month)}月　科目`} />
-      <div className="rows">
-        <Head
-          month={month}
-          title="科目"
-          aside={
-            <Link className="act" href="/settings">
-              回設定
-            </Link>
-          }
-        />
-        <Hint>改名或合併會一次更新帳目、預算、自動分類與週期帳目。舊帳目的科目也會跟著變。筆數是近 12 個月。</Hint>
-        <CategoryChangeForm inventory={inventory} />
-        <div className="gap" />
-      </div>
+      <Head
+        month={month}
+        title="科目"
+        aside={
+          <Link className="act" href="/settings">
+            回設定
+          </Link>
+        }
+      />
+      <Hint>改名或合併會一次更新帳目、預算、自動分類與週期帳目。舊帳目的科目也會跟著變。筆數是近 12 個月。</Hint>
+      <CategoryChangeForm inventory={inventory} />
     </>
   );
 }

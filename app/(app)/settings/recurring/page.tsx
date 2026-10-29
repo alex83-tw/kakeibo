@@ -26,19 +26,16 @@ export default async function RecurringSettingsPage() {
   return (
     <>
       <Run label={`${toKanji(month)}月　週期帳目`} />
-      <div className="rows">
-        <Head
-          month={month}
-          title="週期帳目"
-          aside={
-            <Link className="act" href="/settings">
-              回設定
-            </Link>
-          }
-        />
-        <RecurringManager items={items} />
-        <div className="gap" />
-      </div>
+      <Head
+        month={month}
+        title="週期帳目"
+        aside={
+          <Link className="act" href="/settings">
+            回設定
+          </Link>
+        }
+      />
+      <RecurringManager items={items} />
     </>
   );
 }

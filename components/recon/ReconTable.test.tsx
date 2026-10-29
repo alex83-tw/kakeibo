@@ -21,7 +21,7 @@ describe("ReconTable", () => {
 
   it("links an account name to the input form with that account chosen, only when asked", () => {
     const { rerender } = render(<ReconTable recon={view([row({})])} linkAccounts />);
-    expect(screen.getByRole("link", { name: /現金/ }).getAttribute("href")).toBe("/recon?a=a1#recon-form");
+    expect(screen.getByRole("link", { name: /現金/ }).getAttribute("href")).toBe("/settings/accounts?a=a1#recon-form");
     rerender(<ReconTable recon={view([row({})])} />);
     expect(screen.queryByRole("link", { name: /現金/ })).toBeNull();
   });

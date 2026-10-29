@@ -76,7 +76,7 @@ describe("alerts", () => {
       ...base, budgets,
       entries: [entry({ amount: 1200 }), entry({ main_category: "其他", sub_category: "other", amount: 10 })],
     });
-    expect(v.alerts[0]).toMatchObject({ kind: "budget-over", subject: "餐飲", emphasis: "NT$ 200", href: "/settings/budget" });
+    expect(v.alerts[0]).toMatchObject({ kind: "budget-over", subject: "餐飲", emphasis: "NT$ 200", href: "/budget" });
   });
   it("several budget problems share one row, worst first, and leave the other slots to the books", () => {
     const two = [
@@ -96,7 +96,7 @@ describe("alerts", () => {
       ],
     });
     expect(v.alerts.map((a) => a.kind)).toEqual(["budget-over", "duplicate"]);
-    expect(v.alerts[0]).toMatchObject({ subject: "3 個科目", body: "餐飲、交通 超支；居住 接近預算", href: "/settings/budget" });
+    expect(v.alerts[0]).toMatchObject({ subject: "3 個科目", body: "餐飲、交通 超支；居住 接近預算", href: "/budget" });
   });
   it("a merged row with only warnings is a warning, not an overrun", () => {
     const two = [
@@ -113,7 +113,7 @@ describe("alerts", () => {
       accounts: [account("card", "credit_card", 0)],
       reconciliations: [{ account_id: "card", statement_date: "2026-10-20", statement_balance: -2830, book_balance: -3150, diff: -320 }],
     });
-    expect(v.alerts[0]).toMatchObject({ kind: "reconcile", href: "/recon" });
+    expect(v.alerts[0]).toMatchObject({ kind: "reconcile", href: "/settings/accounts" });
     expect(v.alerts[0].text).toContain("帳簿比實際多欠 320");
   });
   it("a matched reconciliation does not alert", () => {
@@ -233,7 +233,7 @@ describe("spending outside any budget", () => {
 describe("alert destinations", () => {
   it("a duplicate group links to the day it happened, not the whole book", () => {
     const v = buildToday({ ...base, entries: [entry({ amount: 80, entry_date: "2026-10-12" }), entry({ amount: 80, entry_date: "2026-10-12" })] });
-    expect(v.alerts[0]).toMatchObject({ kind: "duplicate", href: "/ledger/2026-10-12" });
+    expect(v.alerts[0]).toMatchObject({ kind: "duplicate", href: "/ledger?m=2026-10#d-12" });
   });
   it("an uncategorized alert links to the earliest such day this month", () => {
     const v = buildToday({
@@ -243,6 +243,6 @@ describe("alert destinations", () => {
         entry({ main_category: "其他", sub_category: "other", entry_date: "2026-10-03", amount: 55 }),
       ],
     });
-    expect(v.alerts[0]).toMatchObject({ kind: "uncategorized", href: "/ledger/2026-10-03" });
+    expect(v.alerts[0]).toMatchObject({ kind: "uncategorized", href: "/ledger?m=2026-10#d-03" });
   });
 });

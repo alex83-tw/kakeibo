@@ -7,13 +7,14 @@ const createEntry = vi.fn();
 const softDeleteEntry = vi.fn();
 vi.mock("@/app/actions/entries", () => ({
   updateEntry: vi.fn(),
+  restoreEntry: vi.fn(),
   createEntry: (...a: unknown[]) => createEntry(...a),
   softDeleteEntry: (...a: unknown[]) => softDeleteEntry(...a),
 }));
 
 import { EntrySheet } from "./EntrySheet";
 import { CategoryOptionsProvider } from "./CategoryOptions";
-import { RECORD_EVENT } from "./RecordButton";
+import { EDIT_EVENT, RECORD_EVENT } from "./RecordButton";
 
 const acct = (id: string, name: string, kind: LedgerAccount["kind"], sort_order: number): LedgerAccount => ({
   id, name, kind, sort_order, opening_balance: 0, opening_date: "2026-01-01", archived: false,
@@ -108,24 +109,52 @@ describe("EntrySheet transfer without enough accounts", () => {
 });
 
 describe("EntrySheet as a modal dialog", () => {
-  it("is aria-modal, and the bookmark bar and page behind it are inert only while it is open", async () => {
+  it("is aria-modal, and the book behind it (bookmarks, both pages) is inert only while it is open", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(
-      <>
-        <nav className="tabs" data-testid="tabs" />
-        <div className="page" data-testid="page">
-          <EntrySheet accounts={accounts} recentCategories={[]} />
-        </div>
-      </>,
+      <div className="book" data-testid="book">
+        <nav className="tabs" />
+        <EntrySheet accounts={accounts} recentCategories={[]} />
+      </div>,
     );
     await user.click(screen.getByRole("button", { name: "記一筆" }));
     expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
-    expect(screen.getByTestId("tabs")).toHaveAttribute("inert");
-    expect(screen.getByTestId("page")).toHaveAttribute("inert");
+    expect(screen.getByTestId("book")).toHaveAttribute("inert");
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(screen.getByTestId("tabs")).not.toHaveAttribute("inert");
-    expect(screen.getByTestId("page")).not.toHaveAttribute("inert");
+    expect(screen.getByTestId("book")).not.toHaveAttribute("inert");
+  });
+});
+
+describe("EntrySheet editing a ledger line", () => {
+  const entry = {
+    id: "e1", entry_type: "expense" as const, main_category: "餐飲", sub_category: "午餐", amount: 120, currency: "TWD",
+    entry_date: "2026-10-05", notes: "便當", account_id: "a1", transfer_account_id: null, deleted_at: null, is_recurring: false,
+  };
+
+  it("opens the entry from the edit event, and 刪除這筆 soft-deletes it with a 復原", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={accounts} recentCategories={[]} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(EDIT_EVENT, { detail: entry }));
+    });
+    expect(screen.getByRole("dialog", { name: "編輯帳目" })).toBeInTheDocument();
+    expect(screen.getByLabelText("摘要")).toHaveValue("便當");
+    await user.click(screen.getByRole("button", { name: "刪除這筆" }));
+    expect(softDeleteEntry).toHaveBeenCalledWith("e1");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("status")).toHaveTextContent("已刪除一筆帳目");
+    expect(screen.getByRole("button", { name: "復原" })).toBeInTheDocument();
+  });
+
+  it("a foreign-currency entry can be read and deleted, not edited", () => {
+    render(<EntrySheet accounts={accounts} recentCategories={[]} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(EDIT_EVENT, { detail: { ...entry, currency: "USD", amount: 77.22 } }));
+    });
+    expect(screen.getByRole("dialog", { name: "外幣帳目" })).toHaveTextContent("USD 77.22");
+    expect(screen.queryByLabelText("金額")).toBeNull();
+    expect(screen.getByRole("button", { name: "刪除這筆" })).toBeInTheDocument();
   });
 });
 

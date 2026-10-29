@@ -2,12 +2,13 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef } from "react";
+import { formatAmount } from "@/lib/money";
 import type { Entry, LedgerAccount } from "@/lib/domain/types";
 import { EntryForm, type SavedEntry } from "./EntryForm";
 import type { RecordPreset } from "./RecordButton";
 
-/** What sits behind the dialog: the bookmark bar and the page (content, dock, toasts). */
-const BACKGROUND = ".tabs, .page";
+/** What sits behind the dialog: the whole book (bookmarks, both pages, dock). */
+const BACKGROUND = ".book";
 
 /** Radix shell around EntryForm: focus trap, aria-modal, inert background, Esc, and focus return to whatever opened it. */
 export function EntryDialog({
@@ -18,6 +19,7 @@ export function EntryDialog({
   initial,
   preset,
   onSaved,
+  onDelete,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,6 +28,8 @@ export function EntryDialog({
   initial?: Entry;
   preset?: RecordPreset;
   onSaved: (saved: SavedEntry) => void;
+  /** given when editing an existing entry */
+  onDelete?: () => void;
 }) {
   // There is no Dialog.Trigger (the opener lives elsewhere), so remember who had focus and hand it back.
   const opener = useRef<HTMLElement | null>(null);
@@ -56,16 +60,35 @@ export function EntryDialog({
             opener.current?.focus();
           }}
         >
-          <EntryForm
-            accounts={accounts}
-            recentCategories={recentCategories}
-            initial={initial}
-            preset={preset}
-            onSaved={(saved) => {
-              onOpenChange(false);
-              onSaved(saved);
-            }}
-          />
+          {initial && initial.currency !== "TWD" ? (
+            // The form only writes TWD; an imported foreign-currency entry can be read and deleted, not edited.
+            <>
+              <div className="entry-h">
+                <Dialog.Title>外幣帳目</Dialog.Title>
+                <Dialog.Close className="ghost">取消</Dialog.Close>
+              </div>
+              <p className="entry-n">
+                {initial.main_category}　{initial.currency} {formatAmount(initial.amount)}　{initial.entry_date}
+              </p>
+              <p className="entry-n">外幣帳目不計入收支，也不能在這裡修改；不需要的話可以刪除。</p>
+            </>
+          ) : (
+            <EntryForm
+              accounts={accounts}
+              recentCategories={recentCategories}
+              initial={initial}
+              preset={preset}
+              onSaved={(saved) => {
+                onOpenChange(false);
+                onSaved(saved);
+              }}
+            />
+          )}
+          {onDelete ? (
+            <button type="button" className="ghost entry-del" onClick={onDelete}>
+              刪除這筆
+            </button>
+          ) : null}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
