@@ -1,6 +1,7 @@
 -- 006_merge_legacy_categories.sql — 把舊 financial-advisor 的支出科目併進 kakeibo 的 12 個主分類。
 -- 不依賴 005 的 RPC（005 還沒執行也能跑）。只改：accounting_entries、category_rules、recurring_rules、budget_plans 的科目欄位與 updated_at。
 -- 乾跑：檔尾預設是 ROLLBACK。先跑 006a 盤點確認沒有漏掉的舊名稱，再跑本檔看 NOTICE 與最後的查詢；沒問題再把檔尾改成 COMMIT。
+-- 只動 uid 這一位使用者（kakeibo 的固定 user_id，見 lib/server/auth.ts DEFAULT_USER_ID）；表裡其他 user_id（004／005 測試殘留的 aaaaaaaa／bbbbbbbb）一列都不碰。
 -- 備份提醒：合併不可逆。執行 COMMIT 前請先在 SQL editor 匯出 006a 的結果（或 Supabase 備份）。
 --
 -- 對應（使用者 2026-10-29 確認）：
@@ -13,7 +14,7 @@ BEGIN;
 
 DO $$
 DECLARE
-  uid uuid;
+  uid uuid := '00000000-0000-0000-0000-000000000000'; -- 若你設了 KAKEIBO_USER_ID，改成那個
   m record;
   b financial.budget_plans;
   t financial.budget_plans;
@@ -23,11 +24,9 @@ DECLARE
   n_before_c int; n_after_c int;
   n_left int;
 BEGIN
-  -- 只有一位使用者才安全；多位就中止。
-  IF (SELECT count(DISTINCT user_id) FROM financial.accounting_entries) <> 1 THEN
-    RAISE EXCEPTION 'FAIL: accounting_entries 不是剛好一位 user_id，中止';
+  IF NOT EXISTS (SELECT 1 FROM financial.accounting_entries WHERE user_id = uid) THEN
+    RAISE EXCEPTION 'FAIL: accounting_entries 沒有 user_id = %，中止', uid;
   END IF;
-  SELECT DISTINCT user_id INTO uid FROM financial.accounting_entries;
 
   SELECT count(*) INTO n_before_e FROM financial.accounting_entries WHERE user_id = uid;
   SELECT count(*) INTO n_before_r FROM financial.category_rules     WHERE user_id = uid;
@@ -116,11 +115,11 @@ BEGIN
 END $$;
 
 -- 還沒對到 kakeibo 12 個主分類的支出科目（自訂科目或漏掉的舊名稱）；有列出就回頭補對應表。
-SELECT 'entries' AS src, main_category, count(*) AS n
+SELECT 'entries' AS src, user_id, main_category, count(*) AS n
   FROM financial.accounting_entries
  WHERE entry_type = 'expense'
    AND main_category NOT IN ('餐飲','交通','居住','日用購物','醫療保健','娛樂休閒','學習成長','人情社交','家庭','保險','稅費','其他')
- GROUP BY main_category
+ GROUP BY user_id, main_category
  ORDER BY n DESC;
 
 ROLLBACK; -- 確認無誤後改成 COMMIT;

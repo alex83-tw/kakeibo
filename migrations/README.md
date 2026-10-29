@@ -4,7 +4,7 @@
 
 **乾跑**：先把檔尾的 `COMMIT;` 改成 `ROLLBACK;` 跑一次確認沒有錯誤，再改回 `COMMIT;` 正式執行。
 
-執行順序：`001` → `002` → `003` → `004` → `tests/004_assert.sql` → `005` → `tests/005_assert.sql` → `006a`（唯讀盤點，結果貼回確認）→ `006`（先 ROLLBACK 乾跑）（成功 = 「Success. No rows returned」；失敗 = `ERROR: FAIL: …`）。
+執行順序：`001` → `002` → `003` → `004` → `tests/004_assert.sql` → `005` → `tests/005_assert.sql` → `tests/cleanup_assert_fixtures.sql`（清測試殘留）→ `006a`（唯讀盤點，結果貼回確認）→ `006`（先 ROLLBACK 乾跑）→ `007a`（快照）→ `007`（先 ROLLBACK 乾跑）（成功 = 「Success. No rows returned」；失敗 = `ERROR: FAIL: …`）。
 `000_introspect.sql` 是唯讀查詢，已執行，結果在 `docs/schema-snapshot.md`。
 
 | 檔名 | 內容 | 狀態 | 執行日期 |
@@ -17,8 +17,10 @@
 | tests/004_assert.sql | 驗證 004（ROLLBACK，不留資料） | 已驗證（2026-10-29，使用者在 SQL editor 執行，無 FAIL，ROLLBACK 後無殘留） | |
 | 005_category_rpc_user_param.sql | 兩個科目 RPC 加 `p_user`（不登入、service role 下 `auth.uid()` 是 NULL）；會 DROP 舊簽名 | **待執行**（科目改名／合併要等它） | |
 | tests/005_assert.sql | 驗證 005（不設 JWT claims，只靠 `p_user`；ROLLBACK；開頭先清假 user_id 殘留） | **待執行** | |
-| 006a_category_inventory.sql | 唯讀：全時段盤點四張表的科目（含收入、已刪除、舊月份） | **待執行**（先跑、結果貼回對話） | |
-| 006_merge_legacy_categories.sql | 舊科目併進 12 個主分類（不依賴 005）；預設 ROLLBACK，內含斷言 | **待執行**（先 ROLLBACK 乾跑，確認再改 COMMIT） | |
+| 006a_category_inventory.sql | 唯讀：全時段盤點四張表的科目（含收入、已刪除、舊月份） | 已執行 | 2026-10-29 |
+| 006_merge_legacy_categories.sql | 舊科目併進 12 個主分類（不依賴 005）；只動 uid 一位使用者 | 已執行（COMMIT） | 2026-10-29 |
+| 007a_budget_current_month.sql | 唯讀：本月 budget_plans 每一列（007 的執行前快照） | **待執行**（先跑、貼回結果） | |
+| 007_collapse_sub_budgets.sql | 本月子科目預算加總成主分類預算（sub=other）；預設 ROLLBACK，含總額斷言 | **待執行**（先 ROLLBACK 乾跑，確認再改 COMMIT） | |
 | tests/cleanup_assert_fixtures.sql | 清掉 004／005 assert 殘留在 DB 的測試資料（只動兩個假 user_id） | 待使用者執行（見對話） | |
 
 注意：新表沒有 `updated_at` trigger，更新時由程式明確寫入 `updated_at`。

@@ -30,5 +30,6 @@ Plan: docs/superpowers/plans/2026-10-29-kakeibo-v1.md
 - [x] P1 注意列：重複／未歸類／異常連到該日明細；籤上寫「需處理／待確認」
 - [x] P2 句中連結被 flex 拆散（Hint 包 span）、連結點擊區 44px、見開き預設「今日」、桌面只留一個 h1、全形英數顯示時折成半形
 - [x] 預算頁帳本化（BudgetBook：就地改、離開欄位自動存）；對帳表帳本化（帳簿｜實際｜差額｜日期，點帳戶名稱選好帳戶）
-- [ ] **待使用者執行** migrations/006a_category_inventory.sql（唯讀盤點）→ 006_merge_legacy_categories.sql（預設 ROLLBACK，確認後改 COMMIT）。005 也還沒執行（科目改名／合併頁要等它）。
+- [x] 006a 盤點、006 科目合併已執行（2026-10-29，使用者 COMMIT）。真實 user 是 00000000-…；aaaaaaaa／bbbbbbbb 是 004／005 測試殘留。
+- [ ] **待使用者執行** 007a_budget_current_month.sql（快照）→ 007_collapse_sub_budgets.sql（本月子科目預算加總成主分類預算；預設 ROLLBACK）。005 也還沒執行（科目改名／合併頁要等它）。
 - 未採納：critique 的「點擊目標 38×23」（瀏覽器實測整格 46×44 皆可點，偵測器量到的是連結內框）、「dock 蓋住最後一條注意列」（捲到底實測沒有蓋住）、「帳戶預設未指定」（來自線上沒有帳戶，程式預設就是第一個帳戶）
