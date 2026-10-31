@@ -21,7 +21,7 @@
 | 006_merge_legacy_categories.sql | 舊科目併進 12 個主分類（不依賴 005）；只動 uid 一位使用者 | 已執行（COMMIT） | 2026-10-29 |
 | 007a_budget_current_month.sql | 唯讀：本月 budget_plans 每一列（007 的執行前快照） | 已執行 | 2026-10-29 |
 | 007_collapse_sub_budgets.sql | 本月子科目預算加總成主分類預算（sub=other）；預設 ROLLBACK，含總額斷言 | 已執行（COMMIT） | 2026-10-29 |
-| 008a_exchange_rates_introspect.sql | 唯讀：`exchange_rates` 欄位、約束、各幣別日期範圍（外幣換算的前置確認，結果貼回） | 待使用者執行 | |
+| 008a_exchange_rates_introspect.sql | 唯讀：`exchange_rates` 欄位、約束、各幣別日期範圍（外幣換算的前置確認，結果貼回） | 已執行（2026-10-31）：欄位與 RLS 已確認、資料到 10-31；唯一約束依 advisor migration 視為存在 | |
 | tests/cleanup_assert_fixtures.sql | 清掉 004／005 assert 殘留在 DB 的測試資料（只動兩個假 user_id） | 待使用者執行（見對話） | |
 
 注意：新表沒有 `updated_at` trigger，更新時由程式明確寫入 `updated_at`。

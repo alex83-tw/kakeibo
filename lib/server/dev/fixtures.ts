@@ -97,9 +97,9 @@ class Query implements PromiseLike<{ data: Row[]; error: { message: string } | n
     this.payload = patch;
     return this;
   }
-  upsert(row: Row, opts: { onConflict: string }) {
+  upsert(row: Row | Row[], opts: { onConflict: string }) {
     this.mode = "upsert";
-    this.payload = row;
+    this.batch = Array.isArray(row) ? row : [row];
     this.conflict = opts.onConflict.split(",");
     return this;
   }
@@ -161,9 +161,11 @@ class Query implements PromiseLike<{ data: Row[]; error: { message: string } | n
       return { data: made, error: null };
     }
     if (this.mode === "upsert") {
-      const same = rows.find((r) => this.conflict.every((c) => r[c] === this.payload[c]));
-      if (same) Object.assign(same, this.payload);
-      else rows.push({ id: uid(), created_at: new Date().toISOString(), rollover_amount: 0, ...this.payload });
+      for (const payload of this.batch) {
+        const same = rows.find((r) => this.conflict.every((c) => r[c] === payload[c]));
+        if (same) Object.assign(same, payload);
+        else rows.push({ id: uid(), created_at: new Date().toISOString(), rollover_amount: 0, ...payload });
+      }
       return { data: [], error: null };
     }
     const hit = rows.filter((r) => this.filters.every((f) => f(r)));

@@ -22,7 +22,7 @@ Schema：**`financial`**。所有表 RLS 已開，政策皆為 `auth.uid() = use
 - `categories`：UNIQUE(user_id,type,label)；v1 不使用。
 - `category_rules`：UNIQUE(user_id,keyword)；keyword, main_category, sub_category (null), entry_type。
 - `recurring_rules`：見上；CHECK 限制 entry_type（income｜expense）、frequency、importance、source、金額區間、日期區間。
-- `exchange_rates`：欄位依舊 repo 為 `from_currency, to_currency, rate, date`（**尚未對線上確認**，見 `migrations/008a_exchange_rates_introspect.sql`）。外幣帳目以 entry 當天匯率換算成 TWD。
+- `exchange_rates`（2026-10-31 以 008a 確認）：`id, from_currency, to_currency, rate, date, source, created_at`；UNIQUE(from_currency,to_currency,date)（advisor 的 migration 建立、它的 upsert 也靠這個；008a 的約束查詢結果未回報，視為預期）；RLS 只開 SELECT（`using true`，kakeibo 以 service role 寫入）。USD／JPY／TWD 六個方向都有資料，由 advisor 的同步維持最新。外幣帳目以 entry 當天（沒有就取之前最近一天）的 X→TWD 匯率換算；kakeibo 的「匯率」頁只寫 X→TWD 與 TWD→X（`source` 為 `yahoo-finance` 或 `manual`）。
 
 ## 資料規模（`entry_type` × `currency`）
 
