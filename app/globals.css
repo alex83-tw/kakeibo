@@ -172,6 +172,12 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 .lg-sel { height: var(--row); flex: none; display: flex; align-items: center; gap: 4px; }
 .lg-sel .lg-n { margin-right: auto; font-size: var(--fs-label); color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lg-sel .act { margin-left: 0; }
+/* 窄頁：合計不能被截斷，所以文字自成一行（仍落在 40px 橫線上），按鈕在下一行靠右 */
+@container (max-width: 519px) {
+  .lg-sel { height: calc(var(--row) * 2); flex-wrap: wrap; align-content: flex-start; gap: 0 4px; }
+  .lg-sel .lg-n { flex: 1 0 100%; height: var(--row); line-height: var(--row); margin-right: 0; }
+  .lg-sel .lg-n + .act { margin-left: auto; }
+}
 button.act:disabled { opacity: 0.4; cursor: default; }
 /* 選取模式：被選的行加底色和勾，不只靠顏色 */
 button.ln[aria-pressed="true"] b::before { content: "✓ "; }
