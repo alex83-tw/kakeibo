@@ -75,8 +75,6 @@ export function EntryForm({
 }) {
   const live = accounts.filter((a) => !a.archived || a.id === initial?.account_id || a.id === initial?.transfer_account_id);
   const recent = recentCategories.slice(0, 5);
-  const defaultCategory = (type: EntryType) =>
-    type === "expense" && recent[0] ? joinCategory(recent[0].main, recent[0].sub) : "";
   const copy = initial ? undefined : preset?.copy;
   const presetCategory = preset && !initial && preset.main !== "" ? joinCategory(preset.main, normalizeSub(preset.sub)) : null;
   // A copied account may have been archived since: only offer what the form can still choose.
@@ -91,7 +89,7 @@ export function EntryForm({
       ? initial.entry_type === "transfer"
         ? ""
         : joinCategory(initial.main_category, normalizeSub(initial.sub_category))
-      : (presetCategory ?? defaultCategory(copy?.type ?? "expense")),
+      : (presetCategory ?? ""),
   );
   const [accountId, setAccountId] = useState(
     initial ? (initial.account_id ?? "") : copy && copy.account_id === "" ? "" : (liveId(copy?.account_id) ?? live[0]?.id ?? ""),
@@ -128,7 +126,7 @@ export function EntryForm({
   function pickType(next: EntryType) {
     setType(next);
     if (next === "transfer") setCurrency("TWD");
-    setCategory(defaultCategory(next));
+    setCategory("");
     setCategoryTouched(false);
     setErrors({});
   }

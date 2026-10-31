@@ -3,7 +3,15 @@ import { Hint } from "@/components/paper/Hint";
 import type { Alert } from "@/lib/domain/alerts";
 
 // 「需處理」只留給真的出事的（超支、對帳有差）；預估與接近預算只是提醒，歸「待確認」。
-const QUESTION = ["budget-projected", "budget-warning", "uncategorized", "duplicate", "abnormal", "missing-recurring"];
+// 每一種各有自己的籤，一眼分得出是預算、分類、重複、金額還是漏記，不全寫成「待確認」。
+const QUESTION_LABEL: Partial<Record<Alert["kind"], string>> = {
+  "budget-projected": "預估超支",
+  "budget-warning": "接近預算",
+  uncategorized: "待分類",
+  duplicate: "疑似重複",
+  abnormal: "金額異常",
+  "missing-recurring": "漏記",
+};
 
 export function AlertList({ alerts }: { alerts: Alert[] }) {
   return (
@@ -12,7 +20,8 @@ export function AlertList({ alerts }: { alerts: Alert[] }) {
         alerts.map((a) => (
           <AlertRow
             key={a.kind + a.text}
-            tone={QUESTION.includes(a.kind) ? "question" : "action"}
+            tone={a.kind in QUESTION_LABEL ? "question" : "action"}
+            label={QUESTION_LABEL[a.kind]}
             href={a.href}
             preset={a.preset}
             actionLabel={a.actionLabel ?? "查看"}

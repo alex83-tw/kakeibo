@@ -91,13 +91,23 @@ describe("EntrySheet from an alert", () => {
 });
 
 describe("EntrySheet states where the entry will be filed", () => {
-  it("spells out the default category above 儲存, follows the select, and is absent for transfers", async () => {
+  it("starts with no category chosen even when recent ones exist, so nothing is filed by accident; follows the select, and is absent for transfers", async () => {
     const user = await open();
+    expect(screen.getByLabelText("科目")).toHaveProperty("value", "");
+    expect(screen.getByRole("button", { name: "（尚未選科目）" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("科目"), "餐飲::午餐");
     expect(screen.getByRole("button", { name: "餐飲／午餐" })).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("科目"), "交通::other");
     expect(screen.getByRole("button", { name: "交通／一般" })).toBeInTheDocument();
     await user.click(screen.getByRole("radio", { name: "轉帳" }));
     expect(screen.queryByText(/^記為/)).toBeNull();
+  });
+  it("saving without a category asks for one and creates nothing", async () => {
+    const user = await open();
+    await user.type(screen.getByLabelText("金額"), "100");
+    await user.click(screen.getByRole("button", { name: "儲存" }));
+    expect(screen.getByText("請選擇科目")).toBeInTheDocument();
+    expect(createEntry).not.toHaveBeenCalled();
   });
   it("says so when no category is chosen yet (income starts blank)", async () => {
     const user = await open();
@@ -267,6 +277,7 @@ describe("EntrySheet", () => {
 
   it("rejects non-numeric input, then saves '1,500' as typed", async () => {
     const user = await open();
+    await user.selectOptions(screen.getByLabelText("科目"), "餐飲::午餐");
     await user.type(screen.getByLabelText("金額"), "abc");
     await user.click(screen.getByRole("button", { name: "儲存" }));
     expect(screen.getByText("請輸入數字")).toBeInTheDocument();
@@ -309,6 +320,7 @@ describe("EntrySheet", () => {
 
   it("after saving: sheet closes, toast offers 復原, 復原 soft-deletes, toast fades after ~5s", async () => {
     const user = await open();
+    await user.selectOptions(screen.getByLabelText("科目"), "餐飲::午餐");
     await user.type(screen.getByLabelText("金額"), "1,500");
     await user.click(screen.getByRole("button", { name: "儲存" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
@@ -319,6 +331,7 @@ describe("EntrySheet", () => {
 
     // a second save to test the timeout path
     await user.click(screen.getByRole("button", { name: "記一筆" }));
+    await user.selectOptions(screen.getByLabelText("科目"), "餐飲::午餐");
     await user.type(screen.getByLabelText("金額"), "20");
     await user.click(screen.getByRole("button", { name: "儲存" }));
     await waitFor(() => expect(screen.getByText("已記錄 NT$20 支出")).toBeInTheDocument());
@@ -329,6 +342,7 @@ describe("EntrySheet", () => {
   it("a server error keeps the sheet open and shows the message", async () => {
     createEntry.mockResolvedValue({ ok: false, errors: { form: "儲存失敗，請稍後再試" } });
     const user = await open();
+    await user.selectOptions(screen.getByLabelText("科目"), "餐飲::午餐");
     await user.type(screen.getByLabelText("金額"), "10");
     await user.click(screen.getByRole("button", { name: "儲存" }));
     expect(await screen.findByText("儲存失敗，請稍後再試")).toBeInTheDocument();
