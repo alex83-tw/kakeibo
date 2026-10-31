@@ -1,18 +1,27 @@
 import Link from "next/link";
 import { RecurringManager, type RecurringItem } from "@/components/settings/RecurringManager";
+import { RecurringSuggestions } from "@/components/settings/RecurringSuggestions";
 import { Head } from "@/components/paper/Head";
 import { Run } from "@/components/paper/Run";
 import { subLabel } from "@/lib/domain/categories";
 import { anchorMonth, ruleName } from "@/lib/domain/recurring";
+import { detectRecurring } from "@/lib/domain/recurring-detect";
 import { getUserId } from "@/lib/server/auth";
+import { listEntries } from "@/lib/server/repos/entries";
 import { listRecurring } from "@/lib/server/repos/rules";
 import { createServerClient } from "@/lib/server/supabase";
 import { formatAmount } from "@/lib/money";
+import { shiftMonth, twToday } from "@/lib/time";
 
 const FREQUENCY: Record<string, string> = { monthly: "每月", quarterly: "每季", annual: "每年" };
 
 export default async function RecurringSettingsPage() {
-  const rules = await listRecurring(await createServerClient(), await getUserId());
+  const client = await createServerClient();
+  const userId = await getUserId();
+  const today = twToday();
+  const from = shiftMonth(Number(today.slice(0, 4)), Number(today.slice(5, 7)), -11);
+  const [rules, entries] = await Promise.all([listRecurring(client, userId), listEntries(client, userId, { start: `${from.year}-${String(from.month).padStart(2, "0")}-01`, end: today })]);
+  const suggestions = detectRecurring(entries, rules, today);
   const items: RecurringItem[] = rules.map((r) => ({
     id: r.id,
     name: ruleName(r),
@@ -32,6 +41,7 @@ export default async function RecurringSettingsPage() {
           </Link>
         }
       />
+      <RecurringSuggestions suggestions={suggestions} />
       <RecurringManager items={items} />
     </>
   );
