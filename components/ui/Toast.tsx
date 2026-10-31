@@ -5,6 +5,8 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 export interface ToastState {
   text: string;
   action?: { label: string; run: () => void };
+  /** How long it stays, overriding the provider's default. */
+  ms?: number;
 }
 
 interface ToastApi {
@@ -37,7 +39,7 @@ export function ToastProvider({ children, ms = 5000 }: { children: ReactNode; ms
   useEffect(() => {
     if (!head || paused) return;
     const budget = left.current;
-    const rest = budget.get(head) ?? ms;
+    const rest = budget.get(head) ?? head.ms ?? ms;
     const started = Date.now();
     const t = setTimeout(() => setQueue((q) => q.slice(1)), rest);
     return () => {

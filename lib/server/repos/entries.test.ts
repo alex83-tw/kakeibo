@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ValidEntry } from "@/lib/domain/validate";
-import { insertEntry, listEntries, listRecentEntries, scopedEntries, setEntryDeleted, updateEntryRow } from "./entries";
+import { insertEntry, listEntries, listRecentEntries, scopedEntries, setEntriesDeleted, setEntryDeleted, updateEntryRow } from "./entries";
 import { fakeClient } from "./fake-client";
 
 describe("scopedEntries", () => {
@@ -97,5 +97,33 @@ describe("entry writes", () => {
     await setEntryDeleted(res.client, "u1", "e1", false);
     expect((res.calls.find((c) => c[0] === "update")?.[1] as { deleted_at: null }).deleted_at).toBeNull();
     expect(await setEntryDeleted(fakeClient([]).client, "u1", "x", true)).toBe(false);
+  });
+});
+
+describe("setEntriesDeleted", () => {
+  it("scopes to the user, chunks the ids by 200, and returns the ids that changed", async () => {
+    const { client, calls } = fakeClient([{ id: "a" }]);
+    const ids = Array.from({ length: 450 }, (_, i) => `e${i}`);
+    const changed = await setEntriesDeleted(client, "u1", ids, true);
+    const ins = calls.filter((c) => c[0] === "in").map((c) => (c[2] as string[]).length);
+    expect(ins).toEqual([200, 200, 50]);
+    expect(calls.filter((c) => c[0] === "eq" && c[1] === "user_id")).toHaveLength(3);
+    expect(changed).toEqual(["a", "a", "a"]);
+  });
+  it("delete only touches live rows; restore clears deleted_at without that filter", async () => {
+    const del = fakeClient([{ id: "e1" }]);
+    await setEntriesDeleted(del.client, "u1", ["e1"], true);
+    expect(del.calls).toContainEqual(["is", "deleted_at", null]);
+    expect((del.calls.find((c) => c[0] === "update")?.[1] as { deleted_at: string }).deleted_at).toMatch(/^\d{4}-/);
+    const res = fakeClient([{ id: "e1" }]);
+    await setEntriesDeleted(res.client, "u1", ["e1"], false);
+    expect(res.calls.some((c) => c[0] === "is")).toBe(false);
+    expect((res.calls.find((c) => c[0] === "update")?.[1] as { deleted_at: null }).deleted_at).toBeNull();
+  });
+  it("does nothing for an empty list and throws when the query fails", async () => {
+    const none = fakeClient([]);
+    expect(await setEntriesDeleted(none.client, "u1", [], true)).toEqual([]);
+    expect(none.calls).toHaveLength(0);
+    await expect(setEntriesDeleted(fakeClient([], { message: "boom" }).client, "u1", ["x"], true)).rejects.toThrow("boom");
   });
 });

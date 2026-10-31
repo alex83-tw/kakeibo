@@ -33,6 +33,11 @@ describe("entriesToCsv", () => {
     const csv = entriesToCsv([entry({ notes: 'a,b "c"\nd' })], accounts);
     expect(csv).toContain('"a,b ""c""\nd"');
   });
+  it("keeps a spreadsheet from running a note that starts like a formula, and re-import undoes it", () => {
+    const csv = entriesToCsv([entry({ notes: "=HYPERLINK(1)" })], accounts);
+    expect(csv.split("\r\n")[1]).toBe("2026-10-28,支出,餐飲,一般,180,現金,,'=HYPERLINK(1)");
+    expect(parseEntriesCsv(csv, accounts).rows[0].notes).toBe("=HYPERLINK(1)");
+  });
   it("transfer rows carry 轉帳 and the target account", () => {
     const csv = entriesToCsv([entry({ entry_type: "transfer", main_category: "轉帳", account_id: "a1", transfer_account_id: "a2" })], accounts);
     expect(csv.split("\r\n")[1]).toBe("2026-10-28,轉帳,轉帳,一般,180,現金,郵局,");

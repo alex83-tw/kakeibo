@@ -4,12 +4,10 @@ import { revalidatePath } from "next/cache";
 import { parseEntriesCsv, planImport } from "@/lib/domain/csv";
 import { validateEntryInput, type ValidEntry } from "@/lib/domain/validate";
 import { getUserId } from "@/lib/server/auth";
+import { failure, MAX_CHARS, MAX_ROWS } from "@/lib/server/import-guard";
 import { listAccounts } from "@/lib/server/repos/accounts";
 import { insertEntries, listEntries } from "@/lib/server/repos/entries";
 import { createServerClient } from "@/lib/server/supabase";
-
-const MAX_CHARS = 1_000_000;
-const MAX_ROWS = 5000;
 
 export type ImportPreview =
   | { ok: true; toAdd: number; duplicates: number; errors: { line: number; message: string }[]; sample: { date: string; text: string; amount: string }[] }
@@ -27,12 +25,6 @@ async function plan(text: string) {
   const existing =
     rows.length === 0 ? [] : (await listEntries(client, userId, { start: dates[0], end: dates[dates.length - 1] })).filter((e) => e.currency === "TWD" && !e.foreign);
   return { userId, client, errors, ...planImport(rows, existing) };
-}
-
-function failure(e: unknown): { ok: false; error: string } {
-  if (e instanceof Error && e.message === "UNAUTHENTICATED") return { ok: false, error: "請先登入" };
-  if (e instanceof Error && (e.message.startsWith("檔案") || e.message.startsWith("一次"))) return { ok: false, error: e.message };
-  return { ok: false, error: "處理失敗，請稍後再試" };
 }
 
 export async function previewImport(text: string): Promise<ImportPreview> {

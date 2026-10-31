@@ -1,4 +1,5 @@
 import { normalizeSub, subLabel } from "./categories";
+import { formulaGuard, unguard } from "./csv-safe";
 import type { Entry, LedgerAccount } from "./types";
 import { validateEntryInput, type EntryInput } from "./validate";
 
@@ -6,7 +7,9 @@ const HEADER = ["日期", "類型", "科目", "子科目", "金額", "帳戶", "
 const TYPE_LABEL = { income: "收入", expense: "支出", transfer: "轉帳" } as const;
 const TYPE_BY_LABEL = { 收入: "income", 支出: "expense", 轉帳: "transfer" } as const;
 
-const cell = (s: string) => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+const quote = (s: string) => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+/** Exported fields that a spreadsheet would run as a formula (=, +, -, @) get a leading ' so they open as text. */
+const cell = (s: string) => quote(formulaGuard(s));
 
 /** A header plus one example line, so a file typed by hand starts from the right shape. */
 export function csvTemplate(): string {
@@ -69,7 +72,9 @@ export function parseEntriesCsv(
   text: string,
   accounts: LedgerAccount[] = [],
 ): { rows: EntryInput[]; errors: { line: number; message: string }[] } {
-  const records = parseRecords(text.replace(/^﻿/, "")).filter((r) => !(r.length === 1 && r[0] === ""));
+  const records = parseRecords(text.replace(/^﻿/, ""))
+    .filter((r) => !(r.length === 1 && r[0] === ""))
+    .map((r) => r.map(unguard));
   if (records.length === 0) return { rows: [], errors: [] };
   if (records[0].join(",") !== HEADER.join(",")) return { rows: [], errors: [{ line: 1, message: "表頭不正確" }] };
 

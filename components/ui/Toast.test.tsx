@@ -56,4 +56,12 @@ describe("ToastProvider", () => {
     act(() => void vi.advanceTimersByTime(300));
     expect(screen.queryByText("慢慢來")).toBeNull();
   });
+
+  it("a toast can ask for longer than the default", async () => {
+    await fire([{ ...undo("十秒"), ms: 10000 }]);
+    act(() => void vi.advanceTimersByTime(9000));
+    expect(screen.getByText("十秒")).toBeInTheDocument();
+    act(() => void vi.advanceTimersByTime(1200));
+    expect(screen.queryByText("十秒")).toBeNull();
+  });
 });

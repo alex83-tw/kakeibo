@@ -116,13 +116,39 @@ export async function insertEntry(client: SupabaseClient, userId: string, value:
 
 const CHUNK = 500;
 
-/** Bulk insert for CSV import; same stamping as insertEntry. */
-export async function insertEntries(client: SupabaseClient, userId: string, values: ValidEntry[]): Promise<void> {
+/** Bulk insert (CSV import, card paste); same stamping as insertEntry. Returns the new ids, in insert order, so the caller can offer 復原. */
+export async function insertEntries(client: SupabaseClient, userId: string, values: ValidEntry[]): Promise<string[]> {
+  const ids: string[] = [];
   for (let i = 0; i < values.length; i += CHUNK) {
     const rows = values.slice(i, i + CHUNK).map((v) => ({ ...v, user_id: userId, is_recurring: false }));
-    const { error } = await client.from("accounting_entries").insert(rows);
+    const { data, error } = await client.from("accounting_entries").insert(rows).select("id");
     if (error) throw new Error(error.message);
+    ids.push(...((data as { id: string }[] | null) ?? []).map((r) => r.id));
   }
+  return ids;
+}
+
+const DELETE_CHUNK = 200; // ids go in the URL of an .in() filter
+
+/**
+ * Soft delete (deleted = true) or restore (false) many rows of this user. Returns the ids actually changed:
+ * a delete skips rows already deleted, so undoing with the result restores exactly what this call removed.
+ */
+export async function setEntriesDeleted(client: SupabaseClient, userId: string, ids: string[], deleted: boolean): Promise<string[]> {
+  const changed: string[] = [];
+  const now = new Date().toISOString();
+  for (let i = 0; i < ids.length; i += DELETE_CHUNK) {
+    let q = client
+      .from("accounting_entries")
+      .update({ deleted_at: deleted ? now : null, updated_at: now })
+      .eq("user_id", userId)
+      .in("id", ids.slice(i, i + DELETE_CHUNK));
+    if (deleted) q = q.is("deleted_at", null);
+    const { data, error } = await q.select("id");
+    if (error) throw new Error(error.message);
+    changed.push(...((data as { id: string }[] | null) ?? []).map((r) => r.id));
+  }
+  return changed;
 }
 
 /** False when no live row of this user has that id. */
