@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname.current, useSear
 import { BookmarkNav, BOOKMARKS } from "./BookmarkNav";
 
 describe("BookmarkNav", () => {
-  it("renders 今日／帳本／預算／設定 as real links, 帳本 marked for the left page", () => {
+  it("renders 今日／帳本／預算／報表／設定 as real links, 帳本 marked for the left page", () => {
     pathname.current = "/";
     render(<BookmarkNav />);
     const links = screen.getAllByRole("link");
@@ -15,21 +15,22 @@ describe("BookmarkNav", () => {
       ["今日", "/"],
       ["帳本", "/ledger"],
       ["預算", "/budget"],
+      ["報表", "/reports"],
       ["設定", "/settings"],
     ]);
     expect(links[1]).toHaveClass("tab-l");
-    expect(BOOKMARKS).toHaveLength(4);
+    expect(BOOKMARKS).toHaveLength(5);
   });
 
   it("carries a valid ?m= to every bookmark so the left page keeps its month, and drops a bad one", () => {
     pathname.current = "/budget";
     pathname.search = "m=2026-09";
     const { unmount } = render(<BookmarkNav />);
-    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/?m=2026-09", "/ledger?m=2026-09", "/budget?m=2026-09", "/settings?m=2026-09"]);
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/?m=2026-09", "/ledger?m=2026-09", "/budget?m=2026-09", "/reports?m=2026-09", "/settings?m=2026-09"]);
     unmount();
     pathname.search = "m=junk";
     render(<BookmarkNav />);
-    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/", "/ledger", "/budget", "/settings"]);
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/", "/ledger", "/budget", "/reports", "/settings"]);
     pathname.search = "";
   });
 

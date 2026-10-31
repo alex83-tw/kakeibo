@@ -8,6 +8,7 @@ export const BOOKMARKS = [
   { href: "/", label: "今日" },
   { href: "/ledger", label: "帳本" },
   { href: "/budget", label: "預算" },
+  { href: "/reports", label: "報表" },
   { href: "/settings", label: "設定" },
 ] as const;
 

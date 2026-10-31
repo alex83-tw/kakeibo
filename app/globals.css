@@ -255,7 +255,7 @@ a.act, button.act { margin-left: auto; color: var(--ink); font-weight: 700; text
 /* 電腦版見開き：左頁帳本、右頁目前的網址；書籤固定在上緣，兩頁各自捲動，線跟著字捲 */
 @media (min-width: 1024px) {
   .book { max-width: 1280px; height: 100dvh; min-height: 0; padding: 0 24px 16px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto; }
-  .tabs { grid-column: 1 / -1; display: grid; grid-template-columns: 50% repeat(3, auto) 1fr; justify-items: start; gap: 0 4px; padding-left: 0; }
+  .tabs { grid-column: 1 / -1; display: grid; grid-template-columns: 50% repeat(4, auto) 1fr; justify-items: start; gap: 0 4px; padding-left: 0; }
   .tabs .tab-l { grid-column: 1; grid-row: 1; margin-left: 18px; }
   .tabs .tab:nth-child(1) { margin-left: 18px; }
   /* position: relative 讓 .sr 這類 absolute 元素被頁面的捲動區裝住，不然會撐高整份文件、整頁跟著捲 */
@@ -383,3 +383,30 @@ a.btn { display: flex; align-items: center; justify-content: center; text-decora
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* 報表：長條畫在行線上（科目＝一條實線，月別＝上點線收入、下實線支出）；表格本身就是圖表的文字版 */
+.rp { width: 100%; border-collapse: collapse; }
+.rp tr { position: relative; }
+.rp a { color: var(--ink); text-underline-offset: 4px; }
+/* 長條畫在 <tr> 的背景上：偽元素放進 <tr> 會被當成多出來的一格，把欄位擠歪 */
+.rp-cat tbody tr { background: linear-gradient(var(--ink), var(--ink)) left bottom 6px / var(--w) 4px no-repeat; }
+.rp-trend tbody tr {
+  background:
+    repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px) left top 5px / var(--wi) 4px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) left bottom 5px / var(--we) 4px no-repeat;
+}
+.rp-trend tr.now td:first-child { font-weight: 700; }
+.rp-mode { justify-content: flex-start; gap: 20px; }
+@media (min-width: 1024px) { .pane-r .rp-mode, .pane-r .rp-year { display: flex; } }
+.rp-mode a[aria-current] { text-decoration: none; box-shadow: inset 0 -3px 0 var(--ink); }
+.note.worse { color: var(--shu); }
+.rp-net b { font-size: var(--fs-figure); }
+.rp-heat { display: grid; grid-template-columns: repeat(7, 1fr); }
+.rp-heat > * { height: var(--row); display: grid; place-items: center; font-size: var(--fs-label); color: var(--ink); text-decoration: none; border-left: 1px solid var(--hair); }
+.rp-heat > .wk { font-weight: 700; color: var(--ink-2); box-shadow: inset 0 -1px 0 var(--ink); }
+.rp-heat .lv0 { color: var(--ink-2); }
+.rp-heat .lv1 { background: rgba(26, 29, 27, 0.08); }
+.rp-heat .lv2 { background: rgba(26, 29, 27, 0.18); }
+.rp-heat .lv3 { background: rgba(26, 29, 27, 0.3); }
+.rp-heat .lv4 { background: rgba(26, 29, 27, 0.46); font-weight: 700; }
+.rp-heat a:hover { outline: 2px solid var(--ink); outline-offset: -2px; }
