@@ -172,6 +172,8 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 /* 搜尋 */
 .sf { flex: none; }
 .sf > summary { min-height: var(--row); display: flex; align-items: center; cursor: pointer; font-weight: 700; font-size: var(--fs-label); }
+.sf > summary::after { content: "修改"; margin-left: auto; padding-left: 10px; text-decoration: underline; text-underline-offset: 4px; }
+.sf[open] > summary::after { content: "收合"; }
 .sf > summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .sf .fld > span { flex: none; }
 .sf .fld input[type="date"] { min-width: 0; }
