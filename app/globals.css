@@ -169,6 +169,20 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 .lg-tools input:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 .lg-tools .lg-n { font-size: var(--fs-label); color: var(--ink-2); white-space: nowrap; }
 .lg-tools .act { margin-left: 0; }
+/* 信用卡明細確認：一筆兩行 */
+.bi-text { align-items: flex-start; }
+.bi-text textarea { flex: 1; min-width: 0; border: 1px solid var(--ink); background: transparent; font: inherit; font-size: var(--fs-label); color: var(--ink); padding: 8px; resize: vertical; }
+.bi { list-style: none; margin: 0; padding: 0; }
+.bi-r { padding: 0; }
+.bi-r.off { opacity: 0.55; }
+.bi-l1, .bi-l2 { min-height: var(--row); display: flex; align-items: center; gap: 8px; }
+.bi-l1 input[type="checkbox"] { width: 24px; height: 24px; flex: none; accent-color: var(--ink); }
+.bi-n { flex: 1; min-width: 0; height: calc(var(--row) - 8px); border: 0; border-radius: 0; background: transparent; box-shadow: inset 0 -1px 0 var(--ink); font: inherit; font-size: var(--fs-label); color: var(--ink); padding: 0 4px; }
+.bi-a { flex: none; min-width: 4.5em; text-align: right; font-weight: 700; }
+.bi-l2 { padding-left: 32px; }
+.bi-l2 select { flex: 1; min-width: 0; height: calc(var(--row) - 8px); border: 0; background: transparent; font: inherit; font-size: var(--fs-label); color: var(--ink); }
+.bi-d { flex: none; font-size: var(--fs-label); font-weight: 700; border: 1px solid var(--ink); padding: 0 4px; }
+.bi-l2 .ghost { min-height: var(--row); padding: 0 0 0 8px; flex: none; }
 /* 搜尋 */
 .sf { flex: none; }
 .sf > summary { min-height: var(--row); display: flex; align-items: center; cursor: pointer; font-weight: 700; font-size: var(--fs-label); }

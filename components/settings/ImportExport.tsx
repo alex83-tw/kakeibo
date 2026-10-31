@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { applyImport, previewImport, type ImportPreview } from "@/app/actions/csv";
 import { Hint } from "@/components/paper/Hint";
@@ -43,6 +44,15 @@ export function ImportExport() {
         <a className="btn" href="/settings/import-export/export" download>
           下載 CSV
         </a>
+      </div>
+
+      <div className="gap" />
+      <h2 className="sec">信用卡明細</h2>
+      <div className="form-block">
+        <p className="entry-n">從網銀複製信用卡明細貼上，看過一遍再匯入。</p>
+        <Link className="btn" href="/settings/import-export/card">
+          貼上信用卡明細
+        </Link>
       </div>
 
       <div className="gap" />
