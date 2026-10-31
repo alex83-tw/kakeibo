@@ -122,3 +122,21 @@ Plan: docs/superpowers/plans/2026-10-29-kakeibo-v1.md
 - 走查中發現並修正：桌面 `.sr`（absolute）沒被 `.pane` 裝住，整份文件多出 ~200px 可捲，`scrollIntoView` 會連整頁一起捲；`.pane` 改 `position: relative`，捲動改直接設 `scrollTop`。
 - 加了 `loading.tsx` 之後，`redirect()`／`notFound()` 的 HTTP 狀態變成 200（內容仍是轉址／找不到頁），瀏覽器行為正常。
 - 驗證：tsc 0 錯誤；eslint 0；vitest 34 檔／352 測試通過（起點 29 檔／320）。Playwright（fixtures 伺服器，隔離 worktree）走過：桌面首頁→篩選→換月→回到本月→預算（月份與書籤）→規則新增、記一筆自動帶科目、刪除、復原；科目清單；平板帳本與匯入匯出；錯誤頁（頁面、左頁、整個 layout）與重試；舊網址轉址。**手機 390 只看了帳本（捲到今日），沒有逐頁走完；FirstAccount 只有單元測試，沒有在瀏覽器裡建立；真實資料庫路徑（3000）沒有寫入驗證。**
+
+## 2026-10-31 補齊 financial-advisor 的收支功能（branch feat/income-expense-parity）
+
+計畫：`~/.claude/plans/finance-advisor-steady-seahorse.md`。盤點結論：advisor 有、kakeibo 沒有的 → 信用卡貼上批次匯入、批次選取／刪除／復原、跨月搜尋篩選、複製一筆、匯率維護，其後是報表、結轉、自訂分類、定期偵測、年度／JSON 匯出。使用者已同意把結轉與外幣匯出從「範圍外」移回範圍內。
+
+- [x] PR1 基礎：`insertEntries` 回傳 ids、`setEntriesDeleted`（200 筆分批）、Toast 可指定時間、`lib/server/import-guard.ts`、`lib/domain/csv-safe.ts`（匯出加公式防護，匯入時還原）
+- [x] PR2 帳本選取模式：選取／全選目前顯示／刪除／10 秒復原；編輯對話框「複製成新的一筆」
+- [x] PR3 `/search`：關鍵字、類型、科目、日期區間、金額區間、排序、分頁（每頁 50、最多讀 3000 筆）；帳本工具列「搜尋」連結帶著輸入的文字；搜尋結果也能選取刪除
+- [ ] PR4a／4b 信用卡貼上匯入 — **等使用者提供各卡別真實明細各一行（含外幣國碼行）**，確認金額欄的幣別
+- [ ] PR5 匯率維護 — **等使用者跑 `migrations/008a_exchange_rates_introspect.sql` 並貼回四個結果**
+- [ ] 第二階段：報表、結轉（要先決定語意、跑 009a）、匯出（年份／外幣／JSON）、定期偵測、自訂分類（要先決定 overlay 表）
+
+### 結果（PR1–3）
+- 驗證：tsc 0 錯誤；eslint 0；vitest 39 檔／400 測試通過（起點 34 檔／352）。
+- Playwright（fixtures 伺服器、隔離 worktree，埠 3101）：桌面 1280 與手機 390 走過——帳本 選取 → 點兩筆 → 刪除（月支出 15,461→14,121、科目總覽同步）→ 復原；篩選「餐飲」後全選只選到顯示的 6 筆（合計 871 與科目總覽相符）；Esc 離開選取模式；複製一筆（金額、科目、帳戶、今日日期都帶入，儲存後多一筆）；帳本「搜尋」→ `/search?q=` → 展開條件填最少金額送出 → 點一筆改金額儲存（結果即時更新）→ 選取全部刪除 → 復原；上一頁回到前一個搜尋。
+- 走查中修正：選取列在窄頁被截斷（「收入 58…」），窄頁改成兩行；`/search` 的摺疊標題少了「可展開」的提示，加「修改／收合」。
+- 沒驗證：真實資料庫路徑（批次軟刪除的 `.in()` 與 RLS、`insertEntries` 的 `.select("id")`）只用 fixtures／fake client 跑過；`/search` 的 3000 筆上限只有單元測試，沒有大資料量實測；1023／1024 交界沒有重走。
+- 注意：fixtures 的 `Entry` 重啟後會重置；Turbopack 在 worktree 裡改 CSS 要多改一次檔才會重新編譯（不是程式問題）。
