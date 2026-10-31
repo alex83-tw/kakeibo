@@ -72,7 +72,8 @@ export function ReportView({ period, entries, thisMonth }: { period: Period; ent
       {empty ? (
         <p className="r hint">這段期間還沒有帳目。</p>
       ) : (
-        <>
+        <div className="rp-grid">
+          <div className="rp-col">
           <h2 className="sec">收支</h2>
           <div className="r">
             <span>收入</span>
@@ -123,6 +124,8 @@ export function ReportView({ period, entries, thisMonth }: { period: Period; ent
             </table>
           )}
 
+          </div>
+          <div className="rp-col">
           <h2 className="sec">{period.kind === "month" ? "近六個月" : "每月"}</h2>
           <table className="rt rp rp-trend">
             <caption className="sr">每月收入與支出；上方斜紋是收入，下方實心是支出</caption>
@@ -156,7 +159,8 @@ export function ReportView({ period, entries, thisMonth }: { period: Period; ent
           </table>
 
           {period.kind === "month" ? <Heat entries={entries} year={period.year} month={period.month} /> : null}
-        </>
+          </div>
+        </div>
       )}
     </>
   );

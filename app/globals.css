@@ -254,7 +254,7 @@ a.act, button.act { margin-left: auto; color: var(--ink); font-weight: 700; text
 
 /* 電腦版見開き：左頁帳本、右頁目前的網址；書籤固定在上緣，兩頁各自捲動，線跟著字捲 */
 @media (min-width: 1024px) {
-  .book { max-width: 1280px; height: 100dvh; min-height: 0; padding: 0 24px 16px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto; }
+  .book { max-width: 1680px; height: 100dvh; min-height: 0; padding: 0 24px 16px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto; }
   .tabs { grid-column: 1 / -1; display: grid; grid-template-columns: 50% repeat(4, auto) 1fr; justify-items: start; gap: 0 4px; padding-left: 0; }
   .tabs .tab-l { grid-column: 1; grid-row: 1; margin-left: 18px; }
   .tabs .tab:nth-child(1) { margin-left: 18px; }
@@ -265,6 +265,13 @@ a.act, button.act { margin-left: auto; color: var(--ink); font-weight: 700; text
   .dock { grid-column: 2; grid-row: 3; position: static; border-left: 0; border-bottom: 1px solid var(--ink); display: flex; justify-content: flex-end; }
   .dock .btn { width: 280px; }
   .pane-r .mnav { display: none; }
+  /* 整個見開き都給這一頁（報表、月結、搜尋）：左頁收起，整頁只捲一次，書籤與記一筆釘在上下緣 */
+  .book:has(.spread) { height: auto; min-height: 100dvh; grid-template-columns: 1fr; }
+  .book:has(.spread) .pane-l { display: none; }
+  .book:has(.spread) .pane-r { grid-column: 1; overflow: visible; border-left: 1px solid var(--ink); box-shadow: none; }
+  .book:has(.spread) .pane-r .mnav { display: flex; }
+  .book:has(.spread) .tabs { position: sticky; top: 0; z-index: 6; background: var(--desk); }
+  .book:has(.spread) .dock { grid-column: 1; position: sticky; bottom: 0; border-left: 1px solid var(--ink); }
   .book { box-shadow: none; }
 }
 
@@ -410,3 +417,17 @@ a.btn { display: flex; align-items: center; justify-content: center; text-decora
 .rp-heat .lv3 { background: rgba(26, 29, 27, 0.3); }
 .rp-heat .lv4 { background: rgba(26, 29, 27, 0.46); font-weight: 700; }
 .rp-heat a:hover { outline: 2px solid var(--ink); outline-offset: -2px; }
+
+/* 月結、報表：頁面夠寬（>= 1000px）就並成兩欄，每欄各自的行仍落在同一組橫線上 */
+.mc, .rp-grid { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 56px; }
+@container (min-width: 1000px) { .mc, .rp-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.mc-col, .rp-col { min-width: 0; }
+.mc .rt th[scope="row"] { font-weight: 400; }
+.mc .rt .sum th { font-weight: 700; }
+.mc .c-r { font-size: var(--fs-label); }
+.mc .c-r a { color: var(--ink); text-underline-offset: 4px; }
+.mc-todo { margin: 0; padding: 0; list-style: none; }
+.mc-todo li { min-height: var(--row); line-height: var(--row); }
+.mc-todo li::before { content: "△ "; font-weight: 700; color: var(--shu); }
+.mc-todo li.ok::before { content: "✓ "; color: var(--aoi); }
+.mc-todo a { color: var(--ink); font-weight: 700; text-underline-offset: 4px; }

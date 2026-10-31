@@ -109,3 +109,29 @@ export async function copyBudgetsFromPrevious(
   }
   return rows.length;
 }
+
+/** Writes whole plan rows (amount, threshold and rollover) for one month: closing a month carries rollover into next month's plans, creating a plan that is missing. */
+export async function upsertPlans(
+  client: SupabaseClient,
+  userId: string,
+  year: number,
+  month: number,
+  rows: BudgetRow[],
+): Promise<void> {
+  if (rows.length === 0) return;
+  const { error } = await client.from("budget_plans").upsert(
+    rows.map((b) => ({
+      user_id: userId,
+      main_category: b.main_category,
+      sub_category: "other",
+      budget_amount: b.budget_amount,
+      rollover_amount: b.rollover_amount,
+      warning_threshold: b.warning_threshold,
+      currency: "TWD",
+      period_year: year,
+      period_month: month,
+    })),
+    { onConflict: CONFLICT },
+  );
+  if (error) throw new Error(error.message);
+}

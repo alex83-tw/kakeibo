@@ -14,6 +14,7 @@ export default async function SettingsPage() {
     { href: "/settings/accounts", label: "帳戶・對帳", note: accounts.filter((a) => !a.archived).length > 0 ? `${accounts.filter((a) => !a.archived).length} 個` : "尚未建立" },
     { href: "/settings/recurring", label: "週期帳目", note: "每月固定的收支" },
     { href: "/settings/rules", label: "自動分類", note: "關鍵字對應科目" },
+    { href: "/close", label: "月結", note: "月末：帳戶餘額、預算結轉" },
     { href: "/settings/rates", label: "匯率", note: "USD・JPY 換算台幣" },
     { href: "/settings/import-export", label: "匯入・匯出", note: "CSV・信用卡明細" },
   ];

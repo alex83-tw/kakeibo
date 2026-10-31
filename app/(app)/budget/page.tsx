@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BudgetBook, type BudgetBookRow } from "@/components/settings/BudgetBook";
 import { Head } from "@/components/paper/Head";
 import { Hint } from "@/components/paper/Hint";
@@ -10,7 +11,7 @@ import { getUserId } from "@/lib/server/auth";
 import { listBudgets } from "@/lib/server/repos/budgets";
 import { listEntries } from "@/lib/server/repos/entries";
 import { createServerClient } from "@/lib/server/supabase";
-import { monthRange, resolveMonth, toKanji } from "@/lib/time";
+import { formatMonthParam, monthRange, resolveMonth, toKanji } from "@/lib/time";
 
 /** `?m=` picks the month; on the desktop spread the left page shares it, so only the phone shows this page's own month nav. */
 export default async function BudgetPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
@@ -40,7 +41,15 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <Run label={`${toKanji(month)}月　預算`} />
-      <Head month={month} title="預算" />
+      <Head
+        month={month}
+        title="預算"
+        aside={
+          <Link className="act" href={`/close?m=${formatMonthParam(year, month)}`}>
+            月結
+          </Link>
+        }
+      />
       <MonthNav year={year} month={month} path="/budget" />
       <Hint>點金額直接改，離開欄位就存；清空＝取消這項預算。<span className="nb">「提醒 %」</span>＝用到幾成時提醒。</Hint>
       <BudgetBook year={year} month={month} rows={rows} addable={taxonomy.filter((m) => !used.has(m))} hasAny={budgets.length > 0} />
