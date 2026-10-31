@@ -71,3 +71,12 @@ export function budgetClose(budgets: BudgetRow[], next: BudgetRow[], entries: En
 export function isClosed(rows: BudgetClose[]): boolean {
   return rows.length > 0 && rows.every((r) => r.nextRollover === r.remaining);
 }
+
+/**
+ * open: nothing carried yet. closed: next month carries exactly what is left. stale: next month carries something that no longer
+ * matches (entries were added, changed or deleted after the close), so closing again would change it. A carried 0 counts as nothing carried.
+ */
+export function closeState(rows: BudgetClose[]): "open" | "closed" | "stale" {
+  if (isClosed(rows)) return "closed";
+  return rows.some((r) => r.nextRollover !== null && r.nextRollover !== 0 && r.nextRollover !== r.remaining) ? "stale" : "open";
+}

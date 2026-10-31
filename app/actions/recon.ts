@@ -28,8 +28,9 @@ export async function saveReconciliation(input: {
     const account = (await listAccounts(client, userId)).find((a) => a.id === input.account_id);
     if (!account) return { ok: false, error: "找不到這個帳戶" };
 
-    // The book balance is computed here from the ledger, never taken from the browser.
-    const entries = await listEntries(client, userId, { start: account.opening_date, end: twToday() });
+    // The book balance is computed here from the ledger, never taken from the browser: as of the statement date, never later than today.
+    const today = twToday();
+    const entries = await listEntries(client, userId, { start: account.opening_date, end: input.statement_date < today ? input.statement_date : today });
     const book = accountBalance(account, entries);
     const { diff, matched } = reconcile(account.kind, book, statement);
 

@@ -19,3 +19,17 @@ describe("AlertList tags", () => {
     expect(screen.queryByRole("link", { name: "去記帳" })).toBeNull();
   });
 });
+
+describe("AlertList month-end row", () => {
+  it("adds a 月結 row after the alerts, and an empty list does not claim there is nothing to do", () => {
+    render(<AlertList alerts={[]} monthCloseDue month={10} />);
+    expect(screen.queryByText("目前沒有需要處理的事。")).toBeNull();
+    expect(screen.getByText("月結").closest(".alert")?.querySelector(".tag")?.textContent).toBe("月結");
+    expect(screen.getByRole("link", { name: "去月結" })).toHaveAttribute("href", "/close");
+  });
+  it("is absent before the last week", () => {
+    render(<AlertList alerts={[]} />);
+    expect(screen.getByText("目前沒有需要處理的事。")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "去月結" })).toBeNull();
+  });
+});

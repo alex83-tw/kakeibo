@@ -13,7 +13,7 @@ const QUESTION_LABEL: Partial<Record<Alert["kind"], string>> = {
   "missing-recurring": "漏記",
 };
 
-export function AlertList({ alerts }: { alerts: Alert[] }) {
+export function AlertList({ alerts, monthCloseDue = false, month }: { alerts: Alert[]; monthCloseDue?: boolean; month?: number }) {
   return (
     <>
       {alerts.length > 0 ? (
@@ -35,9 +35,14 @@ export function AlertList({ alerts }: { alerts: Alert[] }) {
             ) : null}
           </AlertRow>
         ))
-      ) : (
+      ) : monthCloseDue ? null : (
         <Hint>目前沒有需要處理的事。</Hint>
       )}
+      {monthCloseDue ? (
+        <AlertRow tone="question" label="月結" href="/close" actionLabel="去月結">
+          <strong>{month ? `${month} 月` : "本月"}</strong> 快結束了，把帳戶對一對、剩下的預算帶到下個月
+        </AlertRow>
+      ) : null}
     </>
   );
 }

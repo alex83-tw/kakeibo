@@ -41,7 +41,7 @@ export function LedgerTools({ monthKey, currentKey, todayId, path }: { monthKey:
       tr.hidden = !hit;
       if (hit) shown++;
     });
-    table.querySelectorAll<HTMLTableRowElement>("tbody tr.wk, tbody tr.sum").forEach((tr) => {
+    table.querySelectorAll<HTMLTableRowElement>("tbody tr.wk, tbody tr.sum, tbody tr.wk-b, tbody tr.sum-b").forEach((tr) => {
       tr.hidden = needle !== "";
     });
     table.classList.toggle("filtering", needle !== "");
@@ -53,6 +53,9 @@ export function LedgerTools({ monthKey, currentKey, todayId, path }: { monthKey:
       <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="篩選：科目、摘要、帳戶" aria-label="篩選帳目" autoComplete="off" />
       <span ref={status} className="lg-n" role="status" />
       <SelectToggle />
+      <Link className="act" href={`/close?m=${monthKey}`} aria-label="這個月的月結">
+        月結
+      </Link>
       <Link className="act" href={q.trim() === "" ? "/search" : `/search?q=${encodeURIComponent(q.trim())}`} aria-label="搜尋全部月份">
         搜尋
       </Link>

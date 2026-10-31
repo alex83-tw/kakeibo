@@ -29,6 +29,8 @@ export interface TodayView {
   /** expense per day of the month, TWD only */
   daily: number[];
   alerts: Alert[];
+  /** the last week of a month that has entries: time to look at 月結 (it is not an alert, so it never crowds the three slots or the empty state) */
+  monthCloseDue: boolean;
 }
 
 const nt = (n: number) => `NT$ ${formatAmount(n)}`;
@@ -183,5 +185,6 @@ export function buildToday(input: {
     unbudgeted: { total: unbudgetedRows.reduce((s, r) => s + r.spent, 0), rows: unbudgetedRows },
     daily: dailyExpenses(entries, range),
     alerts: topAlerts(alerts, 3),
+    monthCloseDue: dayOfMonth(today) >= 25 && monthTwd.length > 0,
   };
 }

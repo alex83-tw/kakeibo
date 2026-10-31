@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountsClose, budgetClose, isClosed } from "./month-end";
+import { accountsClose, budgetClose, closeState, isClosed } from "./month-end";
 import type { Entry, LedgerAccount } from "./types";
 
 const acct = (id: string, p: Partial<LedgerAccount> = {}): LedgerAccount => ({ id, kind: "bank", name: id, opening_balance: 1000, opening_date: "2026-01-01", sort_order: 0, archived: false, ...p });
@@ -47,5 +47,13 @@ describe("budgetClose", () => {
     expect(isClosed(rows)).toBe(true);
     expect(isClosed(budgetClose([b("餐飲", 1000)], [b("餐飲", 1000, 0)], entries, OCT))).toBe(false);
     expect(isClosed([])).toBe(false);
+  });
+  it("tells never closed from closed from changed since", () => {
+    const close = (nextRollover: number) => budgetClose([b("餐飲", 1000)], [b("餐飲", 1000, nextRollover)], entries, OCT);
+    expect(closeState(budgetClose([b("餐飲", 1000)], [], entries, OCT))).toBe("open"); // no plan next month
+    expect(closeState(close(0))).toBe("open"); // a plan with nothing carried
+    expect(closeState(close(300))).toBe("closed");
+    expect(closeState(close(450))).toBe("stale"); // carried 450, but the entries now leave 300
+    expect(closeState([])).toBe("open");
   });
 });

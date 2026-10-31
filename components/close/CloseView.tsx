@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { AccountClose, BudgetClose } from "@/lib/domain/month-end";
-import { isClosed } from "@/lib/domain/month-end";
+import { closeState } from "@/lib/domain/month-end";
 import { formatAmount, formatSigned } from "@/lib/money";
 import { toKanji } from "@/lib/time";
 import { CloseButton } from "./CloseButton";
+import { ReconInline } from "./ReconInline";
 
 type AccountRow = AccountClose & { recon: { date: string; diff: number } | null };
 
@@ -30,6 +31,7 @@ export function CloseView({
   next,
   monthStart,
   monthEnd,
+  today,
   accounts,
   budgets,
   otherCount,
@@ -46,7 +48,8 @@ export function CloseView({
 }) {
   const sum = (f: (a: AccountRow) => number) => accounts.reduce((s, a) => s + f(a), 0);
   const unreconciled = accounts.filter((a) => !a.recon || a.recon.date < monthStart || a.recon.diff !== 0);
-  const closed = isClosed(budgets);
+  const state = closeState(budgets);
+  const reconDate = monthEnd < today ? monthEnd : today;
   const nextLabel = `${toKanji(next.month)}月`;
   return (
     <div className="mc">
@@ -94,6 +97,12 @@ export function CloseView({
         )}
 
         <h2 className="sec">收尾前先看一眼</h2>
+        {unreconciled.length > 0 ? (
+          <>
+            <h2 className="sec">對帳：{md(reconDate)}</h2>
+            <ReconInline accounts={unreconciled.map((a) => ({ id: a.id, name: a.name, close: a.close }))} date={reconDate} />
+          </>
+        ) : null}
         <ul className="mc-todo">
           <li className={unreconciled.length === 0 ? "ok" : undefined}>
             {unreconciled.length === 0 ? "每個帳戶本月都對過、對上了" : `${unreconciled.length} 個帳戶還沒對上：${unreconciled.map((a) => a.name).join("、")}`}
@@ -149,10 +158,15 @@ export function CloseView({
             </table>
             <p className="r hint">
               <span className="wrap">
-                {closed ? `${nextLabel}已經帶入這些金額。` : `還沒結轉到${nextLabel}。`}超支會帶成負數；{nextLabel}還沒有的預算會沿用本月金額。重按會用最新的帳目重算，不會疊加。
+                {state === "closed"
+                  ? `${nextLabel}已經帶入這些金額。`
+                  : state === "stale"
+                    ? `${nextLabel}帶入的金額和現在算的不一樣：結轉之後這個月的帳目又改過。重按一次更新。`
+                    : `還沒結轉到${nextLabel}。`}
+                超支會帶成負數；{nextLabel}還沒有的預算會沿用本月金額。重按會用最新的帳目重算，不會疊加。
               </span>
             </p>
-            <CloseButton year={year} month={month} closed={closed} nextLabel={nextLabel} />
+            <CloseButton year={year} month={month} closed={state !== "open"} nextLabel={nextLabel} />
           </>
         )}
       </div>

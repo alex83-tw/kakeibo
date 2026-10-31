@@ -85,7 +85,7 @@ export default async function TodayPage() {
       <DaySlider amounts={view.daily} today={day} year={year} month={month} />
 
       <h2 className="sec">注意</h2>
-      <AlertList alerts={view.alerts} />
+      <AlertList alerts={view.alerts} monthCloseDue={view.monthCloseDue} month={month} />
 
       <h2 className="sec" id="acct">
         帳戶
