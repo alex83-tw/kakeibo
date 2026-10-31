@@ -40,10 +40,30 @@ export function ImportExport() {
     <>
       <h2 className="sec">匯出</h2>
       <div className="form-block">
-        <p className="entry-n">所有以台幣記的帳目（含轉帳）。不含已刪除與外幣帳目，所以不是完整備份。</p>
-        <a className="btn" href="/settings/import-export/export" download>
-          下載 CSV
-        </a>
+        <p className="entry-n">未刪除的帳目（含轉帳），外幣帳目照原幣別與金額。JSON 只能匯出、不能匯回。</p>
+        <form action="/settings/import-export/export" method="get">
+          <div className="fld">
+            <label htmlFor="exp-year">範圍</label>
+            <select id="exp-year" name="year" defaultValue="">
+              <option value="">全部年份</option>
+              {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                <option key={y} value={y}>
+                  {y} 年
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="fld">
+            <label htmlFor="exp-fmt">格式</label>
+            <select id="exp-fmt" name="format" defaultValue="csv">
+              <option value="csv">CSV（可匯回）</option>
+              <option value="json">JSON</option>
+            </select>
+          </div>
+          <button type="submit" className="btn">
+            下載
+          </button>
+        </form>
       </div>
 
       <div className="gap" />
@@ -58,7 +78,7 @@ export function ImportExport() {
       <div className="gap" />
       <h2 className="sec">匯入</h2>
       <div className="form-block">
-        <p className="entry-n">表頭須是「日期,類型,科目,子科目,金額,帳戶,轉入帳戶,備註」。已經在帳本裡的相同帳目會自動略過。</p>
+        <p className="entry-n">表頭須是「日期,類型,科目,子科目,金額,幣別,帳戶,轉入帳戶,備註」（沒有「幣別」欄的舊檔也能匯入，一律當台幣）。已經在帳本裡的相同帳目會自動略過。</p>
         <Hint>
           <a href="/settings/import-export/template" download>
             下載範本

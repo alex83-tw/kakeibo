@@ -21,9 +21,7 @@ async function plan(text: string) {
   const { rows, errors } = parseEntriesCsv(text, await listAccounts(client, userId));
   if (rows.length > MAX_ROWS) throw new Error(`一次最多匯入 ${MAX_ROWS} 筆`);
   const dates = rows.map((r) => r.entry_date).sort();
-  // Only TWD rows are comparable: the CSV carries no currency, and an exported file holds TWD only.
-  const existing =
-    rows.length === 0 ? [] : (await listEntries(client, userId, { start: dates[0], end: dates[dates.length - 1] })).filter((e) => e.currency === "TWD" && !e.foreign);
+  const existing = rows.length === 0 ? [] : await listEntries(client, userId, { start: dates[0], end: dates[dates.length - 1] });
   return { userId, client, errors, ...planImport(rows, existing) };
 }
 
