@@ -20,6 +20,13 @@
   --dots: radial-gradient(circle at 25% 25%, var(--ink) 0.7px, transparent 0.95px),
     radial-gradient(circle at 75% 75%, var(--ink) 0.7px, transparent 0.95px);
 }
+/* 手指點的畫面：橫線間距、也就是每一列的高度，放大到 44px，讓所有點擊區都夠大（整套版面都以 --row 為單位，一起變） */
+@media (pointer: coarse) {
+  :root { --row: 44px; }
+  /* 表格裡的連結與兩個字的短按鈕：整格都點得到，寬度也不小於 44px */
+  .rt td a, .rp td a { display: inline-flex; align-items: center; min-height: var(--row); min-width: 44px; }
+  a.act, button.act, .rp-mode a, .rp-year a { min-width: 44px; justify-content: center; }
+}
 
 @theme inline {
   --color-ink: var(--ink);
@@ -138,7 +145,7 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 .lg-t { table-layout: fixed; }
 .lg-t col.c-d { width: var(--c-d); }
 .lg-t col.c-n { width: var(--c-n); }
-.lg-t .c-x, .lg-t .c-a { display: none; }
+.lg-t .c-x, .lg-t .c-a, .lg-t .c-b { display: none; }
 .lg-t td.d { padding-left: 0; font-weight: 400; }
 .lg-t td.c b { font-weight: 400; }
 .lg-t .x-in { font-size: var(--fs-label); color: var(--ink-2); }
@@ -151,14 +158,15 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 .lg-t tr[id] { scroll-margin-top: calc(var(--row) * 2); }
 @container (min-width: 520px) {
   .lg-sheet {
-    --c-c: 96px; --c-a: 92px; --c-n: 80px;
-    background-image: linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair));
-    background-position: calc(var(--pad) + var(--c-d)) 0, calc(var(--pad) + var(--c-d) + var(--c-c)) 0, right calc(var(--pad) + var(--c-n)) top 0, right calc(var(--pad) + 2 * var(--c-n)) top 0, right calc(var(--pad) + 2 * var(--c-n) + var(--c-a)) top 0;
+    --c-c: 96px; --c-a: 92px; --c-n: 80px; --c-b: 88px;
+    background-image: linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair)), linear-gradient(var(--hair), var(--hair));
+    background-position: calc(var(--pad) + var(--c-d)) 0, calc(var(--pad) + var(--c-d) + var(--c-c)) 0, right calc(var(--pad) + var(--c-b)) top 0, right calc(var(--pad) + var(--c-b) + var(--c-n)) top 0, right calc(var(--pad) + var(--c-b) + 2 * var(--c-n)) top 0, right calc(var(--pad) + var(--c-b) + 2 * var(--c-n) + var(--c-a)) top 0;
   }
+  .lg-t col.c-b { width: var(--c-b); }
   .lg-t col.c-c { width: var(--c-c); }
   .lg-t col.c-a { width: var(--c-a); }
-  .lg-t .c-x, .lg-t .c-a { display: table-cell; }
-  .lg-t col.c-x, .lg-t col.c-a { display: table-column; }
+  .lg-t .c-x, .lg-t .c-a, .lg-t .c-b { display: table-cell; }
+  .lg-t col.c-x, .lg-t col.c-a, .lg-t col.c-b { display: table-column; }
   .lg-t .x-in { display: none; }
   .lg-sheet.no-a { --c-a: 0px; }
   .no-a .c-a, .no-a col.c-a { display: none; }
@@ -431,3 +439,9 @@ a.btn { display: flex; align-items: center; justify-content: center; text-decora
 .mc-todo li::before { content: "△ "; font-weight: 700; color: var(--shu); }
 .mc-todo li.ok::before { content: "✓ "; color: var(--aoi); }
 .mc-todo a { color: var(--ink); font-weight: 700; text-underline-offset: 4px; }
+
+/* 手指點的畫面：單行欄位與按鈕也和一列一樣高（要寫在各欄位原本的規則之後才蓋得過去） */
+@media (pointer: coarse) {
+  .lg-tools input, .bi-n, .bi-l2 select, .bb-pct input, .chkrow input, .chkrow select, .chkrow .btn { height: var(--row); }
+  .wrap a { display: inline-flex; align-items: center; min-height: var(--row); }
+}

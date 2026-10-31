@@ -75,3 +75,29 @@ describe("buildLedger with a converted foreign entry", () => {
     expect(l.weeks.flatMap((w) => w.lines)[0]).toMatchObject({ foreign: false, orig: "JPY 1,200" });
   });
 });
+
+describe("buildLedger running balance", () => {
+  const entries = [
+    entry({ entry_date: "2026-10-01", entry_type: "income", main_category: "薪資", sub_category: "other", amount: 1000 }),
+    entry({ entry_date: "2026-10-03", amount: 300 }),
+    entry({ entry_date: "2026-10-03", entry_type: "transfer", main_category: "轉帳", sub_category: "other", amount: 500, transfer_account_id: "bank" }),
+    entry({ entry_date: "2026-10-04", amount: 50, currency: "JPY" }),
+    entry({ entry_date: "2026-10-20", amount: 200 }),
+  ];
+  const l = buildLedger({ year: 2026, month: 10, entries, today: "2026-11-15", opening: 5000 });
+  const lines = l.weeks.flatMap((w) => w.lines);
+
+  it("carries the opening balance through each line; a transfer and an unconverted currency leave it alone", () => {
+    expect(lines.map((x) => x.balance)).toEqual([6000, 5700, 5700, 5700, 5500]);
+  });
+  it("closes each week and the month at the running balance", () => {
+    expect(l.weeks.map((w) => w.balance)).toEqual([5700, 5700, 5500]);
+    expect(l.opening).toBe(5000);
+    expect(l.closing).toBe(5500);
+  });
+  it("shows no balance without an opening balance", () => {
+    const n = buildLedger({ year: 2026, month: 10, entries, today: "2026-11-15" });
+    expect(n.closing).toBeNull();
+    expect(n.weeks.flatMap((w) => w.lines).every((x) => x.balance === null)).toBe(true);
+  });
+});

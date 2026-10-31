@@ -16,9 +16,9 @@ import { SelectBar, SelectProvider } from "./SelectMode";
  * 窄的頁面（手機）把摘要併在科目格、不顯示帳戶欄（container query）。
  */
 export async function LedgerPane({ year, month, path }: { year: number; month: number; path: string }) {
-  const { entries, accountNames } = await loadLedgerMonth(year, month);
+  const { entries, accountNames, opening } = await loadLedgerMonth(year, month);
   const today = twToday();
-  const ledger = buildLedger({ year, month, entries, today });
+  const ledger = buildLedger({ year, month, entries, today, opening });
   const monthKey = formatMonthParam(year, month);
   const cur = currentMonth();
   const date = (day: number) => `${monthKey}-${String(day).padStart(2, "0")}`;
@@ -62,6 +62,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
             <col className="c-a" />
             <col className="c-n" />
             <col className="c-n" />
+            <col className="c-b" />
           </colgroup>
           <thead>
             <tr>
@@ -78,6 +79,9 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
               </th>
               <th scope="col" className="n">
                 支出
+              </th>
+              <th scope="col" className="n c-b">
+                餘額
               </th>
             </tr>
           </thead>
@@ -109,7 +113,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
                         {e ? (
                           <LineButton entry={e}>
                             <b>{l.cat}</b>
-                            {note ? <span className="x-in"> {note}</span> : null}
+                            {note || account(l) ? <span className="x-in"> {[account(l), note].filter(Boolean).join("　")}</span> : null}
                             <span className="sr">
                               ，{l.day}日{l.income > 0 ? `收入 ${formatAmount(l.income)}` : l.expense > 0 ? `支出 ${formatAmount(l.expense)}` : dim ? muted : ""}，修改或刪除
                             </span>
@@ -122,6 +126,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
                       <td className="c-a dim">{account(l)}</td>
                       <td className="n">{dim && e?.entry_type === "income" ? <span className="dim">{muted}</span> : amount(l.income)}</td>
                       <td className="n">{dim && e?.entry_type !== "income" && e ? <span className="dim">{muted}</span> : amount(l.expense)}</td>
+                      <td className="n c-b dim">{l.balance === null ? "" : formatSigned(l.balance)}</td>
                     </tr>
                   );
                 })}
@@ -133,6 +138,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
                   <td className="c-a" />
                   <td className="n">{formatAmount(w.income)}</td>
                   <td className="n">{formatAmount(w.expense)}</td>
+                  <td className="n c-b">{w.balance === null ? "" : formatSigned(w.balance)}</td>
                 </tr>
               </Fragment>
             ))}
@@ -142,6 +148,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
               <td className="c-a" />
               <td className="n">{formatAmount(ledger.income)}</td>
               <td className="n">{formatAmount(ledger.expense)}</td>
+              <td className="n c-b">{ledger.closing === null ? "" : formatSigned(ledger.closing)}</td>
             </tr>
           </tbody>
         </table>
