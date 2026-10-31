@@ -153,6 +153,10 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 .lg-t tr.wk td { font-weight: 700; box-shadow: inset 0 -1px 0 var(--ink); }
 .lg-t tr.wk td:first-child { font-size: var(--fs-label); padding-left: 0; }
 .lg-t tr.sum td:first-child { padding-left: 0; }
+/* 手機沒有餘額欄：每週與月底各多一行餘額（寬版隱藏，看欄就好）；週計的實線移到餘額行下面 */
+.lg-t tr.wk-b td, .lg-t tr.sum-b td { text-align: right; font-size: var(--fs-label); color: var(--ink-2); }
+.lg-t tr.wk-b td { box-shadow: inset 0 -1px 0 var(--ink); }
+@container (max-width: 519.98px) { .lg-t tr.wk:has(+ tr.wk-b) td { box-shadow: none; } }
 .lg-t tr.today td, .rt tr.today td { background-image: radial-gradient(circle at 25% 25%, rgba(26, 29, 27, 0.22) 0.6px, transparent 0.85px), radial-gradient(circle at 75% 75%, rgba(26, 29, 27, 0.22) 0.6px, transparent 0.85px); background-size: 4px 4px; }
 .lg-t tr.today .dim, .lg-t tr.today .x-in { color: var(--ink); }
 .lg-t tr[id] { scroll-margin-top: calc(var(--row) * 2); }
@@ -163,6 +167,7 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
     background-position: calc(var(--pad) + var(--c-d)) 0, calc(var(--pad) + var(--c-d) + var(--c-c)) 0, right calc(var(--pad) + var(--c-b)) top 0, right calc(var(--pad) + var(--c-b) + var(--c-n)) top 0, right calc(var(--pad) + var(--c-b) + 2 * var(--c-n)) top 0, right calc(var(--pad) + var(--c-b) + 2 * var(--c-n) + var(--c-a)) top 0;
   }
   .lg-t col.c-b { width: var(--c-b); }
+  .lg-t tr.wk-b, .lg-t tr.sum-b { display: none; }
   .lg-t col.c-c { width: var(--c-c); }
   .lg-t col.c-a { width: var(--c-a); }
   .lg-t .c-x, .lg-t .c-a, .lg-t .c-b { display: table-cell; }

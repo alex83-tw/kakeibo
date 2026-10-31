@@ -61,8 +61,9 @@ export function SelectProvider({ children }: { children: ReactNode }) {
       const entry = known.current.get(el.dataset.eid ?? "");
       if (entry && !el.closest("[hidden]")) next.set(entry.id, entry);
     });
+    if (next.size === 0) show({ text: "目前沒有可以選的帳目" });
     setSelected(next);
-  }, []);
+  }, [show]);
 
   const remove = useCallback(async () => {
     setBusy(true);

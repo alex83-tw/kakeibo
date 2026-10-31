@@ -32,9 +32,9 @@ describe("ToastProvider", () => {
     await fire([undo("第一筆"), undo("第二筆")]);
     expect(screen.getByText("第一筆")).toBeInTheDocument();
     expect(screen.queryByText("第二筆")).toBeNull();
-    act(() => void vi.advanceTimersByTime(5100));
+    act(() => void vi.advanceTimersByTime(8100));
     expect(screen.getByText("第二筆")).toBeInTheDocument();
-    act(() => void vi.advanceTimersByTime(5100));
+    act(() => void vi.advanceTimersByTime(8100));
     expect(screen.queryByText("第二筆")).toBeNull();
   });
 
@@ -51,7 +51,7 @@ describe("ToastProvider", () => {
     act(() => void vi.advanceTimersByTime(20000));
     expect(screen.getByText("慢慢來")).toBeInTheDocument();
     await user.unhover(screen.getByText("慢慢來"));
-    act(() => void vi.advanceTimersByTime(1900));
+    act(() => void vi.advanceTimersByTime(4900));
     expect(screen.getByText("慢慢來")).toBeInTheDocument();
     act(() => void vi.advanceTimersByTime(300));
     expect(screen.queryByText("慢慢來")).toBeNull();

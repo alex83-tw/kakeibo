@@ -140,6 +140,11 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
                   <td className="n">{formatAmount(w.expense)}</td>
                   <td className="n c-b">{w.balance === null ? "" : formatSigned(w.balance)}</td>
                 </tr>
+                {w.balance === null ? null : (
+                  <tr className="wk-b">
+                    <td colSpan={4}>週末餘額　{formatSigned(w.balance)}</td>
+                  </tr>
+                )}
               </Fragment>
             ))}
             <tr className="sum">
@@ -150,6 +155,11 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
               <td className="n">{formatAmount(ledger.expense)}</td>
               <td className="n c-b">{ledger.closing === null ? "" : formatSigned(ledger.closing)}</td>
             </tr>
+            {ledger.closing === null ? null : (
+              <tr className="sum-b">
+                <td colSpan={4}>月末餘額　{formatSigned(ledger.closing)}</td>
+              </tr>
+            )}
           </tbody>
         </table>
         {ledger.weeks.length === 0 ? <p className="lg-empty">這個月還沒有帳目。按「記一筆」開始。</p> : null}

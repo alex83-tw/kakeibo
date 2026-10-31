@@ -28,7 +28,7 @@ export function useToast(): ToastApi {
  * One toast on screen at a time, the rest queue behind it. Each lasts `ms`, and the clock stops while the pointer or focus is on it,
  * so 復原 can be reached by a slow hand or a keyboard.
  */
-export function ToastProvider({ children, ms = 5000 }: { children: ReactNode; ms?: number }) {
+export function ToastProvider({ children, ms = 8000 }: { children: ReactNode; ms?: number }) {
   const [queue, setQueue] = useState<ToastState[]>([]);
   // Held per toast: a toast dismissed under the pointer never fires pointerleave, so a flag shared by all toasts would stay stuck.
   const [heldFor, setHeldFor] = useState<ToastState | null>(null);
