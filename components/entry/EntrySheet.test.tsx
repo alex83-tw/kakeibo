@@ -102,6 +102,21 @@ describe("EntrySheet states where the entry will be filed", () => {
     await user.click(screen.getByRole("radio", { name: "轉帳" }));
     expect(screen.queryByText(/^記為/)).toBeNull();
   });
+  it("找科目 narrows the picker to what matches, keeps the chosen one, and clearing brings everything back", async () => {
+    const user = await open();
+    const labels = () => within(screen.getByLabelText("科目")).getAllByRole("option").map((o) => o.textContent);
+    const all = labels().length;
+    await user.type(screen.getByLabelText("找科目"), "午餐");
+    expect(labels()).toContain("餐飲／午餐");
+    expect(labels().length).toBeLessThan(all);
+    expect(labels()).not.toContain("交通／一般");
+    await user.selectOptions(screen.getByLabelText("科目"), "餐飲／午餐");
+    await user.clear(screen.getByLabelText("找科目"));
+    await user.type(screen.getByLabelText("找科目"), "xyz沒有這個");
+    expect(labels()).toEqual(["請選擇", "餐飲／午餐"]); // nothing matches, the chosen one stays
+    await user.clear(screen.getByLabelText("找科目"));
+    expect(labels().length).toBe(all);
+  });
   it("saving without a category asks for one and creates nothing", async () => {
     const user = await open();
     await user.type(screen.getByLabelText("金額"), "100");
@@ -318,7 +333,7 @@ describe("EntrySheet", () => {
     expect(screen.getByRole("radio", { name: "收入" })).toHaveFocus();
   });
 
-  it("after saving: sheet closes, toast offers 復原, 復原 soft-deletes, toast fades after ~5s", async () => {
+  it("after saving: sheet closes, toast offers 復原, 復原 soft-deletes, toast fades after ~8s", async () => {
     const user = await open();
     await user.selectOptions(screen.getByLabelText("科目"), "餐飲::午餐");
     await user.type(screen.getByLabelText("金額"), "1,500");
@@ -335,7 +350,7 @@ describe("EntrySheet", () => {
     await user.type(screen.getByLabelText("金額"), "20");
     await user.click(screen.getByRole("button", { name: "儲存" }));
     await waitFor(() => expect(screen.getByText("已記錄 NT$20 支出")).toBeInTheDocument());
-    act(() => { vi.advanceTimersByTime(5200); });
+    act(() => { vi.advanceTimersByTime(8200); });
     expect(screen.queryByText("已記錄 NT$20 支出")).not.toBeInTheDocument();
   });
 

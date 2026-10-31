@@ -91,6 +91,7 @@ export function EntryForm({
         : joinCategory(initial.main_category, normalizeSub(initial.sub_category))
       : (presetCategory ?? ""),
   );
+  const [catQuery, setCatQuery] = useState("");
   const [accountId, setAccountId] = useState(
     initial ? (initial.account_id ?? "") : copy && copy.account_id === "" ? "" : (liveId(copy?.account_id) ?? live[0]?.id ?? ""),
   );
@@ -127,6 +128,7 @@ export function EntryForm({
     setType(next);
     if (next === "transfer") setCurrency("TWD");
     setCategory("");
+    setCatQuery("");
     setCategoryTouched(false);
     setErrors({});
   }
@@ -182,6 +184,9 @@ export function EntryForm({
   const err = (k: keyof Errors) => errors[k];
   const known = new Set(Object.entries(taxonomy).flatMap(([main, subs]) => ["other", ...subs].map((s) => joinCategory(main, s))));
   const recentKeys = new Set(recent.map((r) => joinCategory(r.main, r.sub)));
+  // 找科目: narrows the picker to what matches (the chosen one always stays, so the select never loses its value).
+  const needle = catQuery.trim().toLowerCase();
+  const shows = (main: string, sub: string) => needle === "" || joinCategory(main, sub) === category || `${main}${subLabel(sub)}`.toLowerCase().includes(needle);
   const legacy = category !== "" && !known.has(category) && !recent.some((r) => joinCategory(r.main, r.sub) === category) ? category : null;
 
   return (
@@ -249,6 +254,7 @@ export function EntryForm({
         </>
       ) : (
         <>
+          <input className="r" type="search" value={catQuery} onChange={(e) => setCatQuery(e.target.value)} placeholder="找科目：輸入關鍵字，例如 咖啡" aria-label="找科目" autoComplete="off" />
           <Field id="entry-category" label="科目" error={err("main_category")}>
             <select id="entry-category" value={category} onChange={(e) => { setCategory(e.target.value); setCategoryTouched(true); }} aria-describedby="entry-category-err">
               <option value="">請選擇</option>
@@ -257,9 +263,9 @@ export function EntryForm({
                   {splitCategory(legacy).main}／{subLabel(splitCategory(legacy).sub)}
                 </option>
               ) : null}
-              {type === "expense" && recent.length > 0 ? (
+              {type === "expense" && recent.some((r) => shows(r.main, r.sub)) ? (
                 <optgroup label="常用">
-                  {recent.map((r) => (
+                  {recent.filter((r) => shows(r.main, r.sub)).map((r) => (
                     <option key={`r-${r.main}-${r.sub}`} value={joinCategory(r.main, r.sub)}>
                       {r.main}／{subLabel(r.sub)}
                     </option>
@@ -268,7 +274,7 @@ export function EntryForm({
               ) : null}
               {Object.entries(taxonomy).map(([main, subs]) => {
                 // 常用 already lists these; listing them again would put the same choice in the picker twice.
-                const rest = ["other", ...subs].filter((s) => type !== "expense" || !recentKeys.has(joinCategory(main, s)));
+                const rest = ["other", ...subs].filter((s) => (type !== "expense" || !recentKeys.has(joinCategory(main, s))) && shows(main, s));
                 return rest.length === 0 ? null : (
                   <optgroup key={main} label={main}>
                     {rest.map((s) => (
