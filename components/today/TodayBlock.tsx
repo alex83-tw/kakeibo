@@ -5,7 +5,7 @@ import type { Entry } from "@/lib/domain/types";
 import { formatAmount } from "@/lib/money";
 import { foldWidth, stripImported } from "@/lib/text";
 
-function amountCell(e: Entry): string {
+export function amountCell(e: Entry): string {
   if (e.currency !== "TWD") return "未納入";
   if (e.entry_type === "transfer") return `(${formatAmount(e.amount)})`;
   return e.entry_type === "income" ? `＋${formatAmount(e.amount)}` : formatAmount(e.amount);

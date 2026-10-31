@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { restoreEntries, softDeleteEntries } from "@/app/actions/entries";
 import { useToast } from "@/components/ui/Toast";
+import { sumMatches } from "@/lib/domain/search";
 import type { Entry } from "@/lib/domain/types";
 import { formatAmount } from "@/lib/money";
 
@@ -100,23 +101,11 @@ export function SelectProvider({ children }: { children: ReactNode }) {
   return <SelectContext.Provider value={value}>{children}</SelectContext.Provider>;
 }
 
-/** What the selected lines add up to: transfers move money, and a foreign line without a rate is not counted anywhere else either. */
-function totals(entries: Iterable<Entry>) {
-  let expense = 0;
-  let income = 0;
-  for (const e of entries) {
-    if (e.currency !== "TWD") continue;
-    if (e.entry_type === "expense") expense += e.amount;
-    else if (e.entry_type === "income") income += e.amount;
-  }
-  return { expense, income };
-}
-
 /** One row under the filter, only while selecting. */
 export function SelectBar() {
   const s = useSelect();
   if (!s?.selecting) return null;
-  const { expense, income } = totals(s.selected.values());
+  const { expense, income } = sumMatches([...s.selected.values()]);
   return (
     <div className="lg-sel" role="group" aria-label="批次操作">
       <span className="lg-n" role="status">
@@ -133,5 +122,16 @@ export function SelectBar() {
         取消
       </button>
     </div>
+  );
+}
+
+/** The 選取 button that starts the mode; gone while selecting (the bar has 取消). */
+export function SelectToggle() {
+  const s = useSelect();
+  if (!s || s.selecting) return null;
+  return (
+    <button type="button" className="act" onClick={s.start}>
+      選取
+    </button>
   );
 }

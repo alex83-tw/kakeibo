@@ -169,6 +169,18 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 .lg-tools input:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 .lg-tools .lg-n { font-size: var(--fs-label); color: var(--ink-2); white-space: nowrap; }
 .lg-tools .act { margin-left: 0; }
+/* 搜尋 */
+.sf { flex: none; }
+.sf > summary { min-height: var(--row); display: flex; align-items: center; cursor: pointer; font-weight: 700; font-size: var(--fs-label); }
+.sf > summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.sf .fld > span { flex: none; }
+.sf .fld input[type="date"] { min-width: 0; }
+.sf-go { display: flex; align-items: center; gap: 12px; min-height: var(--row); }
+.sf-gap { flex: 1; }
+.rt-search td.c { max-width: 0; }
+.rt-search td.c b { font-weight: 400; }
+.rt-search .x-in { font-size: var(--fs-label); color: var(--ink-2); }
+.rt-search th:first-child, .rt-search td:first-child { width: 4.5em; }
 .lg-sel { height: var(--row); flex: none; display: flex; align-items: center; gap: 4px; }
 .lg-sel .lg-n { margin-right: auto; font-size: var(--fs-label); color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lg-sel .act { margin-left: 0; }
@@ -198,9 +210,9 @@ button.ln:focus-visible { outline: none; }
 tr:has(> td > button.ln:focus-visible) { outline: 3px solid var(--ink); outline-offset: -3px; }
 tr:has(> td > button.ln:hover) td { background-color: rgba(26, 29, 27, 0.05); }
 
-.mnav { height: var(--row); flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.mnav a { height: var(--row); display: inline-flex; align-items: center; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
-.mnav span { font-size: var(--fs-label); color: var(--ink-2); }
+.mnav, .pager { height: var(--row); flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mnav a, .pager a { height: var(--row); display: inline-flex; align-items: center; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
+.mnav span, .pager span { font-size: var(--fs-label); color: var(--ink-2); }
 
 /* 注意：一則一行，字多時換到下一條線 */
 .alert { min-height: var(--row); flex: none; display: flex; align-items: flex-start; gap: 10px; line-height: var(--row); }

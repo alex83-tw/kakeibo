@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ValidEntry } from "@/lib/domain/validate";
-import { insertEntry, listEntries, listRecentEntries, scopedEntries, setEntriesDeleted, setEntryDeleted, updateEntryRow } from "./entries";
+import { insertEntry, listEntries, listRecentEntries, scopedEntries, searchEntries, setEntriesDeleted, setEntryDeleted, updateEntryRow } from "./entries";
+import { parseSearchParams } from "@/lib/domain/search";
 import { fakeClient } from "./fake-client";
 
 describe("scopedEntries", () => {
@@ -125,5 +126,41 @@ describe("setEntriesDeleted", () => {
     expect(await setEntriesDeleted(none.client, "u1", [], true)).toEqual([]);
     expect(none.calls).toHaveLength(0);
     await expect(setEntriesDeleted(fakeClient([], { message: "boom" }).client, "u1", ["x"], true)).rejects.toThrow("boom");
+  });
+});
+
+describe("searchEntries", () => {
+  const row = (i: number, p: Record<string, unknown> = {}) => ({ id: `e${i}`, entry_type: "expense", main_category: "餐飲", sub_category: null, amount: 1, currency: "TWD",
+    entry_date: "2026-10-01", notes: null, account_id: null, transfer_account_id: null, deleted_at: null, is_recurring: false, ...p });
+  const filters = (p: Parameters<typeof parseSearchParams>[0] = {}) => parseSearchParams(p);
+
+  it("keeps the user scope, passes only the database-side filters, and reads newest first", async () => {
+    const { client, calls } = fakeClient([row(1)]);
+    await searchEntries(client, "u1", filters({ type: "income", main: "薪資", from: "2026-01-01", to: "2026-10-31", q: "x", min: "5" }));
+    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
+    expect(calls).toContainEqual(["is", "deleted_at", null]);
+    expect(calls).toContainEqual(["eq", "entry_type", "income"]);
+    expect(calls).toContainEqual(["eq", "main_category", "薪資"]);
+    expect(calls).toContainEqual(["gte", "entry_date", "2026-01-01"]);
+    expect(calls).toContainEqual(["lte", "entry_date", "2026-10-31"]);
+    expect(calls).toContainEqual(["order", "entry_date", { ascending: false }]);
+    expect(calls.some((c) => c[0] === "gte" && c[1] === "amount")).toBe(false);
+    expect(calls.some((c) => c[0] === "ilike" || c[0] === "or")).toBe(false);
+  });
+  it("stops at the cap and says so, without ever asking for more than cap + 1 rows", async () => {
+    const { client, calls } = fakeClient(Array.from({ length: 5000 }, (_, i) => row(i)));
+    const r = await searchEntries(client, "u1", filters());
+    expect(r.entries).toHaveLength(3000);
+    expect(r.truncated).toBe(true);
+    expect(calls.filter((c) => c[0] === "range")).toEqual([["range", 0, 999], ["range", 1000, 1999], ["range", 2000, 2999], ["range", 3000, 3000]]);
+  });
+  it("is not truncated when it fits", async () => {
+    const { client } = fakeClient(Array.from({ length: 2300 }, (_, i) => row(i)));
+    const r = await searchEntries(client, "u1", filters());
+    expect(r).toMatchObject({ truncated: false });
+    expect(r.entries).toHaveLength(2300);
+  });
+  it("throws when the query fails", async () => {
+    await expect(searchEntries(fakeClient([], { message: "boom" }).client, "u1", filters())).rejects.toThrow("boom");
   });
 });

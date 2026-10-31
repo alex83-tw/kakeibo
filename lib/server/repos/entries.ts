@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { rateOn, toTwd, type RateRow } from "@/lib/domain/fx";
+import { SEARCH_CAP, type SearchFilters, sqlFilter } from "@/lib/domain/search";
 import type { Entry, EntryType } from "@/lib/domain/types";
 import type { ValidEntry } from "@/lib/domain/validate";
 
@@ -89,6 +90,39 @@ export async function listEntries(
   if (foreign.length === 0) return out;
   const rates = await listRates(client, foreign, range);
   return out.map((e) => toTwd(e, rates));
+}
+
+/**
+ * Entries matching the database-side part of a search (type, main category, date range), newest first, at most SEARCH_CAP of them
+ * (`truncated` says there were more). Foreign rows come back converted like listEntries; amount and text filters are applied by the caller.
+ */
+export async function searchEntries(client: SupabaseClient, userId: string, f: SearchFilters): Promise<{ entries: Entry[]; truncated: boolean }> {
+  const sql = sqlFilter(f);
+  const rows: EntryRow[] = [];
+  for (let from = 0; from <= SEARCH_CAP; from += PAGE) {
+    let q = scopedEntries(client, userId);
+    if (sql.type) q = q.eq("entry_type", sql.type);
+    if (sql.main) q = q.eq("main_category", sql.main);
+    if (sql.from) q = q.gte("entry_date", sql.from);
+    if (sql.to) q = q.lte("entry_date", sql.to);
+    // one row past the cap tells us there is more
+    const { data, error } = await q
+      .order("entry_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, Math.min(from + PAGE - 1, SEARCH_CAP));
+    if (error) throw new Error(error.message);
+    const page = (data ?? []) as unknown as EntryRow[];
+    rows.push(...page);
+    if (page.length < Math.min(PAGE, SEARCH_CAP + 1 - from)) break;
+  }
+  const truncated = rows.length > SEARCH_CAP;
+  const entries = rows.slice(0, SEARCH_CAP).map(toEntry);
+  const foreign = [...new Set(entries.filter((e) => e.currency !== "TWD").map((e) => e.currency))];
+  if (foreign.length === 0) return { entries, truncated };
+  const dates = entries.map((e) => e.entry_date).sort();
+  const rates = await listRates(client, foreign, { start: dates[0], end: dates[dates.length - 1] });
+  return { entries: entries.map((e) => toTwd(e, rates)), truncated };
 }
 
 /** The newest `n` entries (oldest-first, like listEntries), unconverted: enough to learn which categories are in use without paging the whole year or touching exchange_rates. */
