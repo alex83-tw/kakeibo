@@ -13,7 +13,7 @@ export function fakeClient(rows: unknown[] = [], error: { message: string } | nu
       return builder;
     },
   };
-  for (const m of ["select", "insert", "update", "upsert", "delete", "eq", "is", "gte", "lte", "order", "in"]) {
+  for (const m of ["select", "insert", "update", "upsert", "delete", "eq", "is", "gte", "gt", "lte", "order", "in"]) {
     builder[m] = (...args: unknown[]) => {
       calls.push([m, ...args]);
       return builder;

@@ -119,6 +119,10 @@ class Query implements PromiseLike<{ data: Row[]; error: { message: string } | n
     this.filters.push((r) => (r[col] as string | number) >= v);
     return this;
   }
+  gt(col: string, v: string | number) {
+    this.filters.push((r) => (r[col] as string | number) > v);
+    return this;
+  }
   lte(col: string, v: string | number) {
     this.filters.push((r) => (r[col] as string | number) <= v);
     return this;

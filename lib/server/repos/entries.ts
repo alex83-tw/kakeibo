@@ -33,30 +33,39 @@ export function toEntry(r: EntryRow): Entry {
 
 const PAGE = 1000; // PostgREST returns at most 1000 rows per request
 
-const RATE_LOOKBACK_DAYS = 31;
+type RateQueryRow = { from_currency: string; rate: number | string; date: string };
+const toRateRow = (r: RateQueryRow): RateRow => ({ currency: r.from_currency, date: r.date.slice(0, 10), rate: Number(r.rate) });
 
-/** exchange_rates rows to TWD for these currencies, from a month before `start` through `end` (a rate is the latest row on or before the entry date). */
+/**
+ * exchange_rates rows to TWD for these currencies inside [start, end], plus per currency the latest row before `start`
+ * (a rate is the latest row on or before the entry date). Seeding with that one row, instead of looking back a fixed number of days,
+ * keeps a foreign entry at the same TWD amount whichever date range a page happens to read.
+ */
 async function listRates(client: SupabaseClient, currencies: string[], range: { start: string; end: string }): Promise<RateRow[]> {
-  const from = new Date(`${range.start}T00:00:00Z`);
-  from.setUTCDate(from.getUTCDate() - RATE_LOOKBACK_DAYS);
   const out: RateRow[] = [];
+  // ponytail: rates are advisory; without them toTwd uses the fallback constants instead of taking every page down.
+  const fail = (e: { message: string }) => {
+    console.error("exchange_rates", e.message);
+    return [] as RateRow[];
+  };
+  for (const c of currencies) {
+    const { data, error } = await client.from("exchange_rates").select("from_currency, rate, date").eq("to_currency", "TWD").eq("from_currency", c).lte("date", range.start).order("date", { ascending: false }).range(0, 0);
+    if (error) return fail(error);
+    out.push(...((data ?? []) as RateQueryRow[]).map(toRateRow));
+  }
   for (let at = 0; ; at += PAGE) {
     const { data, error } = await client
       .from("exchange_rates")
       .select("from_currency, rate, date")
       .eq("to_currency", "TWD")
       .in("from_currency", currencies)
-      .gte("date", from.toISOString().slice(0, 10))
+      .gt("date", range.start)
       .lte("date", range.end)
       .order("date", { ascending: true })
       .range(at, at + PAGE - 1);
-    if (error) {
-      // ponytail: rates are advisory; without them toTwd uses the fallback constants instead of taking every page down.
-      console.error("exchange_rates", error.message);
-      return [];
-    }
-    const rows = (data ?? []) as { from_currency: string; rate: number | string; date: string }[];
-    out.push(...rows.map((r) => ({ currency: r.from_currency, date: r.date.slice(0, 10), rate: Number(r.rate) })));
+    if (error) return fail(error);
+    const rows = (data ?? []) as RateQueryRow[];
+    out.push(...rows.map(toRateRow));
     if (rows.length < PAGE) return out;
   }
 }

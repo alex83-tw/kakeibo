@@ -164,3 +164,20 @@ describe("searchEntries", () => {
     await expect(searchEntries(fakeClient([], { message: "boom" }).client, "u1", filters())).rejects.toThrow("boom");
   });
 });
+
+describe("foreign entries and the range a page reads", () => {
+  it("convert to the same TWD amount whichever date range is read, even when the latest rate is months older", async () => {
+    const { fixtureClient, resetFixtures, FIXTURE_USER } = await import("@/lib/server/dev/fixtures");
+    resetFixtures();
+    const client = fixtureClient();
+    await client.from("exchange_rates").insert([{ from_currency: "JPY", to_currency: "TWD", rate: 0.5, date: "2026-03-01" }]);
+    await client.from("accounting_entries").insert([
+      { user_id: FIXTURE_USER, entry_type: "expense", main_category: "餐飲", sub_category: "other", amount: 1000, currency: "JPY", entry_date: "2026-10-20", notes: "x", account_id: null, transfer_account_id: null, is_recurring: false },
+    ]);
+    const month = await listEntries(client, FIXTURE_USER, { start: "2026-10-01", end: "2026-10-31" });
+    const year = await listEntries(client, FIXTURE_USER, { start: "2026-01-01", end: "2026-12-31" });
+    const pick = (es: { notes: string | null; amount: number }[]) => es.find((e) => e.notes === "x")?.amount;
+    expect(pick(month)).toBe(500);
+    expect(pick(year)).toBe(500);
+  });
+});
