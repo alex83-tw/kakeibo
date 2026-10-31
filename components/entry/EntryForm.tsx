@@ -77,21 +77,26 @@ export function EntryForm({
   const recent = recentCategories.slice(0, 5);
   const defaultCategory = (type: EntryType) =>
     type === "expense" && recent[0] ? joinCategory(recent[0].main, recent[0].sub) : "";
-  const presetCategory = preset && !initial ? joinCategory(preset.main, normalizeSub(preset.sub)) : null;
+  const copy = initial ? undefined : preset?.copy;
+  const presetCategory = preset && !initial && preset.main !== "" ? joinCategory(preset.main, normalizeSub(preset.sub)) : null;
+  // A copied account may have been archived since: only offer what the form can still choose.
+  const liveId = (id: string | undefined) => (id !== undefined && live.some((a) => a.id === id) ? id : undefined);
 
-  const [type, setType] = useState<EntryType>(initial?.entry_type ?? "expense");
+  const [type, setType] = useState<EntryType>(initial?.entry_type ?? copy?.type ?? "expense");
   // A foreign entry arrives converted to TWD; the form edits what is stored.
-  const [currency, setCurrency] = useState(initial?.foreign?.currency ?? initial?.currency ?? "TWD");
-  const [amount, setAmount] = useState(initial ? String((initial.foreign ?? initial).amount) : "");
+  const [currency, setCurrency] = useState(initial?.foreign?.currency ?? initial?.currency ?? copy?.currency ?? "TWD");
+  const [amount, setAmount] = useState(initial ? String((initial.foreign ?? initial).amount) : (copy?.amount ?? ""));
   const [category, setCategory] = useState(
     initial
       ? initial.entry_type === "transfer"
         ? ""
         : joinCategory(initial.main_category, normalizeSub(initial.sub_category))
-      : (presetCategory ?? defaultCategory("expense")),
+      : (presetCategory ?? defaultCategory(copy?.type ?? "expense")),
   );
-  const [accountId, setAccountId] = useState(initial ? (initial.account_id ?? "") : (live[0]?.id ?? ""));
-  const [toId, setToId] = useState(initial ? (initial.transfer_account_id ?? "") : (live[1]?.id ?? ""));
+  const [accountId, setAccountId] = useState(
+    initial ? (initial.account_id ?? "") : copy && copy.account_id === "" ? "" : (liveId(copy?.account_id) ?? live[0]?.id ?? ""),
+  );
+  const [toId, setToId] = useState(initial ? (initial.transfer_account_id ?? "") : (liveId(copy?.transfer_account_id) ?? live[1]?.id ?? ""));
   const [date, setDate] = useState(() => initial?.entry_date ?? twToday());
   // Once the user picks a category (or the form starts from an entry or an alert's preset) no rule overrides it.
   const [categoryTouched, setCategoryTouched] = useState(Boolean(initial || presetCategory));

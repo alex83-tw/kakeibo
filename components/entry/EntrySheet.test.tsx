@@ -196,6 +196,48 @@ describe("EntrySheet editing a ledger line", () => {
     expect(updateEntry).toHaveBeenCalledWith("e1", expect.objectContaining({ currency: "JPY", amount: "2000" }));
   });
 
+  it("複製成新的一筆 starts a new entry from this one, dated today, and saves it with createEntry", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={accounts} recentCategories={[]} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(EDIT_EVENT, { detail: { ...entry, currency: "TWD", amount: 252, foreign: { currency: "JPY", amount: 1200, rate: 0.21 } } }));
+    });
+    await user.click(screen.getByRole("button", { name: "複製成新的一筆" }));
+    expect(screen.getByRole("dialog", { name: "記一筆" })).toBeInTheDocument();
+    expect(screen.getByLabelText("金額")).toHaveValue("1200");
+    expect(screen.getByLabelText("幣別")).toHaveValue("JPY");
+    expect(screen.getByLabelText("科目")).toHaveValue("餐飲::午餐");
+    expect(screen.getByLabelText("帳戶")).toHaveValue("a1");
+    expect(screen.getByLabelText("摘要")).toHaveValue("便當");
+    expect(screen.getByLabelText("日期")).not.toHaveValue("2026-10-05");
+    expect(screen.queryByRole("button", { name: "刪除這筆" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "儲存" }));
+    expect(createEntry).toHaveBeenCalledWith(expect.objectContaining({ amount: "1200", currency: "JPY", main_category: "餐飲", sub_category: "午餐", account_id: "a1" }));
+    expect(updateEntry).not.toHaveBeenCalled();
+  });
+
+  it("copying an entry from an account that is no longer offered falls back to the first one", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={[{ ...acct("old", "舊戶", "bank", 0), archived: true }, ...accounts]} recentCategories={[]} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(EDIT_EVENT, { detail: { ...entry, account_id: "old" } }));
+    });
+    await user.click(screen.getByRole("button", { name: "複製成新的一筆" }));
+    expect(screen.getByLabelText("帳戶")).toHaveValue("a1");
+  });
+
+  it("copying a transfer keeps both accounts and no category", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<EntrySheet accounts={accounts} recentCategories={[]} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(EDIT_EVENT, { detail: { ...entry, entry_type: "transfer", main_category: "轉帳", sub_category: null, account_id: "a2", transfer_account_id: "a1" } }));
+    });
+    await user.click(screen.getByRole("button", { name: "複製成新的一筆" }));
+    expect(screen.getByRole("radio", { name: "轉帳" })).toBeChecked();
+    expect(screen.getByLabelText("轉出")).toHaveValue("a2");
+    expect(screen.getByLabelText("轉入")).toHaveValue("a1");
+  });
+
   it("a transfer is always in TWD", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(<EntrySheet accounts={accounts} recentCategories={[]} />);

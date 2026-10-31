@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useSelect } from "./SelectMode";
 
 /** Scroll the row to the top of whatever scrolls it: the page on desktop, the window on a phone. scrollIntoView would also drag every other scrollable ancestor along. */
 function scrollToRow(row: HTMLElement, smooth = false) {
@@ -23,6 +24,7 @@ export function LedgerTools({ monthKey, currentKey, todayId, path }: { monthKey:
   const [q, setQ] = useState("");
   const status = useRef<HTMLSpanElement>(null);
   const isCurrent = monthKey === currentKey;
+  const select = useSelect();
 
   useEffect(() => {
     const row = document.getElementById(todayId);
@@ -51,6 +53,11 @@ export function LedgerTools({ monthKey, currentKey, todayId, path }: { monthKey:
     <div className="lg-tools">
       <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="篩選：科目、摘要、帳戶" aria-label="篩選帳目" autoComplete="off" />
       <span ref={status} className="lg-n" role="status" />
+      {select && !select.selecting ? (
+        <button type="button" className="act" onClick={select.start}>
+          選取
+        </button>
+      ) : null}
       {isCurrent ? (
         <button type="button" className="act" onClick={() => {
             const row = document.getElementById(todayId);

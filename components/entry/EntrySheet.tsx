@@ -66,6 +66,24 @@ export function EntrySheet({
     });
   }
 
+  // Same dialog, new entry: the form remounts (its key goes from the entry's id to "new") starting from this entry's values and today's date.
+  function copy(e: Entry) {
+    setEditing(undefined);
+    setPreset({
+      main: e.entry_type === "transfer" ? "" : e.main_category,
+      sub: e.sub_category ?? "other",
+      notes: e.notes ?? "",
+      copy: {
+        type: e.entry_type,
+        amount: String((e.foreign ?? e).amount),
+        currency: e.foreign?.currency ?? e.currency,
+        account_id: e.account_id ?? "",
+        transfer_account_id: e.transfer_account_id ?? "",
+      },
+    });
+    setTimeout(() => document.getElementById("entry-amount")?.focus()); // the 複製 button that had focus is gone
+  }
+
   return (
     <>
       <div className="dock">
@@ -87,6 +105,7 @@ export function EntrySheet({
         preset={preset}
         initial={editing}
         onDelete={editing ? () => remove(editing) : undefined}
+        onCopy={editing ? () => copy(editing) : undefined}
         onSaved={(s) => show(editing ? { text: s.text } : { text: s.text, action: { label: "復原", run: () => undoCreate(s.id) } })}
       />
     </>

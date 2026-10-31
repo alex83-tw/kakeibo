@@ -9,6 +9,7 @@ import { loadLedgerMonth } from "@/lib/server/ledger";
 import { currentMonth, formatMonthParam, toKanji, twToday, WEEKDAY_JP, weekdayIndex } from "@/lib/time";
 import { LedgerTools } from "./LedgerTools";
 import { LineButton } from "./LineButton";
+import { SelectBar, SelectProvider } from "./SelectMode";
 
 /**
  * 帳本：一筆一行寫在橫線上，欄線印到頁底。日期只寫在當天第一行；週計、月計之後畫實線與雙線。
@@ -31,6 +32,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
   const amount = (n: number) => (n === 0 ? "" : formatSigned(n)); // a refund is a negative expense
 
   return (
+    <SelectProvider key={monthKey}>
     <div className="lg">
       <Run label={`${toKanji(month)}月　帳本`} />
       <Head
@@ -48,6 +50,7 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
       />
       <MonthNav year={year} month={month} path={path} />
       <LedgerTools monthKey={monthKey} currentKey={formatMonthParam(cur.year, cur.month)} todayId={`d-${today.slice(8, 10)}`} path={path} />
+      <SelectBar />
 
       <div className={showAccounts ? "lg-sheet" : "lg-sheet no-a"}>
         <table className="lg-t">
@@ -146,5 +149,6 @@ export async function LedgerPane({ year, month, path }: { year: number; month: n
       </div>
       <NegNote />
     </div>
+    </SelectProvider>
   );
 }

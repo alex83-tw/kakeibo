@@ -21,6 +21,7 @@ export function EntryDialog({
   preset,
   onSaved,
   onDelete,
+  onCopy,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,6 +33,8 @@ export function EntryDialog({
   onSaved: (saved: SavedEntry) => void;
   /** given when editing an existing entry */
   onDelete?: () => void;
+  /** given when editing: start a new entry from this one */
+  onCopy?: () => void;
 }) {
   // There is no Dialog.Trigger (the opener lives elsewhere), so remember who had focus and hand it back.
   const opener = useRef<HTMLElement | null>(null);
@@ -73,6 +76,11 @@ export function EntryDialog({
               onSaved(saved);
             }}
           />
+          {onCopy ? (
+            <button type="button" className="ghost entry-del" onClick={onCopy}>
+              複製成新的一筆
+            </button>
+          ) : null}
           {onDelete ? (
             <button type="button" className="ghost entry-del" onClick={onDelete}>
               刪除這筆

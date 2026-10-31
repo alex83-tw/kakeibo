@@ -169,6 +169,13 @@ h2.sec { margin: var(--row) 0 0; height: var(--row); flex: none; display: flex; 
 .lg-tools input:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 .lg-tools .lg-n { font-size: var(--fs-label); color: var(--ink-2); white-space: nowrap; }
 .lg-tools .act { margin-left: 0; }
+.lg-sel { height: var(--row); flex: none; display: flex; align-items: center; gap: 4px; }
+.lg-sel .lg-n { margin-right: auto; font-size: var(--fs-label); color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-sel .act { margin-left: 0; }
+button.act:disabled { opacity: 0.4; cursor: default; }
+/* 選取模式：被選的行加底色和勾，不只靠顏色 */
+button.ln[aria-pressed="true"] b::before { content: "✓ "; }
+tr:has(> td > button.ln[aria-pressed="true"]) td { background-color: rgba(26, 29, 27, 0.12); }
 .lg-t tr[hidden] { display: none; }
 /* 篩選時同日的第二筆也要看得到日期 */
 .lg-t.filtering td.d:empty::before { content: attr(data-d); }
